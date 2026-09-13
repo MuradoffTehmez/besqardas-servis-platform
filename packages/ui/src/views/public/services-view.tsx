@@ -72,7 +72,7 @@ export function ServicesView({
         <div className="search-input">
           <Search size={18} />
           <input
-            type="text"
+            type="search" aria-label="Axtarış"
             placeholder="Xidmət adı ilə axtar..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}

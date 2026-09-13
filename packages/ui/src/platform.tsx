@@ -1,8 +1,6 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import az from "@sp/i18n/messages/az.json";
-import ru from "@sp/i18n/messages/ru.json";
-import en from "@sp/i18n/messages/en.json";
+import React, { useEffect, useState, lazy, Suspense } from "react";
+import { resolveText } from "./utils/i18n";
 
 import { Header } from "./components/layout/header";
 import { Footer } from "./components/layout/footer";
@@ -20,19 +18,22 @@ import { PricingView } from "./views/public/pricing-view";
 import { WarrantyVerifyView } from "./views/public/warranty-verify-view";
 import { InfoView } from "./views/public/info-view";
 import { LoginView } from "./views/auth/login-view";
-import { CustomerPortal } from "./views/customer/customer-portal";
-import { TechnicianPortal } from "./views/technician/technician-portal";
-import { CourierPortal } from "./views/courier/courier-portal";
-import { AdminPortal } from "./views/admin/admin-portal";
+const CustomerPortal = lazy(() => import("./views/customer/customer-portal").then((module) => ({ default: module.CustomerPortal })));
+const TechnicianPortal = lazy(() => import("./views/technician/technician-portal").then((module) => ({ default: module.TechnicianPortal })));
+const CourierPortal = lazy(() => import("./views/courier/courier-portal").then((module) => ({ default: module.CourierPortal })));
+const AdminPortal = lazy(() => import("./views/admin/admin-portal").then((module) => ({ default: module.AdminPortal })));
 
 type Row = Record<string, any>;
-const words = { az, ru, en };
 
-export function Platform({ admin = false }: { admin?: boolean }) {
+export function Platform(props: { admin?: boolean }) {
+  return <Suspense fallback={<main className="container py-12" aria-busy="true"><p role="status">Yüklənir...</p></main>}><PlatformContent {...props} /></Suspense>;
+}
+
+function PlatformContent({ admin = false }: { admin?: boolean }) {
   const [path, setPath] = useState("/az");
   const [locale, setLocale] = useState<"az" | "ru" | "en">("az");
-  const t = words[locale];
 
+  const [challengeId, setChallengeId] = useState<string | null>(null);
   const [session, setSession] = useState<Row | null>(null);
   const [brand, setBrand] = useState<Row | null>(null);
   const [data, setData] = useState<Row>({});
@@ -44,7 +45,7 @@ export function Platform({ admin = false }: { admin?: boolean }) {
   const [bookingWizardOpen, setBookingWizardOpen] = useState(false);
   const [bookingService, setBookingService] = useState<any | null>(null);
 
-  const page = path.replace(/^\/(az|ru|en)/, "") || "/";
+  const page = path.split("?")[0].replace(/^\/(az|ru|en)(?=\/|$)/, "") || "/";
 
   // API helper
   const req = async (url: string, method = "GET", body?: unknown) => {
@@ -69,7 +70,7 @@ export function Platform({ admin = false }: { admin?: boolean }) {
   // Sync with browser history
   useEffect(() => {
     const sync = () => {
-      const p = window.location.pathname;
+      const p = window.location.pathname + window.location.search;
       const l = p.split("/")[1];
       setLocale(l === "en" || l === "ru" ? l : "az");
       setPath(p);
@@ -108,16 +109,16 @@ export function Platform({ admin = false }: { admin?: boolean }) {
       if (admin) {
         if (session?.authenticated) {
           const [orders, techs] = await Promise.all([
-            req("/service-orders").catch(() => ({ items: [] })),
-            req("/technicians").catch(() => ({ items: [] })),
+            req("/service-orders"),
+            req("/technicians"),
           ]);
           d = { orders: orders.items || [], technicians: techs.items || [] };
         }
-      } else if (page.startsWith("/account") || page.startsWith("/technician") || page.startsWith("/courier")) {
+      } else if (page.startsWith("/account") || (page === "/technician" || page.startsWith("/technician/")) || page.startsWith("/courier")) {
         if (session?.authenticated) {
           const [orders, dev, addrs] = await Promise.all([
-            req("/service-orders").catch(() => ({ items: [] })),
-            req("/account/devices").catch(() => ({ items: [] })),
+            req("/service-orders"),
+            page.startsWith("/account") && (session?.user?.activeRole || session?.user?.role) !== "TECHNICIAN" ? req("/account/devices") : Promise.resolve({ items: [] }),
             req("/auth/session").catch(() => ({})),
           ]);
           d = {
@@ -128,10 +129,10 @@ export function Platform({ admin = false }: { admin?: boolean }) {
         }
       } else if (page === "/" || page === "/services" || page === "/shop") {
         const [services, products, categories, techs] = await Promise.all([
-          req("/services?pageSize=100").catch(() => ({ items: [] })),
-          req("/products?pageSize=100").catch(() => ({ items: [] })),
-          req("/equipment-categories").catch(() => []),
-          req("/technicians").catch(() => ({ items: [] })),
+          req("/services?pageSize=100"),
+          req("/products?pageSize=100"),
+          req("/equipment-categories"),
+          req("/technicians"),
         ]);
         d = {
           services: services.items || [],
@@ -142,25 +143,25 @@ export function Platform({ admin = false }: { admin?: boolean }) {
       } else if (page.startsWith("/services/")) {
         const slug = page.split("/")[2];
         const [svc, cat] = await Promise.all([
-          req("/services/" + slug).catch(() => null),
-          req("/equipment-categories").catch(() => []),
+          req("/services/" + slug),
+          req("/equipment-categories"),
         ]);
         d = { service: svc, categories: cat || [] };
       } else if (page.startsWith("/product/")) {
         const slug = page.split("/")[2];
         const [prod, dev] = await Promise.all([
-          req("/products/" + slug).catch(() => null),
-          session?.authenticated ? req("/account/devices").catch(() => ({ items: [] })) : Promise.resolve({ items: [] }),
+          req("/products/" + slug),
+          session?.authenticated ? req("/account/devices") : Promise.resolve({ items: [] }),
         ]);
         d = { product: prod, devices: dev.items || [] };
       } else if (page === "/technicians") {
-        const techs = await req("/technicians").catch(() => ({ items: [] }));
-        d = { technicians: techs.items || [] };
+        const [techs, services] = await Promise.all([req("/technicians"), req("/services?pageSize=100")]);
+        d = { technicians: techs.items || [], services: services.items || [] };
       } else if (page === "/cart" || page === "/checkout") {
         const [cart, addrs, branches] = await Promise.all([
-          req("/cart").catch(() => ({ items: [] })),
+          req("/cart"),
           session?.authenticated ? req("/auth/session").catch(() => ({})) : Promise.resolve({}),
-          req("/branches").catch(() => ({ items: [] })),
+          req("/branches"),
         ]);
         d = {
           cart,
@@ -168,7 +169,7 @@ export function Platform({ admin = false }: { admin?: boolean }) {
           branches: branches.items || [],
         };
       } else if (page === "/contact" || page === "/branches") {
-        const branches = await req("/branches").catch(() => ({ items: [] }));
+        const branches = await req("/branches");
         d = { branches: branches.items || [] };
       }
 
@@ -200,7 +201,7 @@ export function Platform({ admin = false }: { admin?: boolean }) {
         installationAdded: !!withInstallation,
       });
       setCartCount((c) => c + 1);
-      setNotice(`"${product.name}" səbətə əlavə edildi.`);
+      setNotice(`"${resolveText(product.name, locale, "Məhsul")}" səbətə əlavə edildi.`);
     } catch (e: any) {
       setError(e.message);
     }
@@ -226,7 +227,15 @@ export function Platform({ admin = false }: { admin?: boolean }) {
 
   // Auth operations
   const handleLogin = async (creds: any) => {
-    const res = await req("/auth/login", "POST", creds);
+    const res = challengeId && creds.otp
+      ? await req("/auth/2fa", "POST", { challengeId, code: creds.otp })
+      : await req("/auth/login", "POST", creds);
+    if (res.status === "TWO_FACTOR_REQUIRED") {
+      setChallengeId(res.challengeId);
+      return { ...res, requires2FA: true };
+    }
+    setChallengeId(null);
+    if (res.session) setSession(res.session);
     setRevision((r) => r + 1);
     return res;
   };
@@ -262,6 +271,10 @@ export function Platform({ admin = false }: { admin?: boolean }) {
     { label: "Əlaqə", href: "/contact" },
   ];
 
+  if ((admin || page === "/account" || page.startsWith("/account/") || page === "/technician" || page.startsWith("/technician/") || page === "/courier" || page.startsWith("/courier/")) && session?.authenticated && (busy || error)) {
+    return <main className="container py-12" aria-busy={busy}>{error ? <div role="alert" className="alert alert-danger">{error}<button className="btn outline" onClick={() => setRevision((r) => r + 1)}>Yenidən yoxla</button></div> : <p role="status">Yüklənir...</p>}</main>;
+  }
+
   // RENDER ADMIN PORTAL
   if (admin) {
     if (!session?.authenticated) {
@@ -290,7 +303,7 @@ export function Platform({ admin = false }: { admin?: boolean }) {
   }
 
   // RENDER SPECIALIZED PORTALS (Customer, Technician, Courier)
-  if (page.startsWith("/technician") || session?.user?.role === "TECHNICIAN") {
+  if ((page === "/technician" || page.startsWith("/technician/")) || (session?.user?.activeRole || session?.user?.role) === "TECHNICIAN") {
     if (!session?.authenticated) {
       return (
         <LoginView
@@ -310,7 +323,7 @@ export function Platform({ admin = false }: { admin?: boolean }) {
     );
   }
 
-  if (page.startsWith("/courier") || session?.user?.role === "COURIER") {
+  if (page.startsWith("/courier") || (session?.user?.activeRole || session?.user?.role) === "COURIER") {
     if (!session?.authenticated) {
       return (
         <LoginView
@@ -342,8 +355,7 @@ export function Platform({ admin = false }: { admin?: boolean }) {
         locale={locale}
         onLogout={handleLogout}
         onBookService={() => {
-          setBookingService(null);
-          setBookingWizardOpen(true);
+          go("/services");
         }}
       />
     );
@@ -383,7 +395,10 @@ export function Platform({ admin = false }: { admin?: boolean }) {
         onOpenSearch={() => go("/services")}
       />
 
-      <main id="main-content">
+      <a className="skip-link" href="#main-content">Əsas məzmuna keç</a>
+      <main id="main-content" tabIndex={-1} aria-busy={busy}>
+        {error && <div className="container py-4"><div className="alert alert-danger" role="alert">{error} <button className="btn outline" onClick={() => setRevision((r) => r + 1)}>Yenidən yoxla</button></div></div>}
+        {notice && <div className="container py-4"><div className="alert alert-success" role="status">{notice} <button className="btn ghost" onClick={() => setNotice("")}>Bağla</button></div></div>}
         {busy && (
           <div className="container py-12 text-center text-muted">
             <div className="skeleton large max-w-xl mx-auto mb-4" />
@@ -391,8 +406,9 @@ export function Platform({ admin = false }: { admin?: boolean }) {
           </div>
         )}
 
-        {!busy && (
+        {!busy && !error && (
           <>
+            {((page.startsWith("/services/") && !data.service) || (page.startsWith("/product/") && !data.product) || !["/", "/services", "/shop", "/cart", "/checkout", "/technicians", "/pricing", "/about", "/contact", "/branches", "/faq", "/terms", "/privacy"].includes(page) && !page.startsWith("/services/") && !page.startsWith("/product/") && !page.startsWith("/warranty")) && <div className="container py-12 empty-state"><h1>Səhifə tapılmadı</h1><button className="btn primary" onClick={() => go("/")}>Ana səhifəyə qayıt</button></div>}
             {page === "/" && (
               <HomeView
                 services={data.services || []}
@@ -411,6 +427,7 @@ export function Platform({ admin = false }: { admin?: boolean }) {
 
             {page === "/services" && (
               <ServicesView
+                initialCategory={new URLSearchParams(path.split("?")[1] || "").get("category") || ""}
                 services={data.services || []}
                 categories={data.categories || []}
                 locale={locale}
@@ -538,7 +555,7 @@ export function Platform({ admin = false }: { admin?: boolean }) {
       />
 
       {/* Global Booking Wizard Modal */}
-      <BookingWizard
+      {bookingWizardOpen && <BookingWizard
         open={bookingWizardOpen}
         onClose={() => setBookingWizardOpen(false)}
         service={bookingService}
@@ -553,7 +570,7 @@ export function Platform({ admin = false }: { admin?: boolean }) {
           alert(`Sifarişiniz qeydə alındı! Sifariş nömrəsi: ${order.number || "SV-1052"}`);
           go("/account");
         }}
-      />
+      />}
     </div>
   );
 }

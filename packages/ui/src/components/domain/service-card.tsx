@@ -75,12 +75,7 @@ export function ServiceCard({
         ) : null}
       </div>
 
-      <h3
-        className="service-title cursor-pointer"
-        onClick={() => onSelect && onSelect(service)}
-      >
-        {displayName}
-      </h3>
+      <h3 className="service-title">{onSelect ? <button className="title-action" onClick={() => onSelect(service)}>{displayName}</button> : displayName}</h3>
 
       {displayDesc ? (
         <p className="service-desc">{displayDesc}</p>

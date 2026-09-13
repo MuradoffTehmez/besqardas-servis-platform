@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect } from "react";
+import React, { useEffect, useId, useRef } from "react";
 import { X } from "lucide-react";
 import { cn } from "@sp/utils";
 
@@ -22,22 +22,33 @@ export function Modal({
   maxWidth = "md",
   className,
 }: ModalProps) {
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
+  const subtitleId = useId();
   useEffect(() => {
-    if (!open) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+    const dialog = dialogRef.current;
+    if (!open || !dialog) return;
+    const previousFocus = document.activeElement;
+    const overflow = document.body.style.overflow;
+    dialog.showModal();
+    document.body.style.overflow = "hidden";
+    return () => {
+      dialog.close();
+      document.body.style.overflow = overflow;
+      if (previousFocus instanceof HTMLElement && previousFocus.isConnected) previousFocus.focus();
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div
-        role="dialog"
+      <dialog
+        ref={dialogRef}
         aria-modal="true"
+        aria-labelledby={title ? titleId : undefined}
+        aria-label={title ? undefined : "Dialog"}
+        aria-describedby={subtitle ? subtitleId : undefined}
+        onCancel={(event) => { event.preventDefault(); onClose(); }}
         className={cn(
           "modal",
           maxWidth === "sm" && "modal-sm",
@@ -46,10 +57,15 @@ export function Modal({
           maxWidth === "full" && "modal-full",
           className
         )}
-        onClick={(e) => e.stopPropagation()}
+        onClick={(event) => {
+          if (event.target !== event.currentTarget) return;
+          const rect = event.currentTarget.getBoundingClientRect();
+          if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) onClose();
+        }}
       >
         <button
           autoFocus
+          type="button"
           className="modal-close icon-button"
           aria-label="Bağla"
           onClick={onClose}
@@ -58,12 +74,11 @@ export function Modal({
         </button>
         {title && (
           <div className="modal-header">
-            <h2>{title}</h2>
-            {subtitle && <p className="modal-subtitle">{subtitle}</p>}
+            <h2 id={titleId}>{title}</h2>
+            {subtitle && <p id={subtitleId} className="modal-subtitle">{subtitle}</p>}
           </div>
         )}
         <div className="modal-body">{children}</div>
-      </div>
-    </div>
+      </dialog>
   );
 }

@@ -114,20 +114,20 @@ export function CheckoutView({
               <Truck size={20} /> 1. Çatdırılma Üsulu
             </h3>
             <div className="grid two gap-4">
-              <div
+              <button type="button" aria-pressed={deliveryMethod === "COURIER"}
                 className={`choice-card ${deliveryMethod === "COURIER" ? "active" : ""}`}
                 onClick={() => setDeliveryMethod("COURIER")}
               >
                 <strong>Kuryer Çatdırılması</strong>
                 <small>Ünvana qapıda təhvil verilmə.</small>
-              </div>
-              <div
+              </button>
+              <button type="button" aria-pressed={deliveryMethod === "PICKUP"}
                 className={`choice-card ${deliveryMethod === "PICKUP" ? "active" : ""}`}
                 onClick={() => setDeliveryMethod("PICKUP")}
               >
                 <strong>Filialdan Götürmə</strong>
                 <small>Servis mərkəzimizdən ödənişsiz götürün.</small>
-              </div>
+              </button>
             </div>
 
             {deliveryMethod === "COURIER" && (
@@ -141,8 +141,9 @@ export function CheckoutView({
                         className={`choice-card flex items-center gap-2 ${
                           selectedAddressId === addr.id ? "active" : ""
                         }`}
-                        onClick={() => setSelectedAddressId(addr.id)}
+
                       >
+                        <input type="radio" name="checkout-view-address" checked={selectedAddressId === addr.id} onChange={() => setSelectedAddressId(addr.id)} />
                         <MapPin size={16} />
                         <span>
                           {addr.label}: {addr.city}, {addr.street || addr.addressLine}
@@ -154,10 +155,10 @@ export function CheckoutView({
 
                 {allowsOneTimeAddress ? (
                   <div className="form-group mt-3">
-                    <label className="text-xs text-muted block mb-1">
+                    <label className="text-xs text-muted block mb-1" htmlFor="checkout-view-field-1">
                       Və ya birdəfəlik fərqli ünvan daxil edin (Pro/Premium imkanı — §42):
                     </label>
-                    <input
+                    <input id="checkout-view-field-1"
                       type="text"
                       className="form-input"
                       placeholder="Fərqli ünvan yazın..."
@@ -178,8 +179,8 @@ export function CheckoutView({
 
             {deliveryMethod === "PICKUP" && branches.length > 0 && (
               <div className="branch-substep mt-4">
-                <label className="form-label">Təhvil Filialı</label>
-                <select
+                <label className="form-label" htmlFor="checkout-view-field-2">Təhvil Filialı</label>
+                <select id="checkout-view-field-2"
                   className="form-input"
                   value={selectedBranchId}
                   onChange={(e) => setSelectedBranchId(e.target.value)}
@@ -200,32 +201,32 @@ export function CheckoutView({
               <CreditCard size={20} /> 2. Ödəniş Üsulu
             </h3>
             <div className="grid three gap-4">
-              <div
+              <button type="button" aria-pressed={paymentMethod === "ONLINE_CARD"}
                 className={`choice-card ${paymentMethod === "ONLINE_CARD" ? "active" : ""}`}
                 onClick={() => setPaymentMethod("ONLINE_CARD")}
               >
                 <CreditCard size={20} className="mb-2" />
                 <strong>Onlayn Bank Kartı</strong>
                 <small>Visa / MasterCard / Birbank</small>
-              </div>
+              </button>
 
-              <div
+              <button type="button" aria-pressed={paymentMethod === "POS"}
                 className={`choice-card ${paymentMethod === "POS" ? "active" : ""}`}
                 onClick={() => setPaymentMethod("POS")}
               >
                 <CreditCard size={20} className="mb-2 text-info" />
                 <strong>Qapıda POS Terminal</strong>
                 <small>Kuryerdə kartla ödəniş</small>
-              </div>
+              </button>
 
-              <div
+              <button type="button" aria-pressed={paymentMethod === "CASH"}
                 className={`choice-card ${paymentMethod === "CASH" ? "active" : ""}`}
                 onClick={() => setPaymentMethod("CASH")}
               >
                 <Banknote size={20} className="mb-2 text-success" />
                 <strong>Qapıda Nağd Ödəniş</strong>
                 <small>Fiskal çek təqdim olunur</small>
-              </div>
+              </button>
             </div>
           </div>
         </div>

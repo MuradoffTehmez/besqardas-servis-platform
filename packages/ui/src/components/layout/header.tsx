@@ -48,6 +48,24 @@ export function Header({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const media = window.matchMedia("(min-width: 1201px)");
+    const closeOnResize = () => { if (media.matches) setMobileMenuOpen(false); };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { setMobileMenuOpen(false); menuRef.current?.focus(); }
+    };
+    media.addEventListener("change", closeOnResize);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = overflow;
+      media.removeEventListener("change", closeOnResize);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [mobileMenuOpen]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -55,9 +73,13 @@ export function Header({
         setLangDropdownOpen(false);
       }
     }
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { setLangDropdownOpen(false); langRef.current?.querySelector("button")?.focus(); }
+    };
     if (langDropdownOpen) {
+      document.addEventListener("keydown", handleEscape);
       document.addEventListener("mousedown", handleClickOutside);
-      return () => document.removeEventListener("mousedown", handleClickOutside);
+      return () => { document.removeEventListener("mousedown", handleClickOutside); document.removeEventListener("keydown", handleEscape); };
     }
   }, [langDropdownOpen]);
 
@@ -92,6 +114,7 @@ export function Header({
               <button
                 key={item.href}
                 className={cn("nav-link", isActive && "active")}
+                aria-current={isActive ? "page" : undefined}
                 onClick={() => handleNavClick(item.href)}
               >
                 {item.label}
@@ -119,6 +142,8 @@ export function Header({
               className="lang-toggle icon-button"
               onClick={() => setLangDropdownOpen(!langDropdownOpen)}
               aria-label="Dili dəyiş"
+              aria-expanded={langDropdownOpen}
+              aria-controls="language-options"
             >
               <Globe size={18} />
               <span className="lang-current">{locale.toUpperCase()}</span>
@@ -126,7 +151,7 @@ export function Header({
             </button>
 
             {langDropdownOpen && (
-              <div className="dropdown-menu lang-menu">
+              <div id="language-options" className="dropdown-menu lang-menu">
                 {(["az", "ru", "en"] as const).map((l) => (
                   <button
                     key={l}
@@ -169,6 +194,9 @@ export function Header({
           {/* Mobile Menu Toggle */}
           <button
             className="mobile-toggle icon-button"
+            ref={menuRef}
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-navigation"
             aria-label="Menyu"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
@@ -179,8 +207,8 @@ export function Header({
 
       {/* Mobile Navigation Drawer */}
       {mobileMenuOpen && (
-        <div className="mobile-drawer">
-          <nav className="mobile-nav">
+        <div id="mobile-navigation" className="mobile-drawer">
+          <nav className="mobile-nav" aria-label="Mobil menyu">
             {navItems.map((item) => (
               <button
                 key={item.href}

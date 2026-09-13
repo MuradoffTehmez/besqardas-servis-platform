@@ -61,12 +61,7 @@ export function ProductCard({
           <span className="product-brand">{displayBrand}</span>
         )}
 
-        <h3
-          className="product-title cursor-pointer"
-          onClick={() => onSelect && onSelect(product)}
-        >
-          {displayName}
-        </h3>
+        <h3 className="product-title">{onSelect ? <button className="title-action" onClick={() => onSelect(product)}>{displayName}</button> : displayName}</h3>
 
         <div className="product-meta">
           {product.rating != null && (

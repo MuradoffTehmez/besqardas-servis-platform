@@ -320,8 +320,8 @@ export function TechnicianPortal({
             {executionStep === "DIAGNOSE" && (
               <div className="space-y-4">
                 <div className="form-group">
-                  <label className="form-label">Aşkar Olunan Nasazlıq və Qeydlər *</label>
-                  <textarea
+                  <label className="form-label" htmlFor="technician-portal-field-1">Aşkar Olunan Nasazlıq və Qeydlər *</label>
+                  <textarea id="technician-portal-field-1"
                     className="form-textarea"
                     rows={3}
                     placeholder="Məsələn: Freon qaz təzyiqi normadan aşağıdır, kompressor giriş borusunda mikro-çat aşkar edildi..."
@@ -346,8 +346,8 @@ export function TechnicianPortal({
                   <h4 className="font-bold text-sm mb-3">Mobil Anbardan Material Sərfiyyatı (§22)</h4>
                   <div className="grid three gap-3 items-end">
                     <div className="col-span-2">
-                      <label className="text-xs text-muted block mb-1">Ehtiyat Hissəsi / Material</label>
-                      <select
+                      <label className="text-xs text-muted block mb-1" htmlFor="technician-portal-field-2">Ehtiyat Hissəsi / Material</label>
+                      <select id="technician-portal-field-2"
                         className="form-input text-xs"
                         value={selectedMaterialId}
                         onChange={(e) => setSelectedMaterialId(e.target.value)}

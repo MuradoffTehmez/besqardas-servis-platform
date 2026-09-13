@@ -48,7 +48,7 @@ export function Sidebar({
           <div className="sidebar-user-card">
             <div className="user-avatar">
               {user.avatarUrl ? (
-                <img src={user.avatarUrl} alt={userName} />
+                <img width={42} height={42} decoding="async" src={user.avatarUrl} alt={userName} />
               ) : (
                 <span>{initial}</span>
               )}
@@ -76,6 +76,7 @@ export function Sidebar({
             <button
               key={item.id}
               className={cn("sidebar-link", isActive && "active")}
+              aria-current={isActive ? "page" : undefined}
               onClick={() => onNavigate(item.href)}
             >
               <span className="sidebar-icon">

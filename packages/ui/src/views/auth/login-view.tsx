@@ -61,7 +61,7 @@ export function LoginView({
       setEmail("aysel@demo.az");
       setPassword("Demo1234!");
     } else {
-      setEmail("fuad.usta@demo.az");
+      setEmail("elvin@demo.az");
       setPassword("Demo1234!");
     }
   };
@@ -112,9 +112,9 @@ export function LoginView({
 
         {requires2FA ? (
           <div className="form-group mb-4">
-            <label className="form-label">İki Faktorlu Doğrulama (2FA Kodu)</label>
+            <label htmlFor="login-otp" className="form-label">İki Faktorlu Doğrulama (2FA Kodu)</label>
             <input
-              type="text"
+              type="text" id="login-otp" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}"
               required
               maxLength={6}
               className="form-input text-center text-lg tracking-widest font-mono"
@@ -129,9 +129,9 @@ export function LoginView({
         ) : (
           <>
             <div className="form-group mb-4">
-              <label className="form-label">E-poçt Ünvanı</label>
+              <label htmlFor="login-email" className="form-label">E-poçt Ünvanı</label>
               <input
-                type="email"
+                type="email" id="login-email" autoComplete="username"
                 required
                 className="form-input"
                 value={email}
@@ -140,9 +140,9 @@ export function LoginView({
             </div>
 
             <div className="form-group mb-6">
-              <label className="form-label">Şifrə</label>
+              <label htmlFor="login-password" className="form-label">Şifrə</label>
               <input
-                type="password"
+                type="password" id="login-password" autoComplete="current-password"
                 required
                 className="form-input"
                 value={password}

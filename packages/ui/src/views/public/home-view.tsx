@@ -197,7 +197,7 @@ export function HomeView({
 
             <div className="grid categories-grid">
               {categories.map((cat) => (
-                <div
+                <button type="button"
                   key={cat.id}
                   className="category-card cursor-pointer"
                   onClick={() => onNavigate(`/services?category=${cat.id}`)}
@@ -207,7 +207,7 @@ export function HomeView({
                   </div>
                   <strong>{cat.name?.[locale] || cat.name?.az || cat.name}</strong>
                   <small>{cat.serviceCount || "Servislər"}</small>
-                </div>
+                </button>
               ))}
             </div>
           </div>
@@ -333,7 +333,7 @@ export function HomeView({
                   key={tech.id}
                   technician={tech}
                   locale={locale}
-                  onSelect={(t) => onNavigate(`/technicians/${t.id}`)}
+                  onSelect={() => onNavigate("/technicians")}
                   onBook={(t) => onBookService({ technicianId: t.id })}
                 />
               ))}

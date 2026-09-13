@@ -50,11 +50,11 @@ export function BookingWizard({
   const [description, setDescription] = useState("");
   const [addressId, setAddressId] = useState(userAddresses[0]?.id || "");
   const [customAddress, setCustomAddress] = useState("");
-  const [selectedTechId, setSelectedTechId] = useState("");
+  const [selectedTechId, setSelectedTechId] = useState(initialService?.technicianId || "");
   const [scheduledDate, setScheduledDate] = useState(
     new Date(Date.now() + 86400000).toISOString().split("T")[0]
   );
-  const [scheduledSlot, setScheduledSlot] = useState("10:00 - 12:00");
+  const [scheduledSlot, setScheduledSlot] = useState("09:00 - 11:00");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -135,8 +135,8 @@ export function BookingWizard({
         {step === 1 && (
           <div className="wizard-step-content">
             <div className="form-group mb-4">
-              <label className="form-label">Xidməti Seçin</label>
-              <select
+              <label className="form-label" htmlFor="booking-wizard-field-1">Xidməti Seçin</label>
+              <select id="booking-wizard-field-1"
                 className="form-input"
                 value={selectedServiceId}
                 onChange={(e) => setSelectedServiceId(e.target.value)}
@@ -152,27 +152,27 @@ export function BookingWizard({
             <div className="form-group">
               <label className="form-label">İcra Forması (PRD §14)</label>
               <div className="grid three form-options">
-                <div
+                <button type="button" aria-pressed={executionForm === "ON_SITE"}
                   className={`choice-card ${executionForm === "ON_SITE" ? "active" : ""}`}
                   onClick={() => setExecutionForm("ON_SITE")}
                 >
                   <strong>Ünvanda Servis</strong>
                   <small>Usta göstərilən ünvana gəlir və təmiri yerində icra edir.</small>
-                </div>
-                <div
+                </button>
+                <button type="button" aria-pressed={executionForm === "CARRY_IN"}
                   className={`choice-card ${executionForm === "CARRY_IN" ? "active" : ""}`}
                   onClick={() => setExecutionForm("CARRY_IN")}
                 >
                   <strong>Servis Mərkəzinə Gətirmə</strong>
                   <small>Cihazı özünüz servis filialımıza təhvil verirsiniz.</small>
-                </div>
-                <div
+                </button>
+                <button type="button" aria-pressed={executionForm === "PICKUP_DELIVERY"}
                   className={`choice-card ${executionForm === "PICKUP_DELIVERY" ? "active" : ""}`}
                   onClick={() => setExecutionForm("PICKUP_DELIVERY")}
                 >
                   <strong>Götürmə & Çatdırılma</strong>
                   <small>Kuryerimiz cihazı ünvandan götürür və təmirdən sonra qaytarır.</small>
-                </div>
+                </button>
               </div>
             </div>
           </div>
@@ -183,8 +183,8 @@ export function BookingWizard({
           <div className="wizard-step-content">
             {userDevices.length > 0 && (
               <div className="form-group mb-4">
-                <label className="form-label">Qeydiyyatdakı Cihazlarımdan Seçin</label>
-                <select
+                <label className="form-label" htmlFor="booking-wizard-field-2">Qeydiyyatdakı Cihazlarımdan Seçin</label>
+                <select id="booking-wizard-field-2"
                   className="form-input"
                   value={deviceId}
                   onChange={(e) => setDeviceId(e.target.value)}
@@ -202,8 +202,8 @@ export function BookingWizard({
             {!deviceId && (
               <div className="grid two mb-4">
                 <div className="form-group">
-                  <label className="form-label">Marka və Model</label>
-                  <input
+                  <label className="form-label" htmlFor="booking-wizard-field-3">Marka və Model</label>
+                  <input id="booking-wizard-field-3"
                     type="text"
                     className="form-input"
                     placeholder="Məs: LG DualCool 18000"
@@ -212,8 +212,8 @@ export function BookingWizard({
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Seriya Nömrəsi (opsional)</label>
-                  <input
+                  <label className="form-label" htmlFor="booking-wizard-field-4">Seriya Nömrəsi (opsional)</label>
+                  <input id="booking-wizard-field-4"
                     type="text"
                     className="form-input"
                     placeholder="Məs: SN-9482910"
@@ -227,8 +227,8 @@ export function BookingWizard({
             )}
 
             <div className="form-group">
-              <label className="form-label">Nasazlıq və ya İstək Haqqında Qeyd *</label>
-              <textarea
+              <label className="form-label" htmlFor="booking-wizard-field-5">Nasazlıq və ya İstək Haqqında Qeyd *</label>
+              <textarea id="booking-wizard-field-5"
                 className="form-textarea"
                 rows={3}
                 placeholder="Cihazda hansı problem müşahidə olunur? (Məs: soyutmur, səs edir, kod göstərir...)"
@@ -250,8 +250,9 @@ export function BookingWizard({
                     <label
                       key={addr.id}
                       className={`choice-card address-choice ${addressId === addr.id ? "active" : ""}`}
-                      onClick={() => setAddressId(addr.id)}
+
                     >
+                      <input type="radio" name="booking-wizard-address" checked={addressId === addr.id} onChange={() => setAddressId(addr.id)} />
                       <MapPin size={16} />
                       <div>
                         <strong>{addr.label || "Ünvan"}</strong>
@@ -263,8 +264,8 @@ export function BookingWizard({
               </div>
             ) : (
               <div className="form-group">
-                <label className="form-label">Servis Ünvanı *</label>
-                <input
+                <label className="form-label" htmlFor="booking-wizard-field-6">Servis Ünvanı *</label>
+                <input id="booking-wizard-field-6"
                   type="text"
                   className="form-input"
                   placeholder="Şəhər, rayon, küçə, bina/mənzil"
@@ -281,8 +282,8 @@ export function BookingWizard({
           <div className="wizard-step-content">
             <div className="grid two mb-4">
               <div className="form-group">
-                <label className="form-label">Tarix Seçin</label>
-                <input
+                <label className="form-label" htmlFor="booking-wizard-field-7">Tarix Seçin</label>
+                <input id="booking-wizard-field-7"
                   type="date"
                   className="form-input"
                   value={scheduledDate}
@@ -292,8 +293,8 @@ export function BookingWizard({
               </div>
 
               <div className="form-group">
-                <label className="form-label">Vaxt Slotu</label>
-                <select
+                <label className="form-label" htmlFor="booking-wizard-field-8">Vaxt Slotu</label>
+                <select id="booking-wizard-field-8"
                   className="form-input"
                   value={scheduledSlot}
                   onChange={(e) => setScheduledSlot(e.target.value)}
@@ -309,8 +310,8 @@ export function BookingWizard({
 
             {technicians.length > 0 && (
               <div className="form-group mb-4">
-                <label className="form-label">Xüsusi Usta Təyini (opsional)</label>
-                <select
+                <label className="form-label" htmlFor="booking-wizard-field-9">Xüsusi Usta Təyini (opsional)</label>
+                <select id="booking-wizard-field-9"
                   className="form-input"
                   value={selectedTechId}
                   onChange={(e) => setSelectedTechId(e.target.value)}

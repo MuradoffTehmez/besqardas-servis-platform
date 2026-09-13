@@ -61,7 +61,7 @@ export function WarrantyVerifyView({
           <div className="search-input mb-3">
             <Search size={18} />
             <input
-              type="text"
+              type="text" aria-label="Zəmanət kodu"
               placeholder="Məsələn: WR-2026-88492"
               value={code}
               onChange={(e) => setCode(e.target.value)}

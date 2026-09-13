@@ -41,7 +41,7 @@ export function DataTable<T extends Record<string, any>>({
     const lowerQuery = query.toLowerCase();
     return data.filter((row) => {
       const val = row[searchKey];
-      return val && String(val).toLowerCase().includes(lowerQuery);
+      return val != null && String(val).toLowerCase().includes(lowerQuery);
     });
   }, [data, query, searchKey]);
 
@@ -50,6 +50,7 @@ export function DataTable<T extends Record<string, any>>({
     return [...filteredData].sort((a, b) => {
       const valA = a[sortKey];
       const valB = b[sortKey];
+      if (valA == null && valB == null) return 0;
       if (valA == null) return sortAsc ? 1 : -1;
       if (valB == null) return sortAsc ? -1 : 1;
       if (valA < valB) return sortAsc ? -1 : 1;
@@ -59,10 +60,11 @@ export function DataTable<T extends Record<string, any>>({
   }, [filteredData, sortKey, sortAsc]);
 
   const totalPages = Math.ceil(sortedData.length / pageSize) || 1;
+  const currentPage = Math.min(page, totalPages);
   const paginatedData = useMemo(() => {
-    const start = (page - 1) * pageSize;
+    const start = (currentPage - 1) * pageSize;
     return sortedData.slice(start, start + pageSize);
-  }, [sortedData, page, pageSize]);
+  }, [sortedData, currentPage, pageSize]);
 
   const handleSort = (key: string) => {
     if (sortKey === key) {
@@ -82,6 +84,7 @@ export function DataTable<T extends Record<string, any>>({
             <input
               type="text"
               placeholder={searchPlaceholder}
+              aria-label={searchPlaceholder}
               value={query}
               onChange={(e) => {
                 setQuery(e.target.value);
@@ -92,7 +95,7 @@ export function DataTable<T extends Record<string, any>>({
         </div>
       )}
 
-      <div className="table-wrap">
+      <div className="table-wrap" tabIndex={0} role="region" aria-label="Məlumat cədvəli">
         <table>
           <thead>
             <tr>
@@ -100,12 +103,10 @@ export function DataTable<T extends Record<string, any>>({
                 <th
                   key={col.key}
                   className={cn(col.sortable && "cursor-pointer select-none")}
-                  onClick={() => col.sortable && handleSort(col.key)}
+                  aria-sort={col.sortable ? sortKey === col.key ? sortAsc ? "ascending" : "descending" : "none" : undefined}
+                  scope="col"
                 >
-                  <div className="th-content">
-                    <span>{col.header}</span>
-                    {col.sortable && <ArrowUpDown size={14} className="ml-1 opacity-60" />}
-                  </div>
+                  {col.sortable ? <button type="button" className="th-content" onClick={() => handleSort(col.key)}>{col.header}<ArrowUpDown size={14} /></button> : col.header}
                 </th>
               ))}
             </tr>
@@ -117,6 +118,10 @@ export function DataTable<T extends Record<string, any>>({
                   key={row.id || idx}
                   className={cn(onRowClick && "cursor-pointer hover-row")}
                   onClick={() => onRowClick && onRowClick(row)}
+                  tabIndex={onRowClick ? 0 : undefined}
+                  onKeyDown={(event) => {
+                    if (event.target === event.currentTarget && onRowClick && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); onRowClick(row); }
+                  }}
                 >
                   {columns.map((col) => (
                     <td key={col.key}>
@@ -139,20 +144,20 @@ export function DataTable<T extends Record<string, any>>({
       {totalPages > 1 && (
         <div className="table-pagination">
           <span className="pagination-info">
-            Səhifə {page} / {totalPages} (Cəmi: {sortedData.length})
+            Səhifə {currentPage} / {totalPages} (Cəmi: {sortedData.length})
           </span>
           <div className="pagination-buttons">
             <button
               className="btn btn-sm outline"
-              disabled={page <= 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage <= 1}
+              onClick={() => setPage(Math.max(1, currentPage - 1))}
             >
               <ChevronLeft size={16} /> Əvvəlki
             </button>
             <button
               className="btn btn-sm outline"
-              disabled={page >= totalPages}
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage >= totalPages}
+              onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
             >
               Növbəti <ChevronRight size={16} />
             </button>

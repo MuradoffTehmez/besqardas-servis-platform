@@ -404,16 +404,16 @@ export function AdminPortal({
             <h3 className="text-lg font-bold">Brend və Haqq Qaydaları Ayarları (§20, §56.3)</h3>
             <div className="space-y-4 text-sm">
               <div className="form-group">
-                <label className="form-label">Şirkət Adı (Tenant)</label>
-                <input type="text" className="form-input" defaultValue="besqardasServis.az" />
+                <label className="form-label" htmlFor="admin-portal-field-1">Şirkət Adı (Tenant)</label>
+                <input id="admin-portal-field-1" type="text" className="form-input" defaultValue="besqardasServis.az" />
               </div>
               <div className="form-group">
-                <label className="form-label">Əsas Rəng Tokeni (Primary Color)</label>
-                <input type="text" className="form-input" defaultValue="#24594b" />
+                <label className="form-label" htmlFor="admin-portal-field-2">Əsas Rəng Tokeni (Primary Color)</label>
+                <input id="admin-portal-field-2" type="text" className="form-input" defaultValue="#24594b" />
               </div>
               <div className="form-group">
-                <label className="form-label">Standart Çağırış Haqqı Qaydası (§20.1)</label>
-                <input type="text" className="form-input" defaultValue="Smetadan imtina edildikdə: 0 AZN (Pulsuz)" disabled />
+                <label className="form-label" htmlFor="admin-portal-field-3">Standart Çağırış Haqqı Qaydası (§20.1)</label>
+                <input id="admin-portal-field-3" type="text" className="form-input" defaultValue="Smetadan imtina edildikdə: 0 AZN (Pulsuz)" disabled />
               </div>
               <button className="btn primary" onClick={() => alert("Ayarlar yadda saxlanıldı.")}>
                 Yadda Saxla
@@ -484,8 +484,8 @@ export function AdminPortal({
           maxWidth="md"
         >
           <div className="space-y-4">
-            <label className="form-label">İxtisas və Zonaya Uyğun Ustalar (§15)</label>
-            <select
+            <label className="form-label" htmlFor="admin-portal-field-4">İxtisas və Zonaya Uyğun Ustalar (§15)</label>
+            <select id="admin-portal-field-4"
               className="form-input"
               value={selectedTechId}
               onChange={(e) => setSelectedTechId(e.target.value)}

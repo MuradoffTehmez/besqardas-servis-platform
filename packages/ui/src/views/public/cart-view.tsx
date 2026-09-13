@@ -83,6 +83,8 @@ export function CartView({
                   <div className="quantity-counter flex items-center gap-2">
                     <button
                       className="icon-button btn-sm"
+                      aria-label="Miqdarı azalt"
+                      disabled={item.quantity <= 1}
                       onClick={() => onUpdateQuantity(item.id, Math.max(1, item.quantity - 1))}
                     >
                       <Minus size={14} />
@@ -90,6 +92,7 @@ export function CartView({
                     <span className="font-semibold px-2">{item.quantity}</span>
                     <button
                       className="icon-button btn-sm"
+                      aria-label="Miqdarı artır"
                       onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
                     >
                       <Plus size={14} />

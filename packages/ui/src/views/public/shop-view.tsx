@@ -21,6 +21,7 @@ export function ShopView({
   onNavigate,
   onAddToCart,
 }: ShopViewProps) {
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [selectedBrand, setSelectedBrand] = useState<string>("");
   const [inStockOnly, setInStockOnly] = useState(false);
@@ -55,7 +56,7 @@ export function ShopView({
     setPriceRange(2500);
   };
 
-  const hasActiveFilters = selectedCategory || selectedBrand || inStockOnly || searchQuery;
+  const hasActiveFilters = selectedCategory || selectedBrand || inStockOnly || searchQuery || priceRange !== 2500;
 
   return (
     <div className="shop-view container py-8">
@@ -71,6 +72,8 @@ export function ShopView({
       <div className="shop-layout">
         {/* Sidebar Filters */}
         <aside className="shop-filters panel">
+          <button type="button" className="filter-toggle btn outline w-full" aria-expanded={filtersOpen} aria-controls="shop-filter-fields" onClick={() => setFiltersOpen(!filtersOpen)}><SlidersHorizontal size={18} /> Filtrlər</button>
+          <div id="shop-filter-fields" className={`filter-fields ${filtersOpen ? "is-open" : ""}`}>
           <div className="filters-header flex justify-between items-center mb-4">
             <h3 className="text-base font-bold flex items-center gap-2">
               <SlidersHorizontal size={18} /> Filtrlər
@@ -88,7 +91,7 @@ export function ShopView({
             <div className="search-input">
               <Search size={16} />
               <input
-                type="text"
+                type="search" aria-label="Məhsul Axtarışı"
                 placeholder="Model, ad və ya SKU..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -98,8 +101,8 @@ export function ShopView({
 
           {/* Category Filter */}
           <div className="filter-group mb-4">
-            <label className="filter-label">Kateqoriya</label>
-            <select
+            <label className="filter-label" htmlFor="shop-view-field-1">Kateqoriya</label>
+            <select id="shop-view-field-1"
               className="form-input text-sm"
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
@@ -127,8 +130,8 @@ export function ShopView({
 
           {/* Price Range Slider */}
           <div className="filter-group mb-4">
-            <label className="filter-label">Maksimum Qiymət: {priceRange} AZN</label>
-            <input
+            <label className="filter-label" htmlFor="shop-view-field-2">Maksimum Qiymət: {priceRange} AZN</label>
+            <input id="shop-view-field-2"
               type="range"
               min={10}
               max={5000}
@@ -138,10 +141,11 @@ export function ShopView({
               className="range-slider w-full"
             />
           </div>
+          </div>
         </aside>
 
         {/* Product Listing Main */}
-        <main className="shop-main">
+        <div className="shop-main">
           <div className="shop-status-bar mb-4 flex justify-between items-center">
             <span className="results-count text-sm text-muted">
               {filteredProducts.length} məhsul tapıldı
@@ -170,7 +174,7 @@ export function ShopView({
               </button>
             </div>
           )}
-        </main>
+        </div>
       </div>
     </div>
   );

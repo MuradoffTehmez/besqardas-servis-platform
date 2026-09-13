@@ -65,7 +65,7 @@ export function TechnicianCard({
       <div className="tech-header">
         <div className="tech-avatar">
           {technician.avatarUrl ? (
-            <img src={technician.avatarUrl} alt={displayName} />
+            <img width={56} height={56} loading="lazy" decoding="async" src={technician.avatarUrl} alt={displayName} />
           ) : (
             <span className="avatar-initials">{initials}</span>
           )}
@@ -77,12 +77,7 @@ export function TechnicianCard({
         </div>
 
         <div className="tech-info">
-          <h3
-            className="tech-name cursor-pointer"
-            onClick={() => onSelect && onSelect(technician)}
-          >
-            {displayName}
-          </h3>
+          <h3 className="tech-name">{onSelect ? <button className="title-action" onClick={() => onSelect(technician)}>{displayName}</button> : displayName}</h3>
 
           <div className="tech-stats">
             {technician.rating != null && (
