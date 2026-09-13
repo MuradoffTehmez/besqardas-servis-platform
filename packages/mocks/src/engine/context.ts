@@ -5,6 +5,7 @@ import type { UserRec, B2BAccountRec, TechnicianRec } from "../data/people";
 import type { PlanRec } from "../data/plans";
 import { permissionsFor } from "../data/rbac";
 import { localeFromRequest } from "../lib/i18n";
+import { apiError } from "../lib/errors";
 
 /** Sorğu konteksti: dil, sessiya, aktiv rol, icazələr, plan imkanları və qiymət tipi. */
 
@@ -145,4 +146,10 @@ export function displayNameById(id: string | null | undefined): string {
   if (user) return fullName(user);
   const company = db.b2bAccounts.find((c) => c.id === id);
   return company?.legalName ?? "—";
+}
+
+export function requireTechnician(ctx: Ctx) {
+  if (!ctx.user) throw apiError(401, "UNAUTHORIZED", "error.unauthorized");
+  if (ctx.role !== "TECHNICIAN" || !ctx.technician) throw apiError(403, "FORBIDDEN", "error.forbidden");
+  return ctx.technician;
 }

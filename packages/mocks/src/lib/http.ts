@@ -142,7 +142,7 @@ const RESERVED = new Set(["page", "pageSize", "sort", "q", "locale", "from", "to
  * Vahid siyahı cavabı: `?page=&pageSize=&sort=-createdAt&q=&<sahə>=dəyər1,dəyər2&from=&to=`.
  * Mock konfiqurasiyasında "boş siyahılar" aktivdirsə, boş nəticə qaytarılır.
  */
-export function list<T>(url: URL, items: T[], opts: { search?: (item: T) => string; dateField?: string; defaultSort?: string; ignoreEmpty?: boolean } = {}) {
+export function list<T>(url: URL, items: T[], opts: { search?: (item: T) => string; dateField?: string; defaultSort?: string; ignoreEmpty?: boolean; defaultPageSize?: number } = {}) {
   const sp = url.searchParams;
   let rows = items;
   const q = sp.get("q")?.trim();
@@ -178,7 +178,7 @@ export function list<T>(url: URL, items: T[], opts: { search?: (item: T) => stri
   }
   if (db.mockConfig.emptyLists && !opts.ignoreEmpty) rows = [];
   const page = Math.max(1, Number(sp.get("page") ?? 1));
-  const pageSize = Math.min(500, Math.max(1, Number(sp.get("pageSize") ?? 20)));
+  const pageSize = Math.min(500, Math.max(1, Number(sp.get("pageSize") ?? opts.defaultPageSize ?? 20)));
   const total = rows.length;
   return {
     items: rows.slice((page - 1) * pageSize, page * pageSize),
