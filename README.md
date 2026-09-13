@@ -4,6 +4,8 @@
 
 Texniki servis, məhsul və ehtiyat hissəsi satışı, anbar, ustalar, müştəri cihazları və maliyyəni vahid sistemdə birləşdirən platformanın frontend hissəsi. Tələblər: [docs/PRD.md](docs/PRD.md).
 
+**Cari status:** frontend demo namizədi. Bütün PRD/MVP modulları tamamlanmayıb. [Demo əhatəsi və təqdimat ssenarisi](docs/DEMO.md), [töhfə qaydaları](CONTRIBUTING.md), [release prosesi](docs/RELEASING.md), [dəyişikliklər](CHANGELOG.md), [təhlükəsizlik](SECURITY.md).
+
 ## Struktur (PRD §67)
 
 ```
@@ -54,4 +56,4 @@ OTP və 2FA kodu həmişə `123456`, şifrə `Demo1234!`.
 - Frontend biznes hesablaması aparmır — qiymət, endirim, ƏDV, stok, slotlar, `availableActions`, `entitlements` API-dən gəlir (§64).
 - Bütün data MSW handler-ləri vasitəsilə API sorğuları ilə gəlir; dummy JSON birbaşa import edilmir (§65.3).
 - Mock layer gecikmə, xəta və boş halları simulyasiya edir (tətbiqlərdəki "Mock" panelindən).
-- UI mətnləri tərcümə açarları ilə — AZ (default), RU, EN (§62).
+- Əsas demo UI mətnləri AZ (default), RU, EN dillərindədir. Tam domen lokalizasiyası və SEO ayrıca qəbul işidir (§62).
