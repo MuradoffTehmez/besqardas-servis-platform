@@ -82,7 +82,7 @@ export function Sidebar({
                 <Icon size={18} />
               </span>
               <span className="sidebar-label">{item.label}</span>
-              {item.badge != null && (
+              {item.badge != null && item.badge !== 0 && item.badge !== "0" && (
                 <span className={cn("sidebar-badge", item.badgeVariant && `badge-${item.badgeVariant}`)}>
                   {item.badge}
                 </span>

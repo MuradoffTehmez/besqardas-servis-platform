@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Wrench,
   ShoppingBag,
@@ -47,6 +47,19 @@ export function Header({
 }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
+  const langRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (langRef.current && !langRef.current.contains(event.target as Node)) {
+        setLangDropdownOpen(false);
+      }
+    }
+    if (langDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [langDropdownOpen]);
 
   const handleNavClick = (href: string) => {
     setMobileMenuOpen(false);
@@ -101,7 +114,7 @@ export function Header({
           )}
 
           {/* Language Switcher */}
-          <div className="lang-switcher">
+          <div className="lang-switcher" ref={langRef}>
             <button
               className="lang-toggle icon-button"
               onClick={() => setLangDropdownOpen(!langDropdownOpen)}
