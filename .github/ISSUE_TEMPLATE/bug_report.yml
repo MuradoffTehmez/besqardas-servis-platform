@@ -1,0 +1,21 @@
+name: Xəta hesabatı
+description: Təkrar yaradıla bilən problem
+title: "fix: "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem və gözlənilən nəticə
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Təkrar yaratma addımları
+      description: Route, demo rol, brauzer və ekran ölçüsünü qeyd edin. Şəxsi məlumat paylaşmayın.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Commit və ya release
