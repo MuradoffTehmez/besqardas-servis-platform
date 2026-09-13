@@ -7,7 +7,8 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./styles.css": "./src/styles.css"
+    "./styles.css": "./src/styles.css",
+    "./app.css": "./src/app/app.css"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
@@ -25,9 +26,16 @@
     "lucide-react": "^1.45.0",
     "radix-ui": "^1.6.7",
     "recharts": "^3.10.1",
-    "sonner": "^2.0.8"
+    "sonner": "^2.0.8",
+    "@tanstack/react-query": "^5.102.8",
+    "@sp/api-client": "workspace:*",
+    "@sp/schemas": "workspace:*",
+    "zod": "^4.3.3"
   },
-  "peerDependencies": { "react": "^19.0.0", "react-dom": "^19.0.0" },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
   "devDependencies": {
     "@sp/config": "workspace:*",
     "@types/react": "^19.2.0",

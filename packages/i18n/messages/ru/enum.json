@@ -1,0 +1,760 @@
+{
+  "enum": {
+    "OrderStatus": {
+      "DRAFT": "Черновик",
+      "NEW": "Новый",
+      "CONFIRMED": "Подтверждён",
+      "IN_PROGRESS": "В работе",
+      "WAITING_FOR_CUSTOMER": "Ожидает клиента",
+      "ON_HOLD": "Приостановлен",
+      "COMPLETED": "Выполнен",
+      "CLOSED": "Закрыт",
+      "CANCELLED": "Отменён",
+      "REJECTED": "Отклонён"
+    },
+    "StageStatus": {
+      "PENDING": "Ожидает",
+      "READY": "Готов",
+      "ASSIGNED": "Назначен",
+      "ACCEPTED": "Принят",
+      "ON_THE_WAY": "В пути",
+      "ARRIVED": "На месте",
+      "IN_PROGRESS": "Выполняется",
+      "WAITING_FOR_APPROVAL": "Ожидает одобрения",
+      "WAITING_FOR_PART": "Ожидает запчасть",
+      "BLOCKED": "Заблокирован",
+      "COMPLETED": "Завершён",
+      "SKIPPED": "Пропущен",
+      "FAILED": "Не удался",
+      "CANCELLED": "Отменён"
+    },
+    "StageType": {
+      "CHECK": "Проверка",
+      "ASSIGNMENT": "Назначение",
+      "ARRIVAL": "Прибытие",
+      "MEASUREMENT": "Замер",
+      "MATERIAL_CALC": "Расчёт материалов",
+      "DIAGNOSTICS": "Диагностика",
+      "ESTIMATE_APPROVAL": "Смета и одобрение",
+      "WAIT_PART": "Ожидание запчасти",
+      "WAREHOUSE_PREP": "Подготовка склада",
+      "LOGISTICS": "Логистика",
+      "INTAKE": "Акт приёма",
+      "EXECUTION": "Выполнение",
+      "TEST": "Тест",
+      "READY_NOTICE": "Уведомление о готовности",
+      "FINAL_CHECK": "Финальная проверка",
+      "HANDOVER": "Сдача",
+      "PAYMENT": "Оплата",
+      "WARRANTY": "Гарантия"
+    },
+    "Executor": {
+      "OPERATOR": "Оператор",
+      "DISPATCHER": "Диспетчер",
+      "WAREHOUSE_EMPLOYEE": "Сотрудник склада",
+      "SALES_EMPLOYEE": "Менеджер по продажам",
+      "MANAGER": "Менеджер",
+      "TECHNICIAN": "Мастер",
+      "COURIER": "Курьер",
+      "CUSTOMER": "Клиент",
+      "SYSTEM": "Система"
+    },
+    "StartCondition": {
+      "PREVIOUS_COMPLETED": "Предыдущий этап завершён",
+      "ESTIMATE_APPROVED": "Смета одобрена",
+      "ADVANCE_PAID": "Аванс оплачен",
+      "MATERIAL_RESERVED": "Материал зарезервирован"
+    },
+    "Requirement": {
+      "PHOTO": "Фото",
+      "CHECKLIST": "Чек-лист",
+      "SIGNATURE": "Подпись клиента",
+      "NOTE": "Заметка"
+    },
+    "TemplateStatus": {
+      "DRAFT": "Черновик",
+      "ACTIVE": "Активен",
+      "ARCHIVED": "Архив"
+    },
+    "ExecutionForm": {
+      "ON_SITE": "Выезд на адрес",
+      "CARRY_IN": "Сдача в сервисный центр",
+      "PICKUP_DELIVERY": "Забор и доставка"
+    },
+    "ServiceType": {
+      "INSTALLATION": "Установка",
+      "REMOVAL": "Демонтаж",
+      "MEASUREMENT": "Замер",
+      "DIAGNOSTICS": "Диагностика",
+      "REPAIR": "Ремонт",
+      "PERIODIC": "Периодическое обслуживание"
+    },
+    "PriceModel": {
+      "FIXED": "Фиксированная цена",
+      "STARTING_FROM": "Цена от",
+      "ESTIMATE_BASED": "По смете"
+    },
+    "AssignmentMethod": {
+      "CUSTOMER_CHOICE": "Выбор клиента",
+      "DISPATCHER": "Назначение диспетчером",
+      "AUTO": "Автоназначение"
+    },
+    "OrderSource": {
+      "WEB": "Сайт",
+      "OPERATOR": "Оператор",
+      "B2B": "B2B-панель",
+      "AUTO": "Автоматически (план)",
+      "WARRANTY": "Гарантийное обращение",
+      "PRODUCT_PURCHASE": "Покупка товара"
+    },
+    "OrderType": {
+      "STANDARD": "Стандартный",
+      "WARRANTY": "Гарантийный",
+      "PERIODIC": "Периодический"
+    },
+    "ContactChannel": {
+      "CALL": "Звонок",
+      "SMS": "SMS",
+      "WHATSAPP": "WhatsApp",
+      "EMAIL": "E-mail"
+    },
+    "EstimateStatus": {
+      "DRAFT": "Черновик",
+      "SENT": "Отправлена",
+      "APPROVED": "Одобрена",
+      "PARTIALLY_APPROVED": "Частично одобрена",
+      "REJECTED": "Отклонена",
+      "EXPIRED": "Истекла"
+    },
+    "EstimateLineType": {
+      "MATERIAL": "Материал",
+      "LABOR": "Работа",
+      "EXTRA": "Доп. услуга",
+      "LOGISTICS": "Логистика",
+      "FEE": "Сбор",
+      "DISCOUNT": "Скидка"
+    },
+    "DecisionChannel": {
+      "CABINET": "Личный кабинет",
+      "SMS_LINK": "Ссылка SMS",
+      "SIGNATURE": "Подпись на месте",
+      "PHONE": "По телефону"
+    },
+    "FeeType": {
+      "CALL_OUT": "Вызов",
+      "DIAGNOSTICS": "Диагностика",
+      "AFTER_HOURS": "Вне рабочего времени",
+      "LOGISTICS": "Логистика",
+      "LATE_CANCELLATION": "Поздняя отмена"
+    },
+    "FeeTrigger": {
+      "ALWAYS": "Всегда",
+      "ON_ESTIMATE_REJECT": "При отказе от сметы",
+      "ON_CANCEL_AFTER_DEPARTURE": "При отмене после выезда"
+    },
+    "Zone": {
+      "ANY": "Любая",
+      "IN_CITY": "В городе",
+      "OUT_OF_CITY": "За городом"
+    },
+    "SalesOrderStatus": {
+      "PENDING_PAYMENT": "Ожидает оплаты",
+      "CONFIRMED": "Подтверждён",
+      "PROCESSING": "Собирается",
+      "READY_FOR_PICKUP": "Готов к выдаче",
+      "SHIPPED": "Отправлен",
+      "DELIVERED": "Доставлен",
+      "COMPLETED": "Завершён",
+      "CANCELLED": "Отменён",
+      "RETURN_REQUESTED": "Запрошен возврат",
+      "RETURNED": "Возвращён"
+    },
+    "DeliveryMethod": {
+      "COURIER": "Доставка курьером",
+      "PICKUP": "Самовывоз",
+      "WITH_INSTALLATION": "С установкой"
+    },
+    "ReturnStatus": {
+      "REQUESTED": "Запрошен",
+      "APPROVED": "Одобрен",
+      "REJECTED": "Отклонён",
+      "RECEIVED": "Получен",
+      "INSPECTED": "Проверен",
+      "REFUNDED": "Возвращены деньги",
+      "CLOSED": "Закрыт"
+    },
+    "InspectionResult": {
+      "RESELLABLE": "Годен к продаже",
+      "DAMAGED": "Повреждён",
+      "RETURN_TO_SUPPLIER": "Вернуть поставщику"
+    },
+    "QuoteStatus": {
+      "REQUESTED": "Запрошено",
+      "SENT": "Отправлено",
+      "ACCEPTED": "Принято",
+      "REJECTED": "Отклонено",
+      "EXPIRED": "Истекло"
+    },
+    "PaymentStatus": {
+      "INITIATED": "Создан",
+      "PENDING": "Ожидается",
+      "PAID": "Оплачен",
+      "PARTIALLY_PAID": "Частично оплачен",
+      "FAILED": "Неуспешно",
+      "CANCELLED": "Отменён",
+      "REFUNDED": "Возвращён",
+      "PARTIALLY_REFUNDED": "Частично возвращён",
+      "NONE": "Без оплаты"
+    },
+    "PaymentMethod": {
+      "CASH": "Наличные",
+      "CARD_ONLINE": "Карта онлайн",
+      "CARD_POS": "Карта POS",
+      "BANK_TRANSFER": "Банковский перевод",
+      "INSTALLMENT": "Рассрочка",
+      "BALANCE": "Баланс / кредит"
+    },
+    "PaymentKind": {
+      "FULL": "Полная",
+      "ADVANCE": "Аванс",
+      "PARTIAL": "Частичная"
+    },
+    "OrderKind": {
+      "SERVICE": "Сервис",
+      "SALES": "Продажа",
+      "SUBSCRIPTION": "Подписка",
+      "B2B_INVOICE": "B2B счёт",
+      "B2B": "B2B",
+      "SETTLEMENT": "Расчёт",
+      "TRANSFER": "Перемещение"
+    },
+    "DocumentType": {
+      "FISCAL_RECEIPT": "Фискальный чек",
+      "INVOICE": "Счёт-фактура",
+      "E_INVOICE": "Электронная накладная",
+      "SERVICE_ACT": "Акт выполненных работ",
+      "WARRANTY": "Гарантийный талон",
+      "RECONCILIATION_ACT": "Акт сверки",
+      "INTAKE_ACT": "Акт приёма",
+      "HANDOVER_ACT": "Акт передачи",
+      "SETTLEMENT_ACT": "Акт расчёта"
+    },
+    "DocumentStatus": {
+      "DRAFT": "Черновик",
+      "ISSUED": "Выдан",
+      "CANCELLED": "Аннулирован",
+      "CORRECTED": "Исправлен"
+    },
+    "SyncStatus": {
+      "NOT_SENT": "Не отправлен",
+      "SENT": "Отправлен",
+      "FAILED": "Ошибка",
+      "ACKNOWLEDGED": "Подтверждён"
+    },
+    "WarrantyType": {
+      "MANUFACTURER": "Гарантия производителя",
+      "SALES": "Гарантия продажи",
+      "WORK": "Гарантия на работы",
+      "PART": "Гарантия на запчасть",
+      "EXTENDED": "Расширенная гарантия",
+      "NONE": "Без гарантии"
+    },
+    "WarrantyStatus": {
+      "ACTIVE": "Активна",
+      "EXPIRING": "Истекает",
+      "EXPIRED": "Истекла",
+      "VOID": "Аннулирована",
+      "NONE": "Нет"
+    },
+    "ClaimStatus": {
+      "SUBMITTED": "Отправлено",
+      "UNDER_REVIEW": "На проверке",
+      "APPROVED": "Одобрено",
+      "REJECTED": "Отклонено",
+      "CONVERTED": "Создан заказ"
+    },
+    "DeviceLocation": {
+      "AT_CUSTOMER": "У клиента",
+      "IN_TRANSIT": "В пути",
+      "SERVICE_CENTER": "В сервисном центре",
+      "DELIVERED": "Передан клиенту"
+    },
+    "DeviceSource": {
+      "PURCHASE": "Куплено на платформе",
+      "MANUAL": "Добавлено вручную",
+      "SERVICE": "Из сервиса"
+    },
+    "SubscriptionStatus": {
+      "TRIAL": "Пробный",
+      "ACTIVE": "Активна",
+      "PAST_DUE": "Просрочена оплата",
+      "GRACE_PERIOD": "Льготный период",
+      "CANCELLED": "Отменена",
+      "EXPIRED": "Истекла"
+    },
+    "BillingPeriod": {
+      "MONTH_1": "1 месяц",
+      "MONTH_3": "3 месяца",
+      "MONTH_6": "6 месяцев",
+      "MONTH_12": "12 месяцев"
+    },
+    "PlanGroup": {
+      "CUSTOMER": "Планы клиентов",
+      "TECHNICIAN": "Планы мастеров",
+      "CORPORATE": "Корпоративные планы",
+      "CUSTOM": "Специальные планы"
+    },
+    "PlanVisibility": {
+      "PUBLIC": "Публичный",
+      "INVITE_ONLY": "По приглашению",
+      "ARCHIVED": "Архив"
+    },
+    "LogisticsStatus": {
+      "PLANNED": "Запланирована",
+      "ASSIGNED": "Назначена",
+      "ON_THE_WAY": "В пути",
+      "PICKED_UP": "Забрано",
+      "IN_TRANSIT": "Перевозится",
+      "DELIVERED": "Доставлено",
+      "FAILED": "Не выполнена",
+      "CANCELLED": "Отменена"
+    },
+    "LogisticsType": {
+      "PICKUP": "Забор",
+      "DELIVERY": "Доставка",
+      "TRANSFER": "Перевозка"
+    },
+    "CargoKind": {
+      "DEVICE": "Устройство",
+      "PRODUCT": "Товар",
+      "MATERIAL": "Материал"
+    },
+    "TransferStatus": {
+      "DRAFT": "Черновик",
+      "APPROVED": "Одобрено",
+      "IN_TRANSIT": "В пути",
+      "RECEIVED": "Получено",
+      "PARTIALLY_RECEIVED": "Частично получено",
+      "DISCREPANCY": "Расхождение",
+      "CANCELLED": "Отменено"
+    },
+    "PurchaseStatus": {
+      "DRAFT": "Черновик",
+      "SENT": "Отправлен",
+      "CONFIRMED": "Подтверждён",
+      "PARTIALLY_RECEIVED": "Частично получен",
+      "RECEIVED": "Получен",
+      "CLOSED": "Закрыт",
+      "CANCELLED": "Отменён"
+    },
+    "StockCountStatus": {
+      "DRAFT": "Черновик",
+      "IN_PROGRESS": "В процессе",
+      "PENDING_APPROVAL": "Ожидает утверждения",
+      "APPROVED": "Утверждена",
+      "CANCELLED": "Отменена"
+    },
+    "CountScope": {
+      "FULL": "Полная",
+      "ZONE": "Зона",
+      "CATEGORY": "Категория",
+      "MOBILE": "Мобильный склад"
+    },
+    "MovementType": {
+      "RECEIPT": "Приход",
+      "SALE_ISSUE": "Отпуск по продаже",
+      "SERVICE_CONSUMPTION": "Сервисный расход",
+      "TRANSFER_OUT": "Перемещение (расход)",
+      "TRANSFER_IN": "Перемещение (приход)",
+      "RETURN": "Возврат",
+      "WRITE_OFF": "Списание",
+      "PURPOSE_CHANGE": "Смена назначения",
+      "ADJUSTMENT": "Корректировка"
+    },
+    "ReservationStatus": {
+      "ACTIVE": "Активен",
+      "RELEASED": "Снят",
+      "CONSUMED": "Использован",
+      "EXPIRED": "Истёк"
+    },
+    "ReservationSource": {
+      "SERVICE_ORDER": "Сервисный заказ",
+      "SALES_ORDER": "Заказ на продажу",
+      "TECHNICIAN": "Мастер",
+      "TRANSFER": "Перемещение"
+    },
+    "WarehouseType": {
+      "CENTRAL": "Центральный склад",
+      "BRANCH": "Склад филиала",
+      "SERVICE_CENTER": "Склад сервисного центра",
+      "MOBILE": "Мобильный склад",
+      "TECHNICIAN": "Склад мастера",
+      "TRANSIT": "Транзит",
+      "QUARANTINE": "Карантин"
+    },
+    "StockPurpose": {
+      "SALES": "Товарный запас",
+      "SERVICE": "Сервисный запас"
+    },
+    "StockStatus": {
+      "IN_STOCK": "В наличии",
+      "LOW": "Мало",
+      "OUT_OF_STOCK": "Нет в наличии"
+    },
+    "CostingMethod": {
+      "WEIGHTED_AVERAGE": "Средневзвешенная",
+      "FIFO": "FIFO"
+    },
+    "CostingLevel": {
+      "PRODUCT": "Товар",
+      "CATEGORY": "Категория",
+      "WAREHOUSE_GROUP": "Группа складов",
+      "COMPANY": "Компания"
+    },
+    "SettlementStatus": {
+      "PENDING": "Начислено",
+      "APPROVED": "Утверждено",
+      "PAID": "Выплачено",
+      "ON_HOLD": "Удержано"
+    },
+    "DeductionKind": {
+      "CASH_COLLECTED": "Принятые наличные",
+      "MATERIAL_CREDIT": "Материал в долг",
+      "TAX": "Налоговое удержание",
+      "REFUND_ADJUSTMENT": "Корректировка возврата"
+    },
+    "CommissionStatus": {
+      "PENDING": "Начислена",
+      "APPROVED": "Утверждена",
+      "PAID": "Выплачена",
+      "CANCELLED": "Отменена"
+    },
+    "CommissionModel": {
+      "PERCENT": "Процент",
+      "FIXED": "Фиксированная сумма",
+      "BY_SERVICE_TYPE": "По типу услуги",
+      "CONTRACT": "По договору"
+    },
+    "CommissionBase": {
+      "NET_OF_VAT": "Сумма без НДС",
+      "LABOR_ONLY": "Только работы",
+      "WHOLE_ORDER": "Весь заказ"
+    },
+    "Stacking": {
+      "STACKABLE": "Суммируется",
+      "EXCLUSIVE": "Эксклюзивная",
+      "COMBINABLE_WITH_LIST": "С выбранными акциями"
+    },
+    "DiscountBase": {
+      "BASE_PRICE": "Базовая цена",
+      "AFTER_PREVIOUS": "После предыдущей скидки"
+    },
+    "PromotionKind": {
+      "PERCENT": "Процент",
+      "FIXED": "Фиксированная",
+      "PROMO_CODE": "Промокод",
+      "SUBSCRIPTION": "Скидка подписки"
+    },
+    "AppliesTo": {
+      "PRODUCTS": "Товары",
+      "SERVICES": "Услуги",
+      "CART": "Корзина"
+    },
+    "PriceType": {
+      "RETAIL": "Розница",
+      "TECHNICIAN": "Мастер",
+      "PARTNER": "Партнёр",
+      "WHOLESALE": "Опт",
+      "CORPORATE": "Корпоративная"
+    },
+    "Segment": {
+      "RETAIL": "Частный",
+      "PARTNER": "Партнёр",
+      "WHOLESALE": "Опт",
+      "CORPORATE": "Корпоративный"
+    },
+    "Role": {
+      "GUEST": "Гость",
+      "CUSTOMER": "Клиент",
+      "CORPORATE_CUSTOMER": "Корпоративный клиент",
+      "PARTNER": "Партнёр",
+      "WHOLESALE_CUSTOMER": "Оптовый покупатель",
+      "TECHNICIAN": "Мастер",
+      "OPERATOR": "Оператор",
+      "DISPATCHER": "Диспетчер",
+      "WAREHOUSE_EMPLOYEE": "Сотрудник склада",
+      "COURIER": "Курьер / Водитель",
+      "SALES_EMPLOYEE": "Менеджер по продажам",
+      "ACCOUNTANT": "Бухгалтер",
+      "MANAGER": "Менеджер",
+      "ADMIN": "Администратор",
+      "SUPER_ADMIN": "Супер-админ"
+    },
+    "Scope": {
+      "OWN": "Свои",
+      "ASSIGNED": "Назначенные",
+      "BRANCH": "Филиал",
+      "ORGANIZATION": "Организация",
+      "PLATFORM": "Платформа"
+    },
+    "Action": {
+      "view": "Просмотр",
+      "create": "Создание",
+      "edit": "Редактирование",
+      "delete": "Удаление",
+      "approve": "Утверждение",
+      "assign": "Назначение",
+      "export": "Экспорт",
+      "update_status": "Смена статуса"
+    },
+    "Resource": {
+      "service_orders": "Сервисные заказы",
+      "assignments": "Назначение мастеров",
+      "estimates": "Сметы",
+      "workflow_templates": "Шаблоны workflow",
+      "fee_rules": "Правила сборов",
+      "reason_codes": "Коды причин",
+      "catalog": "Каталог и PIM",
+      "price_rules": "Ценовые правила",
+      "inventory": "Склад, перемещения, инвентаризация",
+      "purchases": "Закупки и поставщики",
+      "sales_orders": "Заказы на продажу",
+      "payments": "Платежи, касса, счета",
+      "finance_reports": "Финансовые отчёты",
+      "subscription_plans": "Планы подписок",
+      "b2b_accounts": "B2B-аккаунты",
+      "partner_commissions": "Комиссии партнёров",
+      "technician_settlements": "Расчёты с мастерами",
+      "logistics_tasks": "Логистические задачи",
+      "customers": "Клиенты",
+      "technicians": "Мастера",
+      "users": "Пользователи",
+      "roles": "Роли и права",
+      "audit_logs": "Журнал аудита",
+      "reviews": "Отзывы",
+      "content": "Контент сайта",
+      "notification_templates": "Шаблоны уведомлений",
+      "integrations": "Интеграции",
+      "kpi_targets": "Цели KPI",
+      "settings": "Настройки",
+      "branches": "Филиалы"
+    },
+    "EmploymentType": {
+      "STAFF": "Штатный мастер",
+      "INDEPENDENT": "Независимый мастер"
+    },
+    "TechnicianStatus": {
+      "PENDING_VERIFICATION": "Ожидает проверки",
+      "VERIFIED": "Проверен",
+      "REJECTED": "Отклонён",
+      "ACTIVE": "Активен",
+      "SUSPENDED": "Приостановлен"
+    },
+    "VerificationStatus": {
+      "PENDING": "На проверке",
+      "VERIFIED": "Подтверждён",
+      "REJECTED": "Отклонён",
+      "EXPIRED": "Истёк"
+    },
+    "DocKind": {
+      "ID_CARD": "Удостоверение личности",
+      "CERTIFICATE": "Сертификат",
+      "DIPLOMA": "Диплом",
+      "CRIMINAL_RECORD": "Справка о несудимости",
+      "OTHER": "Другое"
+    },
+    "SpecStatus": {
+      "ACTIVE": "Активна",
+      "PENDING_APPROVAL": "Ожидает одобрения",
+      "INACTIVE_CERT_EXPIRED": "Сертификат истёк"
+    },
+    "ExperienceLevel": {
+      "BEGINNER": "Начальный",
+      "INTERMEDIATE": "Средний",
+      "EXPERT": "Эксперт"
+    },
+    "LicenseStatus": {
+      "ACTIVE": "Активна",
+      "REVOKED": "Отозвана",
+      "NONE": "Нет"
+    },
+    "PartnershipStatus": {
+      "PENDING": "Ожидает",
+      "APPROVED": "Одобрено",
+      "REJECTED": "Отклонено",
+      "ENDED": "Завершено"
+    },
+    "B2BStatus": {
+      "PENDING_REVIEW": "На проверке",
+      "ACTIVE": "Активен",
+      "SUSPENDED": "Приостановлен",
+      "REJECTED": "Отклонён"
+    },
+    "CompanyUserRole": {
+      "OWNER": "Владелец аккаунта",
+      "ORDERER": "Заказчик",
+      "APPROVER": "Утверждающий",
+      "ACCOUNTANT": "Бухгалтер",
+      "SITE_MANAGER": "Ответственный за объект"
+    },
+    "PaymentTerms": {
+      "PREPAID": "Предоплата",
+      "DEFERRED": "Отсрочка"
+    },
+    "VisitStatus": {
+      "PLANNED": "Запланирован",
+      "ORDER_CREATED": "Заказ создан",
+      "DONE": "Выполнен",
+      "MISSED": "Пропущен"
+    },
+    "ContractStatus": {
+      "ACTIVE": "Действует",
+      "EXPIRED": "Истёк",
+      "DRAFT": "Черновик"
+    },
+    "ReviewStatus": {
+      "PENDING": "На модерации",
+      "PUBLISHED": "Опубликован",
+      "REJECTED": "Отклонён"
+    },
+    "ReviewTarget": {
+      "SERVICE": "Услуга",
+      "TECHNICIAN": "Мастер",
+      "PRODUCT": "Товар"
+    },
+    "NotificationChannel": {
+      "IN_APP": "В приложении",
+      "PUSH": "Push",
+      "EMAIL": "E-mail",
+      "SMS": "SMS",
+      "WHATSAPP": "WhatsApp"
+    },
+    "NotificationGroup": {
+      "ORDER_STATUS": "Статусы заказов",
+      "ESTIMATE": "Сметы",
+      "PAYMENT": "Платежи",
+      "REMINDERS": "Напоминания",
+      "MARKETING": "Маркетинг"
+    },
+    "IntegrationArea": {
+      "PAYMENT": "Онлайн-платежи",
+      "POS": "POS-терминал",
+      "INSTALLMENT": "Рассрочка",
+      "FISCAL": "Фискальная касса",
+      "E_INVOICE": "Э-накладная",
+      "SMS": "SMS",
+      "MESSAGING": "WhatsApp",
+      "EMAIL": "E-mail",
+      "PUSH": "Push",
+      "MAP": "Карты",
+      "STORAGE": "Хранилище файлов",
+      "ACCOUNTING": "Бухгалтерия"
+    },
+    "Health": {
+      "OK": "Работает",
+      "DEGRADED": "С перебоями",
+      "DOWN": "Не работает",
+      "UNKNOWN": "Неизвестно"
+    },
+    "ProductType": {
+      "PHYSICAL": "Товар",
+      "SPARE_PART": "Запчасть",
+      "CONSUMABLE": "Расходный материал",
+      "BUNDLE": "Пакет товар + услуга"
+    },
+    "ProductStatus": {
+      "ACTIVE": "Активен",
+      "DRAFT": "Черновик",
+      "ARCHIVED": "Архив"
+    },
+    "AttributeType": {
+      "TEXT": "Текст",
+      "NUMBER": "Число",
+      "NUMBER_UNIT": "Число + единица",
+      "BOOLEAN": "Да / нет",
+      "SELECT": "Один из списка",
+      "MULTISELECT": "Несколько из списка",
+      "DATE": "Дата"
+    },
+    "FilterDisplay": {
+      "CHECKBOX": "Флажки",
+      "RANGE": "Диапазон",
+      "SLIDER": "Слайдер"
+    },
+    "UserStatus": {
+      "ACTIVE": "Активен",
+      "INVITED": "Приглашён",
+      "BLOCKED": "Заблокирован",
+      "DISABLED": "Отключён",
+      "PENDING_VERIFICATION": "Ожидает подтверждения"
+    },
+    "ReasonCategory": {
+      "ON_HOLD": "Приостановка",
+      "CANCELLED": "Отмена",
+      "REJECTED": "Отклонение",
+      "FAILED": "Неудачный этап",
+      "RESCHEDULE": "Перенос",
+      "ESTIMATE_REJECT": "Отказ от сметы",
+      "DECLINE_JOB": "Отказ от работы",
+      "FEE_WAIVE": "Отмена сбора",
+      "RETURN": "Возврат"
+    },
+    "CashDeskType": {
+      "BRANCH": "Касса филиала",
+      "TECHNICIAN": "Наличные мастера",
+      "COURIER": "Наличные курьера"
+    },
+    "CashOperation": {
+      "COLLECTION": "Приём наличных",
+      "HANDOVER": "Сдача в кассу",
+      "HANDOVER_CONFIRMED": "Сдача подтверждена",
+      "DISCREPANCY": "Расхождение",
+      "SHIFT_OPEN": "Смена открыта",
+      "SHIFT_CLOSE": "Смена закрыта"
+    },
+    "OpStatus": {
+      "PENDING": "Ожидает",
+      "CONFIRMED": "Подтверждено",
+      "DISPUTED": "Спорно"
+    },
+    "ShiftStatus": {
+      "OPEN": "Открыта",
+      "CLOSED": "Закрыта"
+    },
+    "Comparator": {
+      "LTE": "≤ цели",
+      "GTE": "≥ цели"
+    },
+    "ContentStatus": {
+      "DRAFT": "Черновик",
+      "PUBLISHED": "Опубликовано"
+    },
+    "Placement": {
+      "HOME_HERO": "Главная — баннер",
+      "HOME_STRIP": "Главная — полоса",
+      "SHOP_TOP": "Каталог — верх"
+    },
+    "IntegrationMode": {
+      "SANDBOX": "Тест (sandbox)",
+      "LIVE": "Боевой"
+    },
+    "SettlementPeriod": {
+      "WEEKLY": "Еженедельно",
+      "BIWEEKLY": "Раз в две недели",
+      "MONTHLY": "Ежемесячно"
+    },
+    "Recipient": {
+      "CUSTOMER": "Клиент",
+      "TECHNICIAN": "Мастер",
+      "COURIER": "Курьер",
+      "DISPATCHER": "Диспетчер",
+      "WAREHOUSE_EMPLOYEE": "Сотрудник склада",
+      "MANAGER": "Менеджер"
+    },
+    "OldPart": {
+      "RETURN_TO_CUSTOMER": "Возвращается клиенту",
+      "DISPOSE": "Утилизация",
+      "WARRANTY_RETURN": "Гарантийный возврат"
+    }
+  }
+}

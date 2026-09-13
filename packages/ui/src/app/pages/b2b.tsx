@@ -1,0 +1,634 @@
+"use client";
+import React, { useState } from "react";
+import { BarChart3, Building2, CalendarClock, ClipboardList, CreditCard, FileSignature, FileText, HardDrive, LayoutDashboard, Package, Percent, Plus, ShoppingBag, Trash2, Upload, Users, Wallet, Wrench, Zap } from "lucide-react";
+import { toast } from "sonner";
+import { cn } from "@sp/utils";
+import { patch, post, qs, useApi } from "@sp/api-client";
+import { useI18n } from "../core/i18n";
+import { Link, useRouter } from "../core/router";
+import { useSession } from "../core/session";
+import { PanelShell, type NavGroup } from "../core/shells";
+import type { RouteDef } from "../core/router";
+import { Card, EmptyState, EnumBadge, FormError, Grid, KeyValue, PageHeader, QueryView, SelectField, Stat, TextArea, TextField, errorText } from "../kit/base";
+import { ConfirmDialog, Dialog, ResourceTable } from "../kit/actions";
+import { BarsChart, DonutChart, MapView } from "../kit/media";
+import { PhoneField } from "../kit/media";
+import { DocumentsPage, SalesOrderDetailPage, SalesOrdersPage, ServiceOrderDetailPage, ServiceOrdersPage } from "./account";
+import { ShopPage } from "./shop";
+import { DocumentDialog, Progress, UsageBar, useRefresh } from "./common";
+
+/**
+ * B2B kabinetləri (PRD §44–45, §60.5): korporativ müştəri, partner və topdan alıcı. Qiymət, limit və borc API-dən gəlir.
+ */
+
+type Segment = "corporate" | "partner" | "wholesale";
+
+function segmentOf(role: string): Segment {
+  return role === "PARTNER" ? "partner" : role === "WHOLESALE_CUSTOMER" ? "wholesale" : "corporate";
+}
+
+export function B2BShell({ children }: { children: React.ReactNode }) {
+  const { t } = useI18n();
+  const { role, user } = useSession();
+  const seg = segmentOf(role);
+  const base = `/${seg}`;
+  const common = [
+    { to: `${base}/documents`, label: t("b2b.nav.documents"), icon: FileText },
+    { to: `${base}/users`, label: t("b2b.nav.users"), icon: Users },
+  ];
+  const nav: Record<Segment, NavGroup[]> = {
+    corporate: [
+      { items: [{ to: base, label: t("b2b.nav.dashboard"), icon: LayoutDashboard, exact: true }, { to: `${base}/services`, label: t("b2b.nav.services"), icon: Wrench }, { to: `${base}/schedule`, label: t("b2b.nav.schedule"), icon: CalendarClock }, { to: `${base}/sites`, label: t("b2b.nav.sites"), icon: Building2 }, { to: `${base}/devices`, label: t("b2b.nav.devices"), icon: HardDrive }] },
+      { label: t("b2b.nav.company"), items: [{ to: `${base}/contracts`, label: t("b2b.nav.contracts"), icon: FileSignature }, { to: `${base}/reports`, label: t("b2b.nav.reports"), icon: BarChart3 }, ...common] },
+    ],
+    partner: [
+      { items: [{ to: base, label: t("b2b.nav.dashboard"), icon: LayoutDashboard, exact: true }, { to: `${base}/catalog`, label: t("b2b.nav.catalog"), icon: ShoppingBag }, { to: `${base}/orders`, label: t("b2b.nav.orders"), icon: Package }, { to: `${base}/services`, label: t("b2b.nav.services"), icon: Wrench }] },
+      { label: t("b2b.nav.finance"), items: [{ to: `${base}/commissions`, label: t("b2b.nav.commissions"), icon: Percent }, { to: `${base}/balance`, label: t("b2b.nav.balance"), icon: Wallet }, ...common] },
+    ],
+    wholesale: [
+      { items: [{ to: base, label: t("b2b.nav.dashboard"), icon: LayoutDashboard, exact: true }, { to: `${base}/catalog`, label: t("b2b.nav.catalog"), icon: ShoppingBag }, { to: `${base}/quick-order`, label: t("b2b.nav.quickOrder"), icon: Zap }, { to: `${base}/quotes`, label: t("b2b.nav.quotes"), icon: ClipboardList }, { to: `${base}/orders`, label: t("b2b.nav.orders"), icon: Package }] },
+      { label: t("b2b.nav.finance"), items: [{ to: `${base}/balance`, label: t("b2b.nav.balance"), icon: Wallet }, ...common] },
+    ],
+  };
+  return <PanelShell nav={nav[seg]} title={user?.companyName ?? t(`b2b.${seg}`)}>{children}</PanelShell>;
+}
+
+const route = (roles: string[], pattern: string, render: RouteDef["render"], titleKey: string): RouteDef => ({ pattern, render, shell: "b2b", roles, titleKey });
+const CORP = ["CORPORATE_CUSTOMER"];
+const PART = ["PARTNER"];
+const WHOLE = ["WHOLESALE_CUSTOMER"];
+
+export const b2bRoutes: RouteDef[] = [
+  route(CORP, "/corporate", () => <B2BDashboardPage />, "b2b.nav.dashboard"),
+  route(CORP, "/corporate/sites", () => <SitesPage />, "b2b.nav.sites"),
+  route(CORP, "/corporate/devices", () => <B2BDevicesPage />, "b2b.nav.devices"),
+  route(CORP, "/corporate/services", () => <B2BServicesPage base="/corporate/services" />, "b2b.nav.services"),
+  route(CORP, "/corporate/services/:id", (p) => <ServiceOrderDetailPage id={p.id!} back="/corporate/services" />, "b2b.nav.services"),
+  route(CORP, "/corporate/schedule", () => <SchedulePlanPage />, "b2b.nav.schedule"),
+  route(CORP, "/corporate/contracts", () => <ContractsPage />, "b2b.nav.contracts"),
+  route(CORP, "/corporate/documents", () => <B2BDocumentsPage />, "b2b.nav.documents"),
+  route(CORP, "/corporate/reports", () => <ReportsPage />, "b2b.nav.reports"),
+  route(CORP, "/corporate/users", () => <CompanyUsersPage />, "b2b.nav.users"),
+
+  route(PART, "/partner", () => <B2BDashboardPage />, "b2b.nav.dashboard"),
+  route(PART, "/partner/catalog", () => <ShopPage />, "b2b.nav.catalog"),
+  route(PART, "/partner/catalog/*", (p) => <ShopPage categoryPath={p["*"]} />, "b2b.nav.catalog"),
+  route(PART, "/partner/orders", () => <SalesOrdersPage base="/partner/orders" />, "b2b.nav.orders"),
+  route(PART, "/partner/orders/:id", (p) => <SalesOrderDetailPage id={p.id!} back="/partner/orders" />, "b2b.nav.orders"),
+  route(PART, "/partner/services", () => <B2BServicesPage base="/partner/services" />, "b2b.nav.services"),
+  route(PART, "/partner/services/:id", (p) => <ServiceOrderDetailPage id={p.id!} back="/partner/services" />, "b2b.nav.services"),
+  route(PART, "/partner/commissions", () => <CommissionsPage />, "b2b.nav.commissions"),
+  route(PART, "/partner/documents", () => <B2BDocumentsPage />, "b2b.nav.documents"),
+  route(PART, "/partner/balance", () => <BalancePage />, "b2b.nav.balance"),
+  route(PART, "/partner/users", () => <CompanyUsersPage />, "b2b.nav.users"),
+
+  route(WHOLE, "/wholesale", () => <B2BDashboardPage />, "b2b.nav.dashboard"),
+  route(WHOLE, "/wholesale/catalog", () => <ShopPage />, "b2b.nav.catalog"),
+  route(WHOLE, "/wholesale/catalog/*", (p) => <ShopPage categoryPath={p["*"]} />, "b2b.nav.catalog"),
+  route(WHOLE, "/wholesale/quick-order", () => <QuickOrderPage />, "b2b.nav.quickOrder"),
+  route(WHOLE, "/wholesale/quotes", () => <QuotesPage />, "b2b.nav.quotes"),
+  route(WHOLE, "/wholesale/orders", () => <SalesOrdersPage base="/wholesale/orders" />, "b2b.nav.orders"),
+  route(WHOLE, "/wholesale/orders/:id", (p) => <SalesOrderDetailPage id={p.id!} back="/wholesale/orders" />, "b2b.nav.orders"),
+  route(WHOLE, "/wholesale/documents", () => <B2BDocumentsPage />, "b2b.nav.documents"),
+  route(WHOLE, "/wholesale/balance", () => <BalancePage />, "b2b.nav.balance"),
+  route(WHOLE, "/wholesale/users", () => <CompanyUsersPage />, "b2b.nav.users"),
+];
+
+/* ------------------------------------------------------------------ */
+/* Dashboard                                                            */
+/* ------------------------------------------------------------------ */
+
+function B2BDashboardPage() {
+  const { t, money, date, enumLabel } = useI18n();
+  const { role } = useSession();
+  const seg = segmentOf(role);
+  const q = useApi<any>("/b2b/dashboard");
+  return (
+    <QueryView query={q} rows={8}>
+      {(d) => {
+        const used = Number(d.currentDebt.amount);
+        const limit = Number(d.creditLimit.amount);
+        return (
+          <>
+            <PageHeader
+              title={d.companyName}
+              subtitle={t("b2b.dash.subtitle", { manager: d.accountManager, priceList: enumLabel("PriceType", d.priceList) })}
+              actions={
+                seg === "corporate" ? <Link to="/services" className="btn primary"><Wrench size={16} /> {t("book")}</Link> : seg === "wholesale" ? <Link to="/wholesale/quick-order" className="btn primary"><Zap size={16} /> {t("b2b.nav.quickOrder")}</Link> : <Link to="/partner/catalog" className="btn primary"><ShoppingBag size={16} /> {t("b2b.nav.catalog")}</Link>
+              }
+            />
+            {Number(d.overdue.amount) > 0 && <div className="kit-note danger mb-4">{t("b2b.dash.overdue", { amount: money(d.overdue) })}</div>}
+            {d.pendingApprovals > 0 && <div className="kit-note warning mb-4">{t("b2b.dash.approvals", { count: d.pendingApprovals })}</div>}
+            <Grid cols={4}>
+              <Stat label={t("b2b.dash.credit")} value={money(d.availableCredit)} hint={t("b2b.dash.ofLimit", { limit: money(d.creditLimit) })} icon={CreditCard} tone="success" to={`/${seg}/balance`} />
+              <Stat label={t("b2b.dash.debt")} value={money(d.currentDebt)} hint={d.paymentTerms === "DEFERRED" ? t("b2b.dash.deferred", { days: d.deferredDays }) : enumLabel("PaymentTerms", d.paymentTerms)} icon={Wallet} tone="warning" />
+              {seg === "partner" ? <Stat label={t("b2b.dash.commission")} value={money(d.commissionBalance)} icon={Percent} tone="info" to="/partner/commissions" /> : <Stat label={t("b2b.dash.openServices")} value={d.openServices} icon={Wrench} tone="info" to={seg === "corporate" ? "/corporate/services" : undefined} />}
+              <Stat label={t("b2b.dash.openOrders")} value={d.openOrders} icon={Package} to={seg !== "corporate" ? `/${seg}/orders` : undefined} />
+            </Grid>
+            <div className="kit-split">
+              <div className="kit-stack">
+                <Card title={t("b2b.dash.spend")}><BarsChart data={d.spendByMonth} xKey="month" bars={[{ key: "amount", label: t("common.total") }]} /></Card>
+                <Card title={t("b2b.dash.recent")}>
+                  {d.recentOrders.length ? (
+                    <ul className="kit-list">
+                      {d.recentOrders.map((o: any) => (
+                        <li key={o.id}>
+                          <Link to={o.kind === "SERVICE" ? `/${seg === "wholesale" ? "corporate" : seg}/services/${o.id}` : `/${seg === "corporate" ? "partner" : seg}/orders/${o.id}`} className="grow"><strong>{o.number}</strong><small className="block text-muted">{enumLabel("OrderKind", o.kind)} · {date(o.createdAt)}</small></Link>
+                          {o.total && <strong>{money(o.total)}</strong>}
+                          <EnumBadge group={o.kind === "SERVICE" ? "OrderStatus" : "SalesOrderStatus"} code={o.status} />
+                        </li>
+                      ))}
+                    </ul>
+                  ) : <EmptyState />}
+                </Card>
+              </div>
+              <div className="kit-stack">
+                <Card title={t("b2b.dash.limit")}>
+                  <div className="flex justify-between text-sm"><span>{t("b2b.dash.debt")}</span><strong>{money(d.currentDebt)} / {money(d.creditLimit)}</strong></div>
+                  <Progress value={limit ? (used / limit) * 100 : 0} tone={used / limit > 0.8 ? "warning" : undefined} />
+                  {d.addressUsage && <div className="mt-3"><UsageBar label={t("b2b.dash.sites")} used={d.addressUsage.used} limit={d.addressUsage.limit} /></div>}
+                  {Number(d.minOrder.amount) > 0 && <p className="text-sm text-muted">{t("b2b.dash.minOrder", { amount: money(d.minOrder) })}</p>}
+                </Card>
+                {d.sla && (
+                  <Card title={t("b2b.dash.sla")}>
+                    <KeyValue cols={1} items={[[t("b2b.dash.compliance"), `${d.sla.compliance}%`], [t("b2b.dash.reaction"), t("b2b.dash.minutes", { count: d.sla.avgReactionMinutes })], [t("b2b.dash.breaches"), d.sla.breaches]]} />
+                  </Card>
+                )}
+                {d.contract && (
+                  <Card title={t("b2b.nav.contracts")}>
+                    <KeyValue cols={1} items={[[t("fields.number"), d.contract.number], [t("b2b.contracts.period"), `${date(d.contract.startsAt)} — ${date(d.contract.endsAt)}`], [t("b2b.contracts.file"), d.contract.fileName]]} />
+                  </Card>
+                )}
+                {d.campaigns.length > 0 && (
+                  <Card title={t("b2b.dash.campaigns")}>
+                    <ul className="kit-list">{d.campaigns.map((c: any) => <li key={c.id}><span className="grow"><strong>{c.title}</strong><small className="block text-muted">{c.description}</small><small className="text-warning">{t("b2b.dash.until", { date: date(c.endsAt) })}</small></span></li>)}</ul>
+                  </Card>
+                )}
+              </div>
+            </div>
+          </>
+        );
+      }}
+    </QueryView>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Korporativ: obyektlər, cihazlar, servislər, qrafik, müqavilə, hesabat */
+/* ------------------------------------------------------------------ */
+
+function SitesPage() {
+  const { t, date } = useI18n();
+  const q = useApi<any>("/b2b/sites");
+  const [adding, setAdding] = useState(false);
+  const [increase, setIncrease] = useState(false);
+  const full = q.data && q.data.limit !== null && q.data.used >= q.data.limit;
+  return (
+    <>
+      <PageHeader title={t("b2b.nav.sites")} subtitle={q.data ? t("b2b.sites.usage", { used: q.data.used, limit: q.data.limit ?? "∞" }) : undefined} actions={<><button type="button" className="btn outline" onClick={() => setIncrease(true)}>{t("b2b.sites.requestLimit")}</button><button type="button" className="btn primary" disabled={!!full} onClick={() => setAdding(true)}><Plus size={16} /> {t("b2b.sites.add")}</button></>} />
+      {full && <div className="kit-note warning mb-4">{t("b2b.sites.full")}</div>}
+      <QueryView query={q}>
+        {(d) => (
+          <>
+            <Card flush className="mb-6"><MapView height={280} points={d.items.filter((s: any) => s.address.location).map((s: any) => ({ id: s.id, lat: s.address.location.lat, lng: s.address.location.lng, label: s.name }))} /></Card>
+            <Grid cols={2}>
+              {d.items.map((s: any) => (
+                <Card key={s.id} title={s.name} subtitle={`${s.address.city}, ${s.address.street}`}>
+                  <KeyValue cols={2} items={[[t("b2b.nav.devices"), s.deviceCount], [t("b2b.dash.openServices"), s.openOrders], [t("b2b.sites.next"), s.nextServiceAt ? date(s.nextServiceAt) : null], [t("b2b.dash.compliance"), `${s.slaCompliance}%`], [t("b2b.sites.manager"), s.managerName]]} />
+                </Card>
+              ))}
+            </Grid>
+          </>
+        )}
+      </QueryView>
+      {adding && <SiteDialog onClose={() => setAdding(false)} />}
+      {increase && <LimitDialog current={q.data?.limit ?? 0} onClose={() => setIncrease(false)} />}
+    </>
+  );
+}
+
+function SiteDialog({ onClose }: { onClose: () => void }) {
+  const { t } = useI18n();
+  const refresh = useRefresh();
+  const [v, setV] = useState({ label: "", city: "Bakı", street: "", building: "" });
+  const [loc, setLoc] = useState<{ lat: number; lng: number } | null>(null);
+  const [error, setError] = useState<unknown>(null);
+  return (
+    <Dialog open onClose={onClose} size="lg" title={t("b2b.sites.add")} footer={<><button type="button" className="btn outline" onClick={onClose}>{t("common.cancel")}</button><button type="button" className="btn primary" onClick={async () => { setError(null); try { await post("/b2b/sites", { ...v, isDefault: false, location: loc ?? undefined }); await refresh(); toast.success(t("common.saved")); onClose(); } catch (e) { setError(e); } }}>{t("common.save")}</button></>}>
+      <FormError error={error} />
+      <div className="kit-form-grid">
+        <TextField label={t("b2b.sites.name")} required value={v.label} onValue={(x) => setV({ ...v, label: x })} />
+        <TextField label={t("fields.city")} value={v.city} onValue={(x) => setV({ ...v, city: x })} />
+        <TextField label={t("fields.street")} required value={v.street} onValue={(x) => setV({ ...v, street: x })} />
+        <TextField label={t("fields.building")} value={v.building} onValue={(x) => setV({ ...v, building: x })} />
+      </div>
+      <MapView height={220} center={loc ?? undefined} points={loc ? [{ id: "p", ...loc }] : []} onPick={setLoc} />
+    </Dialog>
+  );
+}
+
+function LimitDialog({ current, onClose }: { current: number; onClose: () => void }) {
+  const { t } = useI18n();
+  const [requested, setRequested] = useState(String(current + 5));
+  const [comment, setComment] = useState("");
+  const [error, setError] = useState<unknown>(null);
+  return (
+    <Dialog open onClose={onClose} size="sm" title={t("b2b.sites.requestLimit")} footer={<><button type="button" className="btn outline" onClick={onClose}>{t("common.cancel")}</button><button type="button" className="btn primary" onClick={async () => { try { await post("/b2b/limit-increase", { requested: Number(requested), comment }); toast.success(t("b2b.sites.requestSent")); onClose(); } catch (e) { setError(e); } }}>{t("common.send")}</button></>}>
+      <FormError error={error} />
+      <TextField label={t("b2b.sites.newLimit")} type="number" value={requested} onValue={setRequested} />
+      <TextArea label={t("common.comment")} value={comment} onValue={setComment} rows={2} />
+    </Dialog>
+  );
+}
+
+function B2BDevicesPage() {
+  const { t, date, enumLabel } = useI18n();
+  const sites = useApi<any>("/b2b/sites");
+  return (
+    <>
+      <PageHeader title={t("b2b.nav.devices")} />
+      <ResourceTable
+        path="/b2b/devices"
+        pageSize={50}
+        filters={[{ key: "siteId", label: t("b2b.nav.sites"), options: (sites.data?.items ?? []).map((s: any) => ({ value: s.id, label: s.name })) }]}
+        columns={[
+          { key: "nickname", header: t("acc.devices.nickname"), render: (d: any) => <span><strong>{d.nickname ?? d.modelName}</strong><small className="block">{d.modelName}</small></span> },
+          { key: "siteName", header: t("b2b.sites.name") },
+          { key: "serialNumber", header: t("acc.devices.serial"), hideOnMobile: true },
+          { key: "nextServiceAt", header: t("acc.devices.nextService"), render: (d: any) => <span className={cn(d.nextServiceAt && new Date(d.nextServiceAt) < new Date() && "text-danger")}>{date(d.nextServiceAt)}</span>, sortKey: "nextServiceAt" },
+          { key: "warrantyStatus", header: t("acc.devices.warranty"), render: (d: any) => <EnumBadge group="WarrantyStatus" code={d.warrantyStatus} />, hideOnMobile: true },
+          { key: "openOrders", header: t("b2b.dash.openServices"), className: "num" },
+          { key: "location", header: t("acc.devices.location"), render: (d: any) => enumLabel("DeviceLocation", d.location), hideOnMobile: true },
+        ]}
+      />
+    </>
+  );
+}
+
+function B2BServicesPage({ base }: { base: string }) {
+  const { t } = useI18n();
+  const { role } = useSession();
+  return (
+    <>
+      <ServiceOrdersPage base={base} title={t("b2b.nav.services")} />
+      {role === "CORPORATE_CUSTOMER" && <ApprovalsHint />}
+    </>
+  );
+}
+
+function ApprovalsHint() {
+  const { t } = useI18n();
+  const { user } = useSession();
+  if (!user || !["OWNER", "APPROVER"].includes(user.companyRole ?? "")) return null;
+  return <p className="text-sm text-muted mt-4">{t("b2b.services.approverHint")}</p>;
+}
+
+function SchedulePlanPage() {
+  const { t, date, text } = useI18n();
+  const refresh = useRefresh();
+  const { navigate } = useRouter();
+  return (
+    <>
+      <PageHeader title={t("b2b.nav.schedule")} subtitle={t("b2b.schedule.subtitle")} />
+      <ResourceTable
+        path="/b2b/schedule"
+        pageSize={50}
+        searchable={false}
+        filters={[{ key: "status", label: t("common.status"), options: ["PLANNED", "ORDER_CREATED", "DONE", "MISSED"].map((s) => ({ value: s, label: t(`b2b.schedule.status.${s}`) })) }]}
+        columns={[
+          { key: "plannedAt", header: t("b2b.schedule.planned"), render: (v: any) => date(v.plannedAt), sortKey: "plannedAt" },
+          { key: "siteName", header: t("b2b.sites.name") },
+          { key: "deviceName", header: t("acc.orders.device") },
+          { key: "serviceName", header: t("tech.jobs.service"), render: (v: any) => text(v.serviceName), hideOnMobile: true },
+          { key: "status", header: t("common.status"), render: (v: any) => <span className={cn("badge", v.status === "DONE" ? "badge-success" : v.status === "PLANNED" ? "badge-info" : "badge-warning")}>{t(`b2b.schedule.status.${v.status}`)}</span> },
+          { key: "order", header: "", render: (v: any) => (v.orderId ? <Link to={`/corporate/services/${v.orderId}`} className="text-brand">{v.orderNumber}</Link> : v.status === "PLANNED" ? <button type="button" className="btn outline btn-sm" onClick={async () => { try { const r = await post(`/b2b/schedule/${v.id}/create-order`); await refresh(); toast.success(t("b2b.schedule.created", { number: r.orderNumber })); navigate(`/corporate/services/${r.orderId}`); } catch (e) { toast.error(errorText(e, t("errors.generic"))); } }}>{t("b2b.schedule.createOrder")}</button> : null) },
+        ]}
+      />
+    </>
+  );
+}
+
+function ContractsPage() {
+  const { t, date, enumLabel } = useI18n();
+  const q = useApi<any[]>("/b2b/contracts");
+  return (
+    <>
+      <PageHeader title={t("b2b.nav.contracts")} />
+      <QueryView query={q}>
+        {(list) => (
+          <div className="kit-stack">
+            {list.map((c) => (
+              <Card key={c.id} title={`${c.number} · ${c.title}`} actions={<EnumBadge group="ContractStatus" code={c.status} />}>
+                <KeyValue cols={3} items={[[t("b2b.contracts.period"), `${date(c.startsAt)} — ${date(c.endsAt)}`], [t("b2b.contracts.reaction"), t("b2b.contracts.hours", { count: c.sla.reactionHours })], [t("b2b.contracts.urgent"), t("b2b.contracts.hours", { count: c.sla.urgentArrivalHours })], [t("b2b.dash.compliance"), `${c.sla.compliance}%`], [t("b2b.contracts.coverage"), t("b2b.contracts.coverageText", { sites: c.coveredSites, devices: c.coveredDevices })], [t("b2b.contracts.visits"), c.periodicVisitsPerYear]]} />
+                <p className="text-sm mt-3 flex items-center gap-2"><FileText size={14} /> {c.fileName}</p>
+              </Card>
+            ))}
+          </div>
+        )}
+      </QueryView>
+    </>
+  );
+}
+
+function ReportsPage() {
+  const { t, money } = useI18n();
+  const q = useApi<any>("/b2b/reports");
+  return (
+    <>
+      <PageHeader title={t("b2b.nav.reports")} actions={<button type="button" className="btn outline" onClick={() => window.print()}>{t("docs.print")}</button>} />
+      <QueryView query={q} rows={8}>
+        {(d) => (
+          <>
+            <Grid cols={4}>
+              <Stat label={t("b2b.reports.orders")} value={d.totals.orders} />
+              <Stat label={t("b2b.reports.spend")} value={money(d.totals.spend)} tone="warning" />
+              <Stat label={t("b2b.dash.compliance")} value={`${d.sla.compliance}%`} tone="success" />
+              <Stat label={t("b2b.dash.breaches")} value={d.sla.breaches} tone="danger" hint={t("b2b.reports.reactionAvg", { count: d.sla.reactionAvgMinutes })} />
+            </Grid>
+            <Grid cols={2}>
+              <Card title={t("b2b.reports.bySite")}><BarsChart data={d.bySite} xKey="site" bars={[{ key: "spend", label: t("b2b.reports.spend") }, { key: "orders", label: t("b2b.reports.orders") }]} /></Card>
+              <Card title={t("b2b.reports.byCategory")}><DonutChart data={d.byCategory.map((c: any) => ({ name: c.category, value: c.orders }))} /></Card>
+            </Grid>
+            <Card title={t("b2b.reports.topDevices")} flush>
+              <div className="table-wrap"><table><thead><tr><th>{t("acc.orders.device")}</th><th className="num">{t("b2b.reports.orders")}</th><th className="num">{t("b2b.reports.spend")}</th></tr></thead><tbody>{d.topDevices.map((x: any) => <tr key={x.device}><td>{x.device}</td><td className="num">{x.orders}</td><td className="num">{money({ amount: String(x.spend), currency: "AZN" })}</td></tr>)}</tbody></table></div>
+            </Card>
+          </>
+        )}
+      </QueryView>
+    </>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Ümumi: sənədlər, balans, istifadəçilər                              */
+/* ------------------------------------------------------------------ */
+
+function B2BDocumentsPage() {
+  const { t } = useI18n();
+  const refresh = useRefresh();
+  const [doc, setDoc] = useState<string | null>(null);
+  return (
+    <>
+      <div className="flex justify-end mb-2"><button type="button" className="btn outline" onClick={async () => { const r = await post("/b2b/reconciliation-act"); await refresh(); toast.success(t("b2b.docs.actCreated", { number: r.number })); setDoc(r.documentId); }}>{t("b2b.docs.reconciliation")}</button></div>
+      <DocumentsPage title={t("b2b.nav.documents")} />
+      {doc && <DocumentDialog id={doc} onClose={() => setDoc(null)} />}
+    </>
+  );
+}
+
+function BalancePage() {
+  const { t, money, date, text } = useI18n();
+  const q = useApi<any>("/b2b/balance");
+  return (
+    <>
+      <PageHeader title={t("b2b.nav.balance")} />
+      <QueryView query={q} isEmpty={() => false}>
+        {(d) => (
+          <>
+            <Grid cols={4}>
+              <Stat label={t("b2b.dash.credit")} value={money(d.availableCredit)} tone="success" />
+              <Stat label={t("b2b.dash.limit")} value={money(d.creditLimit)} />
+              <Stat label={t("b2b.dash.debt")} value={money(d.currentDebt)} tone="warning" />
+              <Stat label={t("b2b.balance.overdue")} value={money(d.overdue)} tone="danger" />
+            </Grid>
+            <Card title={t("b2b.balance.entries")} flush>
+              {!d.entries.length ? <EmptyState /> : (
+                <div className="table-wrap">
+                  <table>
+                    <thead><tr><th>{t("common.date")}</th><th>{t("b2b.balance.document")}</th><th>{t("b2b.balance.description")}</th><th className="num">{t("b2b.balance.debit")}</th><th className="num">{t("b2b.balance.credit")}</th><th>{t("b2b.balance.due")}</th><th className="num">{t("b2b.balance.balance")}</th></tr></thead>
+                    <tbody>
+                      {d.entries.map((e: any) => (
+                        <tr key={e.id}>
+                          <td>{date(e.date)}</td>
+                          <td><strong>{e.document}</strong></td>
+                          <td>{text(e.description)}</td>
+                          <td className="num">{Number(e.debit.amount) ? money(e.debit) : "—"}</td>
+                          <td className="num text-success">{Number(e.credit.amount) ? money(e.credit) : "—"}</td>
+                          <td className={cn(e.dueAt && new Date(e.dueAt) < new Date() && "text-danger")}>{e.dueAt ? date(e.dueAt) : "—"}</td>
+                          <td className="num"><strong>{money(e.balance)}</strong></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </Card>
+          </>
+        )}
+      </QueryView>
+    </>
+  );
+}
+
+const COMPANY_ROLES = ["ORDERER", "APPROVER", "ACCOUNTANT", "SITE_MANAGER"];
+
+function CompanyUsersPage() {
+  const { t, relative, enumLabel, money } = useI18n();
+  const { user } = useSession();
+  const q = useApi<any>("/b2b/users");
+  const refresh = useRefresh();
+  const [adding, setAdding] = useState(false);
+  const owner = user?.companyRole === "OWNER";
+  return (
+    <>
+      <PageHeader title={t("b2b.nav.users")} subtitle={q.data ? t("b2b.users.limit", { count: q.data.items.length, limit: q.data.limit ?? "∞" }) : undefined} actions={owner && <button type="button" className="btn primary" disabled={!!q.data && q.data.limit !== null && q.data.items.length >= q.data.limit} onClick={() => setAdding(true)}><Plus size={16} /> {t("b2b.users.invite")}</button>} />
+      {!owner && <p className="kit-note info mb-4">{t("b2b.users.ownerOnly")}</p>}
+      <QueryView query={q}>
+        {(d) => (
+          <Card flush>
+            <div className="table-wrap">
+              <table>
+                <thead><tr><th>{t("fields.fullName")}</th><th>{t("b2b.users.role")}</th><th>{t("b2b.users.sites")}</th><th>{t("b2b.users.approvalLimit")}</th><th>{t("b2b.users.lastLogin")}</th><th>{t("common.status")}</th></tr></thead>
+                <tbody>
+                  {d.items.map((u: any) => (
+                    <tr key={u.id}>
+                      <td><strong>{u.fullName}</strong><small className="block">{u.email} · {u.phone}</small></td>
+                      <td>{owner && u.role !== "OWNER" ? <select className="form-input" value={u.role} aria-label={t("b2b.users.role")} onChange={async (e) => { await patch(`/b2b/users/${u.id}`, { role: e.target.value }); await refresh(); }}>{COMPANY_ROLES.map((r) => <option key={r} value={r}>{enumLabel("CompanyUserRole", r)}</option>)}</select> : enumLabel("CompanyUserRole", u.role)}</td>
+                      <td>{u.siteNames.join(", ") || t("b2b.users.allSites")}</td>
+                      <td>{u.approvalLimit ? money(u.approvalLimit) : t("plans.unlimited")}</td>
+                      <td>{u.lastLoginAt ? relative(u.lastLoginAt) : "—"}</td>
+                      <td>{owner && u.role !== "OWNER" ? <button type="button" className={cn("badge", u.status === "ACTIVE" ? "badge-success" : "badge-danger")} onClick={async () => { await patch(`/b2b/users/${u.id}`, { status: u.status === "BLOCKED" ? "ACTIVE" : "BLOCKED" }); await refresh(); }}>{enumLabel("UserStatus", u.status)}</button> : <EnumBadge group="UserStatus" code={u.status} />}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        )}
+      </QueryView>
+      {adding && <InviteDialog onClose={() => setAdding(false)} />}
+    </>
+  );
+}
+
+function InviteDialog({ onClose }: { onClose: () => void }) {
+  const { t, enumLabel } = useI18n();
+  const refresh = useRefresh();
+  const [v, setV] = useState({ firstName: "", lastName: "", email: "", phone: "", role: "ORDERER" });
+  const [error, setError] = useState<unknown>(null);
+  return (
+    <Dialog open onClose={onClose} title={t("b2b.users.invite")} footer={<><button type="button" className="btn outline" onClick={onClose}>{t("common.cancel")}</button><button type="button" className="btn primary" onClick={async () => { setError(null); try { await post("/b2b/users", v); await refresh(); toast.success(t("b2b.users.invited")); onClose(); } catch (e) { setError(e); } }}>{t("common.send")}</button></>}>
+      <FormError error={error} />
+      <div className="kit-form-grid">
+        <TextField label={t("fields.firstName")} value={v.firstName} onValue={(x) => setV({ ...v, firstName: x })} />
+        <TextField label={t("fields.lastName")} value={v.lastName} onValue={(x) => setV({ ...v, lastName: x })} />
+        <TextField label={t("fields.email")} type="email" value={v.email} onValue={(x) => setV({ ...v, email: x })} />
+        <PhoneField label={t("fields.phone")} value={v.phone} onValue={(x) => setV({ ...v, phone: x })} />
+      </div>
+      <SelectField label={t("b2b.users.role")} value={v.role} onValue={(x) => setV({ ...v, role: x })} options={COMPANY_ROLES.map((r) => ({ value: r, label: enumLabel("CompanyUserRole", r) }))} hint={t(`b2b.users.roleHint.${v.role}`)} />
+    </Dialog>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Partner: komissiyalar                                                */
+/* ------------------------------------------------------------------ */
+
+function CommissionsPage() {
+  const { t, money, date, enumLabel } = useI18n();
+  const q = useApi<any>("/b2b/commissions?pageSize=50");
+  return (
+    <>
+      <PageHeader title={t("b2b.nav.commissions")} />
+      <QueryView query={q} isEmpty={() => false}>
+        {(d) => (
+          <>
+            {!d.enabled && <div className="kit-note warning mb-4">{t("b2b.comm.disabled")}</div>}
+            <Grid cols={3}>
+              <Stat label={t("b2b.comm.pending")} value={money(d.totals.pending)} tone="warning" />
+              <Stat label={t("b2b.comm.approved")} value={money(d.totals.approved)} tone="info" />
+              <Stat label={t("b2b.comm.paid")} value={money(d.totals.paid)} tone="success" />
+            </Grid>
+            <Card title={t("b2b.comm.terms")} className="mb-6">
+              <KeyValue cols={3} items={[[t("b2b.comm.model"), d.model ? enumLabel("CommissionModel", d.model) : null], [t("b2b.comm.base"), d.base ? enumLabel("CommissionBase", d.base) : null], [t("b2b.comm.default"), d.defaultRate ? `${d.defaultRate}%` : null]]} />
+              {d.rates.length > 0 && <ul className="kit-list mt-2">{d.rates.map((r: any, i: number) => <li key={i}><span className="grow">{r.serviceTypeLabel}</span><strong>{r.model === "PERCENT" ? `${r.value}%` : money({ amount: r.value, currency: "AZN" })}</strong></li>)}</ul>}
+            </Card>
+            <Card title={t("b2b.comm.list")} flush>
+              {!d.items.length ? <EmptyState /> : (
+                <div className="table-wrap">
+                  <table>
+                    <thead><tr><th>{t("courier.order")}</th><th>{t("common.date")}</th><th className="num">{t("b2b.comm.baseAmount")}</th><th className="num">{t("b2b.comm.rate")}</th><th className="num">{t("b2b.comm.amount")}</th><th>{t("common.status")}</th></tr></thead>
+                    <tbody>{d.items.map((c: any) => <tr key={c.id}><td><strong>{c.orderNumber}</strong><small className="block">{enumLabel("OrderKind", c.orderType)}</small></td><td>{date(c.createdAt)}{c.paidAt && <small className="block">{t("b2b.comm.paidAt", { date: date(c.paidAt) })}</small>}</td><td className="num">{money(c.base)}</td><td className="num">{c.model === "PERCENT" ? `${c.rate}%` : money({ amount: c.rate, currency: "AZN" })}</td><td className="num"><strong>{money(c.amount)}</strong></td><td><EnumBadge group="CommissionStatus" code={c.status} /></td></tr>)}</tbody>
+                  </table>
+                </div>
+              )}
+            </Card>
+          </>
+        )}
+      </QueryView>
+    </>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Topdan: sürətli sifariş və kommersiya təklifləri (§45.3)             */
+/* ------------------------------------------------------------------ */
+
+function QuickOrderPage() {
+  const { t, money, text, qty } = useI18n();
+  const { navigate } = useRouter();
+  const refresh = useRefresh();
+  const [rows, setRows] = useState<{ sku: string; quantity: string }[]>([{ sku: "", quantity: "1" }, { sku: "", quantity: "1" }, { sku: "", quantity: "1" }]);
+  const [paste, setPaste] = useState("");
+  const [result, setResult] = useState<any | null>(null);
+  const [busy, setBusy] = useState(false);
+  const validate = async (lines = rows) => {
+    setBusy(true);
+    try { setResult(await post("/b2b/quick-order/validate", { lines })); } catch (e) { toast.error(errorText(e, t("errors.generic"))); } finally { setBusy(false); }
+  };
+  const importPaste = () => {
+    const parsed = paste.split(/\r?\n/).map((l) => l.split(/[;,\t]/).map((x) => x.trim())).filter((p) => p[0]).map(([sku, quantity]) => ({ sku: sku!, quantity: quantity || "1" }));
+    if (parsed.length) { setRows(parsed); setPaste(""); void validate(parsed); }
+  };
+  return (
+    <>
+      <PageHeader title={t("b2b.nav.quickOrder")} subtitle={t("b2b.quick.subtitle")} />
+      <div className="kit-split">
+        <Card title={t("b2b.quick.lines")}>
+          <div className="table-wrap">
+            <table>
+              <thead><tr><th>SKU</th><th>{t("common.quantity")}</th><th /></tr></thead>
+              <tbody>
+                {rows.map((r, i) => (
+                  <tr key={i}>
+                    <td><input className="form-input" value={r.sku} placeholder="BS-C7-24" aria-label="SKU" onChange={(e) => setRows(rows.map((x, j) => (j === i ? { ...x, sku: e.target.value } : x)))} /></td>
+                    <td style={{ width: 120 }}><input className="form-input" inputMode="decimal" value={r.quantity} aria-label={t("common.quantity")} onChange={(e) => setRows(rows.map((x, j) => (j === i ? { ...x, quantity: e.target.value } : x)))} /></td>
+                    <td><button type="button" className="icon-button" aria-label={t("common.remove")} onClick={() => setRows(rows.filter((_, j) => j !== i))}><Trash2 size={14} /></button></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="flex gap-2 flex-wrap mt-3">
+            <button type="button" className="btn outline btn-sm" onClick={() => setRows([...rows, { sku: "", quantity: "1" }])}><Plus size={14} /> {t("b2b.quick.addRow")}</button>
+            <button type="button" className="btn primary btn-sm" disabled={busy} onClick={() => validate()}>{t("b2b.quick.check")}</button>
+          </div>
+        </Card>
+        <Card title={t("b2b.quick.import")}>
+          <TextArea label={t("b2b.quick.pasteLabel")} value={paste} onValue={setPaste} rows={6} hint={t("b2b.quick.pasteHint")} />
+          <button type="button" className="btn outline btn-sm" disabled={!paste.trim()} onClick={importPaste}><Upload size={14} /> {t("b2b.quick.importBtn")}</button>
+        </Card>
+      </div>
+      {result && (
+        <Card title={t("b2b.quick.result")} className="mt-6" flush>
+          <div className="table-wrap">
+            <table>
+              <thead><tr><th>SKU</th><th>{t("docs.item")}</th><th className="num">{t("common.quantity")}</th><th className="num">{t("estimate.unitPrice")}</th><th className="num">{t("common.total")}</th><th /></tr></thead>
+              <tbody>
+                {result.lines.map((l: any, i: number) => (
+                  <tr key={i} className={cn(l.error && "declined")}>
+                    <td><strong>{l.sku}</strong></td>
+                    <td>{l.name ? text(l.name) : "—"}</td>
+                    <td className="num">{qty(l.quantity)}</td>
+                    <td className="num">{l.unitPrice ? money(l.unitPrice) : "—"}</td>
+                    <td className="num">{l.total ? money(l.total) : "—"}</td>
+                    <td>{l.error ? <span className="badge badge-danger">{text(l.error)}</span> : <span className="badge badge-success">OK</span>}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="kit-card-body flex justify-between items-center gap-3 flex-wrap">
+            <span>{t("common.total")}: <strong className="text-xl">{money(result.total)}</strong>{!result.meetsMinimum && <span className="text-danger text-sm"> · {t("b2b.dash.minOrder", { amount: money(result.minOrderAmount) })}</span>}</span>
+            <div className="flex gap-2 flex-wrap">
+              <button type="button" className="btn outline" onClick={async () => { try { await post("/b2b/quotes", { lines: rows.filter((r) => r.sku.trim()) }); await refresh(); toast.success(t("b2b.quotes.requested")); navigate("/wholesale/quotes"); } catch (e) { toast.error(errorText(e, t("errors.generic"))); } }}>{t("b2b.quotes.request")}</button>
+              <button type="button" className="btn primary" disabled={!result.meetsMinimum || result.lines.some((l: any) => l.error)} onClick={async () => { await post("/b2b/quick-order/add-to-cart", { lines: result.lines.filter((l: any) => l.variantId).map((l: any) => ({ variantId: l.variantId, quantity: l.quantity.value })) }); await refresh(); toast.success(t("cart.added")); navigate("/cart"); }}>{t("b2b.quick.toCart")}</button>
+            </div>
+          </div>
+        </Card>
+      )}
+    </>
+  );
+}
+
+function QuotesPage() {
+  const { t, money, date, text, qty } = useI18n();
+  const q = useApi<any>("/b2b/quotes?pageSize=50");
+  const refresh = useRefresh();
+  const { navigate } = useRouter();
+  const [confirm, setConfirm] = useState<{ quote: any; decision: "accept" | "reject" } | null>(null);
+  return (
+    <>
+      <PageHeader title={t("b2b.nav.quotes")} actions={<Link to="/wholesale/quick-order" className="btn primary"><Plus size={16} /> {t("b2b.quotes.request")}</Link>} />
+      <QueryView query={q} empty={<EmptyState icon={ClipboardList} title={t("b2b.quotes.empty")} />}>
+        {(d) => (
+          <div className="kit-stack">
+            {d.items.map((x: any) => (
+              <Card key={x.id} title={x.number} subtitle={`${date(x.requestedAt)} · ${x.managerName}`} actions={<EnumBadge group="QuoteStatus" code={x.status} />}>
+                <div className="table-wrap"><table><thead><tr><th>SKU</th><th>{t("docs.item")}</th><th className="num">{t("common.quantity")}</th><th className="num">{t("estimate.unitPrice")}</th><th className="num">{t("common.total")}</th></tr></thead><tbody>{x.lines.map((l: any, i: number) => <tr key={i}><td>{l.sku}</td><td>{text(l.name)}</td><td className="num">{qty(l.quantity)}</td><td className="num">{l.unitPrice ? money(l.unitPrice) : t("b2b.quotes.awaiting")}</td><td className="num">{l.total ? money(l.total) : "—"}</td></tr>)}</tbody></table></div>
+                <div className="flex justify-between items-center gap-2 flex-wrap mt-3">
+                  <span>{x.note && <small className="text-muted">{x.note} · </small>}{x.validUntil && <small>{t("estimate.validUntil", { date: date(x.validUntil) })}</small>}</span>
+                  <span className="flex gap-2 items-center">
+                    {x.total && <strong className="text-lg">{money(x.total)}</strong>}
+                    {x.availableActions.map((a: any) => <button key={a.code} type="button" className={cn("btn btn-sm", a.code === "accept" ? "primary" : "outline danger-outline")} onClick={() => setConfirm({ quote: x, decision: a.code })}>{t(`b2b.quotes.${a.code}`)}</button>)}
+                  </span>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+      </QueryView>
+      {confirm && <ConfirmDialog open danger={confirm.decision === "reject"} title={t(`b2b.quotes.${confirm.decision}`)} text={confirm.decision === "accept" ? t("b2b.quotes.acceptText") : t("actions.confirmText")} onClose={() => setConfirm(null)} onConfirm={async () => { await post(`/b2b/quotes/${confirm.quote.id}/${confirm.decision}`); await refresh(); setConfirm(null); if (confirm.decision === "accept") navigate("/cart"); }} />}
+    </>
+  );
+}

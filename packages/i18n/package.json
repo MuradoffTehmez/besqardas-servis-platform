@@ -9,7 +9,17 @@
     ".": "./src/index.ts",
     "./messages/*": "./messages/*"
   },
-  "scripts": { "typecheck": "tsc --noEmit", "test": "vitest run" },
-  "dependencies": { "date-fns": "^4.4.0" },
-  "devDependencies": { "@sp/config": "workspace:*", "typescript": "^5.9.3", "vitest": "^3.2.4" }
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "i18n:build": "node source/build.mjs"
+  },
+  "dependencies": {
+    "date-fns": "^4.4.0"
+  },
+  "devDependencies": {
+    "@sp/config": "workspace:*",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
 }
