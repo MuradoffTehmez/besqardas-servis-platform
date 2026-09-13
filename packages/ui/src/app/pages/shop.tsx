@@ -88,7 +88,7 @@ export function ShopPage({ categoryPath }: { categoryPath?: string }) {
   const devices = useApi<any>(user && user.activeRole === "CUSTOMER" ? "/account/devices" : null);
   const params = Object.fromEntries(query.entries());
   const url = `/products${qs({ ...params, category: categoryPath, pageSize: 12 })}`;
-  const list = useApi<any>(url, { placeholderData: (p) => p });
+  const list = useApi<any>(url, { placeholderData: (p: any) => p });
   const data = list.data;
   const activeChips = [...query.entries()].filter(([k]) => !["page", "sort", "q", "pageSize"].includes(k));
   const facetValue = (code: string) => query.get(code)?.split(",") ?? [];
@@ -144,7 +144,7 @@ export function ShopPage({ categoryPath }: { categoryPath?: string }) {
   return (
     <div className="container py-6 shop-page">
       <nav className="pg-crumbs mb-2" aria-label={t("common.breadcrumbs")}>
-        <Link to="/">{t("home")}</Link> › <Link to="/shop">{t("shop")}</Link>
+        <Link to="/">{t("home")}</Link> › <Link to="/shop">{t("nav.shop")}</Link>
         {data?.breadcrumbs?.map((b: any) => <span key={b.slug}> › <Link to={b.href}>{b.name}</Link></span>)}
       </nav>
       <div className="flex justify-between items-end flex-wrap gap-3 mb-4">
@@ -250,7 +250,7 @@ export function ProductPage({ slug }: { slug: string }) {
     <div className="container py-6 product-page">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <nav className="pg-crumbs mb-3" aria-label={t("common.breadcrumbs")}>
-        <Link to="/">{t("home")}</Link> › <Link to="/shop">{t("shop")}</Link> › <Link to={`/shop/${p.categoryPath.join("/")}`}>{p.categoryName}</Link> › <span aria-current="page">{p.name}</span>
+        <Link to="/">{t("home")}</Link> › <Link to="/shop">{t("nav.shop")}</Link> › <Link to={`/shop/${p.categoryPath.join("/")}`}>{p.categoryName}</Link> › <span aria-current="page">{p.name}</span>
       </nav>
       <div className="product-detail-grid">
         <section className="kit-card product-gallery">
@@ -428,7 +428,7 @@ export function SearchPage() {
   return (
     <div className="container py-6">
       <h1>{t("search.title")}</h1>
-      <div className="max-w-xl"><SearchBox value={q} onChange={(v) => setQuery({ q: v })} placeholder={t("search")} autoFocus /></div>
+      <div className="max-w-xl"><SearchBox value={q} onChange={(v) => setQuery({ q: v })} placeholder={t("nav.searchPlaceholder")} autoFocus /></div>
       {d?.normalizedQuery && d.normalizedQuery !== q.toLowerCase() && <p className="text-sm text-muted mt-2">{t("search.normalized", { q: d.normalizedQuery })}</p>}
       {!q && (
         <div className="mt-4">
@@ -484,7 +484,7 @@ export function ComparePage() {
           <button type="button" className="btn outline btn-sm" onClick={async () => { await post("/compare", { action: "clear", productId: "" }); await qc.invalidateQueries({ queryKey: ["api"] }); }}>{t("compare.clear")}</button>
         </div>
       </div>
-      <QueryView query={q} isEmpty={(d: any) => !d.products.length} empty={<EmptyState title={t("compare.empty")} action={<Link to="/shop" className="btn primary">{t("shop")}</Link>} />}>
+      <QueryView query={q} isEmpty={(d: any) => !d.products.length} empty={<EmptyState title={t("compare.empty")} action={<Link to="/shop" className="btn primary">{t("nav.shop")}</Link>} />}>
         {(d: any) => (
           <div className="table-wrap">
             <table className="compare-table">
@@ -588,7 +588,7 @@ export function CheckoutPage() {
   const [key] = useState(() => idempotencyKey());
   const form = useFormState({ deliveryMethod: "COURIER", addressMode: "saved" as "saved" | "oneTime", addressId: "", city: "Bakı", street: "", building: "", apartment: "", pickupBranchId: "", installationSlot: "", paymentMethod: "CARD_ONLINE", installmentMonths: 12, companyName: session?.user?.companyName ?? "", voen: "", bankAccount: "", note: "" });
   const v = form.values;
-  const opts = useApi<any>(`/checkout/options?deliveryMethod=${v.deliveryMethod}`, { placeholderData: (p) => p });
+  const opts = useApi<any>(`/checkout/options?deliveryMethod=${v.deliveryMethod}`, { placeholderData: (p: any) => p });
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
   useEffect(() => {

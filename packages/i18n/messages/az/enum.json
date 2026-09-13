@@ -1,0 +1,760 @@
+{
+  "enum": {
+    "OrderStatus": {
+      "DRAFT": "Qaralama",
+      "NEW": "Yeni",
+      "CONFIRMED": "Təsdiqlənib",
+      "IN_PROGRESS": "İcra olunur",
+      "WAITING_FOR_CUSTOMER": "Müştəri gözlənilir",
+      "ON_HOLD": "Dayandırılıb",
+      "COMPLETED": "Tamamlanıb",
+      "CLOSED": "Bağlanıb",
+      "CANCELLED": "Ləğv edilib",
+      "REJECTED": "Qəbul olunmayıb"
+    },
+    "StageStatus": {
+      "PENDING": "Gözləyir",
+      "READY": "Hazırdır",
+      "ASSIGNED": "Təyin olunub",
+      "ACCEPTED": "Qəbul edilib",
+      "ON_THE_WAY": "Yoldadır",
+      "ARRIVED": "Ünvandadır",
+      "IN_PROGRESS": "İcra olunur",
+      "WAITING_FOR_APPROVAL": "Təsdiq gözləyir",
+      "WAITING_FOR_PART": "Hissə gözlənilir",
+      "BLOCKED": "Bloklanıb",
+      "COMPLETED": "Tamamlanıb",
+      "SKIPPED": "Keçilib",
+      "FAILED": "Uğursuz",
+      "CANCELLED": "Ləğv edilib"
+    },
+    "StageType": {
+      "CHECK": "Yoxlama",
+      "ASSIGNMENT": "Təyinat",
+      "ARRIVAL": "Gəliş",
+      "MEASUREMENT": "Ölçü",
+      "MATERIAL_CALC": "Material hesabı",
+      "DIAGNOSTICS": "Diaqnostika",
+      "ESTIMATE_APPROVAL": "Smeta və təsdiq",
+      "WAIT_PART": "Hissə gözləmə",
+      "WAREHOUSE_PREP": "Anbar hazırlığı",
+      "LOGISTICS": "Logistika",
+      "INTAKE": "Qəbul aktı",
+      "EXECUTION": "İcra",
+      "TEST": "Test",
+      "READY_NOTICE": "Hazırdır bildirişi",
+      "FINAL_CHECK": "Yekun yoxlama",
+      "HANDOVER": "Təhvil",
+      "PAYMENT": "Ödəniş",
+      "WARRANTY": "Zəmanət"
+    },
+    "Executor": {
+      "OPERATOR": "Operator",
+      "DISPATCHER": "Dispetçer",
+      "WAREHOUSE_EMPLOYEE": "Anbar əməkdaşı",
+      "SALES_EMPLOYEE": "Satış əməkdaşı",
+      "MANAGER": "Menecer",
+      "TECHNICIAN": "Usta",
+      "COURIER": "Kuryer",
+      "CUSTOMER": "Müştəri",
+      "SYSTEM": "Sistem"
+    },
+    "StartCondition": {
+      "PREVIOUS_COMPLETED": "Əvvəlki mərhələ tamamlanıb",
+      "ESTIMATE_APPROVED": "Smeta təsdiqlənib",
+      "ADVANCE_PAID": "Avans ödənilib",
+      "MATERIAL_RESERVED": "Material rezerv olunub"
+    },
+    "Requirement": {
+      "PHOTO": "Foto",
+      "CHECKLIST": "Checklist",
+      "SIGNATURE": "Müştəri imzası",
+      "NOTE": "Qeyd"
+    },
+    "TemplateStatus": {
+      "DRAFT": "Qaralama",
+      "ACTIVE": "Aktiv",
+      "ARCHIVED": "Arxiv"
+    },
+    "ExecutionForm": {
+      "ON_SITE": "Ünvanda servis",
+      "CARRY_IN": "Servis mərkəzinə gətirmə",
+      "PICKUP_DELIVERY": "Götürmə və çatdırma"
+    },
+    "ServiceType": {
+      "INSTALLATION": "Quraşdırma",
+      "REMOVAL": "Sökülmə",
+      "MEASUREMENT": "Ölçü götürmə",
+      "DIAGNOSTICS": "Diaqnostika",
+      "REPAIR": "Təmir",
+      "PERIODIC": "Periodik servis"
+    },
+    "PriceModel": {
+      "FIXED": "Sabit qiymət",
+      "STARTING_FROM": "Başlanğıc qiymət",
+      "ESTIMATE_BASED": "Smeta əsaslı"
+    },
+    "AssignmentMethod": {
+      "CUSTOMER_CHOICE": "Müştəri seçimi",
+      "DISPATCHER": "Dispetçer təyinatı",
+      "AUTO": "Avtomatik təyinat"
+    },
+    "OrderSource": {
+      "WEB": "Veb sayt",
+      "OPERATOR": "Operator",
+      "B2B": "B2B panel",
+      "AUTO": "Avtomatik (plan)",
+      "WARRANTY": "Zəmanət iddiası",
+      "PRODUCT_PURCHASE": "Məhsul alışı"
+    },
+    "OrderType": {
+      "STANDARD": "Standart",
+      "WARRANTY": "Zəmanət",
+      "PERIODIC": "Periodik"
+    },
+    "ContactChannel": {
+      "CALL": "Zəng",
+      "SMS": "SMS",
+      "WHATSAPP": "WhatsApp",
+      "EMAIL": "E-poçt"
+    },
+    "EstimateStatus": {
+      "DRAFT": "Qaralama",
+      "SENT": "Göndərilib",
+      "APPROVED": "Təsdiqlənib",
+      "PARTIALLY_APPROVED": "Qismən təsdiqlənib",
+      "REJECTED": "İmtina edilib",
+      "EXPIRED": "Müddəti bitib"
+    },
+    "EstimateLineType": {
+      "MATERIAL": "Material",
+      "LABOR": "İş",
+      "EXTRA": "Əlavə xidmət",
+      "LOGISTICS": "Logistika",
+      "FEE": "Haqq",
+      "DISCOUNT": "Endirim"
+    },
+    "DecisionChannel": {
+      "CABINET": "Kabinet",
+      "SMS_LINK": "SMS linki",
+      "SIGNATURE": "Ünvanda imza",
+      "PHONE": "Telefonla"
+    },
+    "FeeType": {
+      "CALL_OUT": "Çağırış",
+      "DIAGNOSTICS": "Diaqnostika",
+      "AFTER_HOURS": "İş saatından kənar",
+      "LOGISTICS": "Logistika",
+      "LATE_CANCELLATION": "Gec ləğv"
+    },
+    "FeeTrigger": {
+      "ALWAYS": "Həmişə",
+      "ON_ESTIMATE_REJECT": "Smetadan imtina edildikdə",
+      "ON_CANCEL_AFTER_DEPARTURE": "Usta yola çıxdıqdan sonra ləğvdə"
+    },
+    "Zone": {
+      "ANY": "İstənilən",
+      "IN_CITY": "Şəhər daxili",
+      "OUT_OF_CITY": "Şəhər xarici"
+    },
+    "SalesOrderStatus": {
+      "PENDING_PAYMENT": "Ödəniş gözlənilir",
+      "CONFIRMED": "Təsdiqlənib",
+      "PROCESSING": "Hazırlanır",
+      "READY_FOR_PICKUP": "Götürməyə hazırdır",
+      "SHIPPED": "Göndərilib",
+      "DELIVERED": "Çatdırılıb",
+      "COMPLETED": "Tamamlanıb",
+      "CANCELLED": "Ləğv edilib",
+      "RETURN_REQUESTED": "Qaytarma sorğusu",
+      "RETURNED": "Qaytarılıb"
+    },
+    "DeliveryMethod": {
+      "COURIER": "Kuryerlə çatdırılma",
+      "PICKUP": "Filialdan götürmə",
+      "WITH_INSTALLATION": "Quraşdırma ilə birlikdə"
+    },
+    "ReturnStatus": {
+      "REQUESTED": "Sorğu göndərilib",
+      "APPROVED": "Təsdiqlənib",
+      "REJECTED": "Rədd edilib",
+      "RECEIVED": "Qəbul edilib",
+      "INSPECTED": "Yoxlanılıb",
+      "REFUNDED": "Geri ödənilib",
+      "CLOSED": "Bağlanıb"
+    },
+    "InspectionResult": {
+      "RESELLABLE": "Satışa yararlı",
+      "DAMAGED": "Zədəli",
+      "RETURN_TO_SUPPLIER": "Təchizatçıya qaytarılmalı"
+    },
+    "QuoteStatus": {
+      "REQUESTED": "Sorğu göndərilib",
+      "SENT": "Təklif göndərilib",
+      "ACCEPTED": "Qəbul edilib",
+      "REJECTED": "Rədd edilib",
+      "EXPIRED": "Müddəti bitib"
+    },
+    "PaymentStatus": {
+      "INITIATED": "Yaradılıb",
+      "PENDING": "Gözlənilir",
+      "PAID": "Ödənilib",
+      "PARTIALLY_PAID": "Qismən ödənilib",
+      "FAILED": "Uğursuz",
+      "CANCELLED": "Ləğv edilib",
+      "REFUNDED": "Geri qaytarılıb",
+      "PARTIALLY_REFUNDED": "Qismən qaytarılıb",
+      "NONE": "Ödəniş yoxdur"
+    },
+    "PaymentMethod": {
+      "CASH": "Nağd",
+      "CARD_ONLINE": "Kart — onlayn",
+      "CARD_POS": "Kart — POS",
+      "BANK_TRANSFER": "Bank köçürməsi",
+      "INSTALLMENT": "Taksit",
+      "BALANCE": "Balans / kredit limiti"
+    },
+    "PaymentKind": {
+      "FULL": "Tam",
+      "ADVANCE": "Avans",
+      "PARTIAL": "Qismən"
+    },
+    "OrderKind": {
+      "SERVICE": "Servis",
+      "SALES": "Satış",
+      "SUBSCRIPTION": "Abunəlik",
+      "B2B_INVOICE": "B2B faktura",
+      "B2B": "B2B",
+      "SETTLEMENT": "Hesablaşma",
+      "TRANSFER": "Transfer"
+    },
+    "DocumentType": {
+      "FISCAL_RECEIPT": "Fiskal çek",
+      "INVOICE": "Hesab-faktura",
+      "E_INVOICE": "E-qaimə",
+      "SERVICE_ACT": "Servis aktı",
+      "WARRANTY": "Zəmanət sənədi",
+      "RECONCILIATION_ACT": "Üzləşmə aktı",
+      "INTAKE_ACT": "Qəbul aktı",
+      "HANDOVER_ACT": "Təhvil aktı",
+      "SETTLEMENT_ACT": "Hesablaşma aktı"
+    },
+    "DocumentStatus": {
+      "DRAFT": "Qaralama",
+      "ISSUED": "Verilib",
+      "CANCELLED": "Ləğv edilib",
+      "CORRECTED": "Düzəliş edilib"
+    },
+    "SyncStatus": {
+      "NOT_SENT": "Göndərilməyib",
+      "SENT": "Göndərilib",
+      "FAILED": "Xəta",
+      "ACKNOWLEDGED": "Qəbul edilib"
+    },
+    "WarrantyType": {
+      "MANUFACTURER": "İstehsalçı zəmanəti",
+      "SALES": "Satış zəmanəti",
+      "WORK": "İş zəmanəti",
+      "PART": "Hissə zəmanəti",
+      "EXTENDED": "Uzadılmış zəmanət",
+      "NONE": "Zəmanətsiz"
+    },
+    "WarrantyStatus": {
+      "ACTIVE": "Aktiv",
+      "EXPIRING": "Bitmək üzrədir",
+      "EXPIRED": "Müddəti bitib",
+      "VOID": "Etibarsız",
+      "NONE": "Yoxdur"
+    },
+    "ClaimStatus": {
+      "SUBMITTED": "Göndərilib",
+      "UNDER_REVIEW": "Yoxlanılır",
+      "APPROVED": "Təsdiqlənib",
+      "REJECTED": "Rədd edilib",
+      "CONVERTED": "Sifarişə çevrilib"
+    },
+    "DeviceLocation": {
+      "AT_CUSTOMER": "Müştəridə",
+      "IN_TRANSIT": "Yolda",
+      "SERVICE_CENTER": "Servis mərkəzində",
+      "DELIVERED": "Təhvil verilib"
+    },
+    "DeviceSource": {
+      "PURCHASE": "Platformada alınıb",
+      "MANUAL": "Əllə əlavə",
+      "SERVICE": "Servisdən"
+    },
+    "SubscriptionStatus": {
+      "TRIAL": "Sınaq",
+      "ACTIVE": "Aktiv",
+      "PAST_DUE": "Ödəniş gecikib",
+      "GRACE_PERIOD": "Güzəşt müddəti",
+      "CANCELLED": "Ləğv edilib",
+      "EXPIRED": "Bitib"
+    },
+    "BillingPeriod": {
+      "MONTH_1": "1 ay",
+      "MONTH_3": "3 ay",
+      "MONTH_6": "6 ay",
+      "MONTH_12": "12 ay"
+    },
+    "PlanGroup": {
+      "CUSTOMER": "Müştəri planları",
+      "TECHNICIAN": "Müstəqil usta planları",
+      "CORPORATE": "Korporativ planlar",
+      "CUSTOM": "Xüsusi planlar"
+    },
+    "PlanVisibility": {
+      "PUBLIC": "Public",
+      "INVITE_ONLY": "Yalnız dəvətlə",
+      "ARCHIVED": "Arxiv"
+    },
+    "LogisticsStatus": {
+      "PLANNED": "Planlaşdırılıb",
+      "ASSIGNED": "Təyin olunub",
+      "ON_THE_WAY": "Yoldadır",
+      "PICKED_UP": "Götürülüb",
+      "IN_TRANSIT": "Daşınır",
+      "DELIVERED": "Təhvil verilib",
+      "FAILED": "Uğursuz",
+      "CANCELLED": "Ləğv edilib"
+    },
+    "LogisticsType": {
+      "PICKUP": "Götürmə",
+      "DELIVERY": "Çatdırılma",
+      "TRANSFER": "Daşınma"
+    },
+    "CargoKind": {
+      "DEVICE": "Cihaz",
+      "PRODUCT": "Məhsul",
+      "MATERIAL": "Material"
+    },
+    "TransferStatus": {
+      "DRAFT": "Qaralama",
+      "APPROVED": "Təsdiqlənib",
+      "IN_TRANSIT": "Yolda",
+      "RECEIVED": "Qəbul edilib",
+      "PARTIALLY_RECEIVED": "Qismən qəbul",
+      "DISCREPANCY": "Uyğunsuzluq",
+      "CANCELLED": "Ləğv edilib"
+    },
+    "PurchaseStatus": {
+      "DRAFT": "Qaralama",
+      "SENT": "Göndərilib",
+      "CONFIRMED": "Təsdiqlənib",
+      "PARTIALLY_RECEIVED": "Qismən qəbul",
+      "RECEIVED": "Qəbul edilib",
+      "CLOSED": "Bağlanıb",
+      "CANCELLED": "Ləğv edilib"
+    },
+    "StockCountStatus": {
+      "DRAFT": "Qaralama",
+      "IN_PROGRESS": "Davam edir",
+      "PENDING_APPROVAL": "Təsdiq gözləyir",
+      "APPROVED": "Təsdiqlənib",
+      "CANCELLED": "Ləğv edilib"
+    },
+    "CountScope": {
+      "FULL": "Tam",
+      "ZONE": "Zona",
+      "CATEGORY": "Kateqoriya",
+      "MOBILE": "Mobil anbar"
+    },
+    "MovementType": {
+      "RECEIPT": "Qəbul",
+      "SALE_ISSUE": "Satış buraxılışı",
+      "SERVICE_CONSUMPTION": "Servis sərfiyyatı",
+      "TRANSFER_OUT": "Transfer (çıxış)",
+      "TRANSFER_IN": "Transfer (giriş)",
+      "RETURN": "Qaytarma",
+      "WRITE_OFF": "Silinmə",
+      "PURPOSE_CHANGE": "Təyinat dəyişikliyi",
+      "ADJUSTMENT": "Düzəliş"
+    },
+    "ReservationStatus": {
+      "ACTIVE": "Aktiv",
+      "RELEASED": "Buraxılıb",
+      "CONSUMED": "İstifadə olunub",
+      "EXPIRED": "Müddəti bitib"
+    },
+    "ReservationSource": {
+      "SERVICE_ORDER": "Servis sifarişi",
+      "SALES_ORDER": "Satış sifarişi",
+      "TECHNICIAN": "Usta",
+      "TRANSFER": "Transfer"
+    },
+    "WarehouseType": {
+      "CENTRAL": "Mərkəzi anbar",
+      "BRANCH": "Filial anbarı",
+      "SERVICE_CENTER": "Servis mərkəzi anbarı",
+      "MOBILE": "Mobil anbar",
+      "TECHNICIAN": "Usta anbarı",
+      "TRANSIT": "Tranzit",
+      "QUARANTINE": "Karantin"
+    },
+    "StockPurpose": {
+      "SALES": "Satış stoku",
+      "SERVICE": "Servis stoku"
+    },
+    "StockStatus": {
+      "IN_STOCK": "Stokda var",
+      "LOW": "Az qalıb",
+      "OUT_OF_STOCK": "Stokda yoxdur"
+    },
+    "CostingMethod": {
+      "WEIGHTED_AVERAGE": "Orta çəkili",
+      "FIFO": "FIFO"
+    },
+    "CostingLevel": {
+      "PRODUCT": "Məhsul",
+      "CATEGORY": "Kateqoriya",
+      "WAREHOUSE_GROUP": "Anbar qrupu",
+      "COMPANY": "Şirkət"
+    },
+    "SettlementStatus": {
+      "PENDING": "Hesablanıb",
+      "APPROVED": "Təsdiqlənib",
+      "PAID": "Ödənilib",
+      "ON_HOLD": "Saxlanılıb"
+    },
+    "DeductionKind": {
+      "CASH_COLLECTED": "Qəbul edilmiş nağd",
+      "MATERIAL_CREDIT": "Nisyə material",
+      "TAX": "Vergi tutulması",
+      "REFUND_ADJUSTMENT": "Geri ödəniş düzəlişi"
+    },
+    "CommissionStatus": {
+      "PENDING": "Hesablanıb",
+      "APPROVED": "Təsdiqlənib",
+      "PAID": "Ödənilib",
+      "CANCELLED": "Ləğv edilib"
+    },
+    "CommissionModel": {
+      "PERCENT": "Faizlə",
+      "FIXED": "Sabit məbləğ",
+      "BY_SERVICE_TYPE": "Xidmət növünə görə",
+      "CONTRACT": "Müqaviləyə görə"
+    },
+    "CommissionBase": {
+      "NET_OF_VAT": "ƏDV-siz məbləğ",
+      "LABOR_ONLY": "Yalnız iş haqqı",
+      "WHOLE_ORDER": "Bütün sifariş"
+    },
+    "Stacking": {
+      "STACKABLE": "Toplanır",
+      "EXCLUSIVE": "Eksklüziv",
+      "COMBINABLE_WITH_LIST": "Seçilmiş kampaniyalarla"
+    },
+    "DiscountBase": {
+      "BASE_PRICE": "Başlanğıc qiymət",
+      "AFTER_PREVIOUS": "Əvvəlki endirimdən sonra"
+    },
+    "PromotionKind": {
+      "PERCENT": "Faiz",
+      "FIXED": "Sabit məbləğ",
+      "PROMO_CODE": "Promo kod",
+      "SUBSCRIPTION": "Abunə endirimi"
+    },
+    "AppliesTo": {
+      "PRODUCTS": "Məhsullar",
+      "SERVICES": "Servislər",
+      "CART": "Səbət"
+    },
+    "PriceType": {
+      "RETAIL": "Pərakəndə",
+      "TECHNICIAN": "Usta",
+      "PARTNER": "Partner",
+      "WHOLESALE": "Topdan",
+      "CORPORATE": "Korporativ"
+    },
+    "Segment": {
+      "RETAIL": "Fərdi",
+      "PARTNER": "Partner",
+      "WHOLESALE": "Topdan",
+      "CORPORATE": "Korporativ"
+    },
+    "Role": {
+      "GUEST": "Qonaq",
+      "CUSTOMER": "Müştəri",
+      "CORPORATE_CUSTOMER": "Korporativ müştəri",
+      "PARTNER": "Partner",
+      "WHOLESALE_CUSTOMER": "Topdan alıcı",
+      "TECHNICIAN": "Usta",
+      "OPERATOR": "Operator",
+      "DISPATCHER": "Dispetçer",
+      "WAREHOUSE_EMPLOYEE": "Anbar əməkdaşı",
+      "COURIER": "Kuryer / Sürücü",
+      "SALES_EMPLOYEE": "Satış əməkdaşı",
+      "ACCOUNTANT": "Mühasib",
+      "MANAGER": "Menecer",
+      "ADMIN": "Admin",
+      "SUPER_ADMIN": "Super Admin"
+    },
+    "Scope": {
+      "OWN": "Öz",
+      "ASSIGNED": "Təyin olunan",
+      "BRANCH": "Filial",
+      "ORGANIZATION": "Təşkilat",
+      "PLATFORM": "Platforma"
+    },
+    "Action": {
+      "view": "Baxış",
+      "create": "Yaratma",
+      "edit": "Redaktə",
+      "delete": "Silmə",
+      "approve": "Təsdiq",
+      "assign": "Təyinat",
+      "export": "Export",
+      "update_status": "Status yeniləmə"
+    },
+    "Resource": {
+      "service_orders": "Servis sifarişləri",
+      "assignments": "Usta təyinatı",
+      "estimates": "Smetalar",
+      "workflow_templates": "Workflow şablonları",
+      "fee_rules": "Haqq qaydaları",
+      "reason_codes": "Səbəb kodları",
+      "catalog": "Kataloq və PIM",
+      "price_rules": "Qiymət qaydaları",
+      "inventory": "Anbar, transfer, sayım",
+      "purchases": "Alış və təchizatçılar",
+      "sales_orders": "Satış sifarişləri",
+      "payments": "Ödəniş, kassa, faktura",
+      "finance_reports": "Maliyyə hesabatları",
+      "subscription_plans": "Abunə planları",
+      "b2b_accounts": "B2B hesabları",
+      "partner_commissions": "Partner komissiyaları",
+      "technician_settlements": "Usta hesablaşmaları",
+      "logistics_tasks": "Logistika tapşırıqları",
+      "customers": "Müştərilər",
+      "technicians": "Ustalar",
+      "users": "İstifadəçilər",
+      "roles": "Rollar və icazələr",
+      "audit_logs": "Audit log",
+      "reviews": "Rəylər",
+      "content": "Sayt məzmunu",
+      "notification_templates": "Bildiriş şablonları",
+      "integrations": "İnteqrasiyalar",
+      "kpi_targets": "KPI hədəfləri",
+      "settings": "Ayarlar",
+      "branches": "Filiallar"
+    },
+    "EmploymentType": {
+      "STAFF": "Şirkət əməkdaşı",
+      "INDEPENDENT": "Müstəqil usta"
+    },
+    "TechnicianStatus": {
+      "PENDING_VERIFICATION": "Yoxlama gözləyir",
+      "VERIFIED": "Yoxlanılıb",
+      "REJECTED": "Rədd edilib",
+      "ACTIVE": "Aktiv",
+      "SUSPENDED": "Dayandırılıb"
+    },
+    "VerificationStatus": {
+      "PENDING": "Yoxlanılır",
+      "VERIFIED": "Təsdiqlənib",
+      "REJECTED": "Rədd edilib",
+      "EXPIRED": "Müddəti bitib"
+    },
+    "DocKind": {
+      "ID_CARD": "Şəxsiyyət vəsiqəsi",
+      "CERTIFICATE": "Sertifikat",
+      "DIPLOMA": "Diplom",
+      "CRIMINAL_RECORD": "Məhkumluq arayışı",
+      "OTHER": "Digər"
+    },
+    "SpecStatus": {
+      "ACTIVE": "Aktiv",
+      "PENDING_APPROVAL": "Təsdiq gözləyir",
+      "INACTIVE_CERT_EXPIRED": "Sertifikat bitib"
+    },
+    "ExperienceLevel": {
+      "BEGINNER": "Başlanğıc",
+      "INTERMEDIATE": "Orta",
+      "EXPERT": "Ekspert"
+    },
+    "LicenseStatus": {
+      "ACTIVE": "Aktiv",
+      "REVOKED": "Geri alınıb",
+      "NONE": "Yoxdur"
+    },
+    "PartnershipStatus": {
+      "PENDING": "Gözləyir",
+      "APPROVED": "Təsdiqlənib",
+      "REJECTED": "Rədd edilib",
+      "ENDED": "Bitib"
+    },
+    "B2BStatus": {
+      "PENDING_REVIEW": "Yoxlama gözləyir",
+      "ACTIVE": "Aktiv",
+      "SUSPENDED": "Dayandırılıb",
+      "REJECTED": "Rədd edilib"
+    },
+    "CompanyUserRole": {
+      "OWNER": "Hesab sahibi",
+      "ORDERER": "Sifarişçi",
+      "APPROVER": "Təsdiqləyici",
+      "ACCOUNTANT": "Mühasib",
+      "SITE_MANAGER": "Obyekt məsulu"
+    },
+    "PaymentTerms": {
+      "PREPAID": "Ön ödəniş",
+      "DEFERRED": "Təxirə salınmış"
+    },
+    "VisitStatus": {
+      "PLANNED": "Planlaşdırılıb",
+      "ORDER_CREATED": "Sifariş yaradılıb",
+      "DONE": "İcra olunub",
+      "MISSED": "Buraxılıb"
+    },
+    "ContractStatus": {
+      "ACTIVE": "Aktiv",
+      "EXPIRED": "Bitib",
+      "DRAFT": "Qaralama"
+    },
+    "ReviewStatus": {
+      "PENDING": "Moderasiyada",
+      "PUBLISHED": "Dərc olunub",
+      "REJECTED": "Rədd edilib"
+    },
+    "ReviewTarget": {
+      "SERVICE": "Servis",
+      "TECHNICIAN": "Usta",
+      "PRODUCT": "Məhsul"
+    },
+    "NotificationChannel": {
+      "IN_APP": "Tətbiq daxili",
+      "PUSH": "Push",
+      "EMAIL": "E-poçt",
+      "SMS": "SMS",
+      "WHATSAPP": "WhatsApp"
+    },
+    "NotificationGroup": {
+      "ORDER_STATUS": "Sifariş statusları",
+      "ESTIMATE": "Smetalar",
+      "PAYMENT": "Ödənişlər",
+      "REMINDERS": "Xatırlatmalar",
+      "MARKETING": "Marketinq"
+    },
+    "IntegrationArea": {
+      "PAYMENT": "Onlayn ödəniş",
+      "POS": "POS terminal",
+      "INSTALLMENT": "Taksit",
+      "FISCAL": "Fiskal kassa",
+      "E_INVOICE": "E-qaimə",
+      "SMS": "SMS",
+      "MESSAGING": "WhatsApp",
+      "EMAIL": "E-poçt",
+      "PUSH": "Push",
+      "MAP": "Xəritə",
+      "STORAGE": "Fayl storage",
+      "ACCOUNTING": "Mühasibat"
+    },
+    "Health": {
+      "OK": "İşləyir",
+      "DEGRADED": "Problemli",
+      "DOWN": "İşləmir",
+      "UNKNOWN": "Naməlum"
+    },
+    "ProductType": {
+      "PHYSICAL": "Fiziki məhsul",
+      "SPARE_PART": "Ehtiyat hissəsi",
+      "CONSUMABLE": "Sərfiyyat materialı",
+      "BUNDLE": "Məhsul + xidmət paketi"
+    },
+    "ProductStatus": {
+      "ACTIVE": "Aktiv",
+      "DRAFT": "Qaralama",
+      "ARCHIVED": "Arxiv"
+    },
+    "AttributeType": {
+      "TEXT": "Mətn",
+      "NUMBER": "Ədəd",
+      "NUMBER_UNIT": "Ədəd + vahid",
+      "BOOLEAN": "Bəli / xeyr",
+      "SELECT": "Siyahıdan bir",
+      "MULTISELECT": "Siyahıdan bir neçə",
+      "DATE": "Tarix"
+    },
+    "FilterDisplay": {
+      "CHECKBOX": "Checkbox",
+      "RANGE": "Aralıq",
+      "SLIDER": "Slider"
+    },
+    "UserStatus": {
+      "ACTIVE": "Aktiv",
+      "INVITED": "Dəvət olunub",
+      "BLOCKED": "Bloklanıb",
+      "DISABLED": "Deaktiv",
+      "PENDING_VERIFICATION": "Təsdiq gözləyir"
+    },
+    "ReasonCategory": {
+      "ON_HOLD": "Dayandırma",
+      "CANCELLED": "Ləğv",
+      "REJECTED": "Qəbul etməmə",
+      "FAILED": "Uğursuz mərhələ",
+      "RESCHEDULE": "Yenidən planlaşdırma",
+      "ESTIMATE_REJECT": "Smetadan imtina",
+      "DECLINE_JOB": "İşdən imtina",
+      "FEE_WAIVE": "Haqqın ləğvi",
+      "RETURN": "Qaytarma"
+    },
+    "CashDeskType": {
+      "BRANCH": "Filial kassası",
+      "TECHNICIAN": "Usta nağdı",
+      "COURIER": "Kuryer nağdı"
+    },
+    "CashOperation": {
+      "COLLECTION": "Nağd qəbulu",
+      "HANDOVER": "Kassaya təhvil",
+      "HANDOVER_CONFIRMED": "Təhvil təsdiqləndi",
+      "DISCREPANCY": "Uyğunsuzluq",
+      "SHIFT_OPEN": "Növbə açıldı",
+      "SHIFT_CLOSE": "Növbə bağlandı"
+    },
+    "OpStatus": {
+      "PENDING": "Gözləyir",
+      "CONFIRMED": "Təsdiqlənib",
+      "DISPUTED": "Mübahisəli"
+    },
+    "ShiftStatus": {
+      "OPEN": "Açıq",
+      "CLOSED": "Bağlı"
+    },
+    "Comparator": {
+      "LTE": "≤ hədəf",
+      "GTE": "≥ hədəf"
+    },
+    "ContentStatus": {
+      "DRAFT": "Qaralama",
+      "PUBLISHED": "Dərc olunub"
+    },
+    "Placement": {
+      "HOME_HERO": "Ana səhifə — əsas",
+      "HOME_STRIP": "Ana səhifə — zolaq",
+      "SHOP_TOP": "Kataloq — yuxarı"
+    },
+    "IntegrationMode": {
+      "SANDBOX": "Test (sandbox)",
+      "LIVE": "Canlı"
+    },
+    "SettlementPeriod": {
+      "WEEKLY": "Həftəlik",
+      "BIWEEKLY": "İki həftəlik",
+      "MONTHLY": "Aylıq"
+    },
+    "Recipient": {
+      "CUSTOMER": "Müştəri",
+      "TECHNICIAN": "Usta",
+      "COURIER": "Kuryer",
+      "DISPATCHER": "Dispetçer",
+      "WAREHOUSE_EMPLOYEE": "Anbar əməkdaşı",
+      "MANAGER": "Menecer"
+    },
+    "OldPart": {
+      "RETURN_TO_CUSTOMER": "Müştəriyə verilir",
+      "DISPOSE": "Utilizasiya",
+      "WARRANTY_RETURN": "Zəmanət qaytarışı"
+    }
+  }
+}

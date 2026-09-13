@@ -1,0 +1,760 @@
+{
+  "enum": {
+    "OrderStatus": {
+      "DRAFT": "Draft",
+      "NEW": "New",
+      "CONFIRMED": "Confirmed",
+      "IN_PROGRESS": "In progress",
+      "WAITING_FOR_CUSTOMER": "Waiting for customer",
+      "ON_HOLD": "On hold",
+      "COMPLETED": "Completed",
+      "CLOSED": "Closed",
+      "CANCELLED": "Cancelled",
+      "REJECTED": "Rejected"
+    },
+    "StageStatus": {
+      "PENDING": "Pending",
+      "READY": "Ready",
+      "ASSIGNED": "Assigned",
+      "ACCEPTED": "Accepted",
+      "ON_THE_WAY": "On the way",
+      "ARRIVED": "Arrived",
+      "IN_PROGRESS": "In progress",
+      "WAITING_FOR_APPROVAL": "Awaiting approval",
+      "WAITING_FOR_PART": "Waiting for part",
+      "BLOCKED": "Blocked",
+      "COMPLETED": "Completed",
+      "SKIPPED": "Skipped",
+      "FAILED": "Failed",
+      "CANCELLED": "Cancelled"
+    },
+    "StageType": {
+      "CHECK": "Check",
+      "ASSIGNMENT": "Assignment",
+      "ARRIVAL": "Arrival",
+      "MEASUREMENT": "Measurement",
+      "MATERIAL_CALC": "Material calculation",
+      "DIAGNOSTICS": "Diagnostics",
+      "ESTIMATE_APPROVAL": "Estimate & approval",
+      "WAIT_PART": "Waiting for part",
+      "WAREHOUSE_PREP": "Warehouse prep",
+      "LOGISTICS": "Logistics",
+      "INTAKE": "Intake",
+      "EXECUTION": "Execution",
+      "TEST": "Test",
+      "READY_NOTICE": "Ready notice",
+      "FINAL_CHECK": "Final check",
+      "HANDOVER": "Handover",
+      "PAYMENT": "Payment",
+      "WARRANTY": "Warranty"
+    },
+    "Executor": {
+      "OPERATOR": "Operator",
+      "DISPATCHER": "Dispatcher",
+      "WAREHOUSE_EMPLOYEE": "Warehouse employee",
+      "SALES_EMPLOYEE": "Sales employee",
+      "MANAGER": "Manager",
+      "TECHNICIAN": "Technician",
+      "COURIER": "Courier",
+      "CUSTOMER": "Customer",
+      "SYSTEM": "System"
+    },
+    "StartCondition": {
+      "PREVIOUS_COMPLETED": "Previous stage completed",
+      "ESTIMATE_APPROVED": "Estimate approved",
+      "ADVANCE_PAID": "Advance paid",
+      "MATERIAL_RESERVED": "Material reserved"
+    },
+    "Requirement": {
+      "PHOTO": "Photo",
+      "CHECKLIST": "Checklist",
+      "SIGNATURE": "Customer signature",
+      "NOTE": "Note"
+    },
+    "TemplateStatus": {
+      "DRAFT": "Draft",
+      "ACTIVE": "Active",
+      "ARCHIVED": "Archived"
+    },
+    "ExecutionForm": {
+      "ON_SITE": "On-site service",
+      "CARRY_IN": "Carry-in to service center",
+      "PICKUP_DELIVERY": "Pickup & delivery"
+    },
+    "ServiceType": {
+      "INSTALLATION": "Installation",
+      "REMOVAL": "Removal",
+      "MEASUREMENT": "Measurement",
+      "DIAGNOSTICS": "Diagnostics",
+      "REPAIR": "Repair",
+      "PERIODIC": "Periodic service"
+    },
+    "PriceModel": {
+      "FIXED": "Fixed price",
+      "STARTING_FROM": "Starting from",
+      "ESTIMATE_BASED": "Estimate-based"
+    },
+    "AssignmentMethod": {
+      "CUSTOMER_CHOICE": "Customer choice",
+      "DISPATCHER": "Dispatcher assignment",
+      "AUTO": "Automatic assignment"
+    },
+    "OrderSource": {
+      "WEB": "Website",
+      "OPERATOR": "Operator",
+      "B2B": "B2B portal",
+      "AUTO": "Automatic (plan)",
+      "WARRANTY": "Warranty claim",
+      "PRODUCT_PURCHASE": "Product purchase"
+    },
+    "OrderType": {
+      "STANDARD": "Standard",
+      "WARRANTY": "Warranty",
+      "PERIODIC": "Periodic"
+    },
+    "ContactChannel": {
+      "CALL": "Call",
+      "SMS": "SMS",
+      "WHATSAPP": "WhatsApp",
+      "EMAIL": "Email"
+    },
+    "EstimateStatus": {
+      "DRAFT": "Draft",
+      "SENT": "Sent",
+      "APPROVED": "Approved",
+      "PARTIALLY_APPROVED": "Partially approved",
+      "REJECTED": "Rejected",
+      "EXPIRED": "Expired"
+    },
+    "EstimateLineType": {
+      "MATERIAL": "Material",
+      "LABOR": "Labor",
+      "EXTRA": "Extra service",
+      "LOGISTICS": "Logistics",
+      "FEE": "Fee",
+      "DISCOUNT": "Discount"
+    },
+    "DecisionChannel": {
+      "CABINET": "Account",
+      "SMS_LINK": "SMS link",
+      "SIGNATURE": "On-site signature",
+      "PHONE": "By phone"
+    },
+    "FeeType": {
+      "CALL_OUT": "Call-out",
+      "DIAGNOSTICS": "Diagnostics",
+      "AFTER_HOURS": "After hours",
+      "LOGISTICS": "Logistics",
+      "LATE_CANCELLATION": "Late cancellation"
+    },
+    "FeeTrigger": {
+      "ALWAYS": "Always",
+      "ON_ESTIMATE_REJECT": "When estimate is declined",
+      "ON_CANCEL_AFTER_DEPARTURE": "Cancel after departure"
+    },
+    "Zone": {
+      "ANY": "Any",
+      "IN_CITY": "In city",
+      "OUT_OF_CITY": "Out of city"
+    },
+    "SalesOrderStatus": {
+      "PENDING_PAYMENT": "Pending payment",
+      "CONFIRMED": "Confirmed",
+      "PROCESSING": "Processing",
+      "READY_FOR_PICKUP": "Ready for pickup",
+      "SHIPPED": "Shipped",
+      "DELIVERED": "Delivered",
+      "COMPLETED": "Completed",
+      "CANCELLED": "Cancelled",
+      "RETURN_REQUESTED": "Return requested",
+      "RETURNED": "Returned"
+    },
+    "DeliveryMethod": {
+      "COURIER": "Courier delivery",
+      "PICKUP": "Branch pickup",
+      "WITH_INSTALLATION": "With installation"
+    },
+    "ReturnStatus": {
+      "REQUESTED": "Requested",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected",
+      "RECEIVED": "Received",
+      "INSPECTED": "Inspected",
+      "REFUNDED": "Refunded",
+      "CLOSED": "Closed"
+    },
+    "InspectionResult": {
+      "RESELLABLE": "Resellable",
+      "DAMAGED": "Damaged",
+      "RETURN_TO_SUPPLIER": "Return to supplier"
+    },
+    "QuoteStatus": {
+      "REQUESTED": "Requested",
+      "SENT": "Sent",
+      "ACCEPTED": "Accepted",
+      "REJECTED": "Rejected",
+      "EXPIRED": "Expired"
+    },
+    "PaymentStatus": {
+      "INITIATED": "Initiated",
+      "PENDING": "Pending",
+      "PAID": "Paid",
+      "PARTIALLY_PAID": "Partially paid",
+      "FAILED": "Failed",
+      "CANCELLED": "Cancelled",
+      "REFUNDED": "Refunded",
+      "PARTIALLY_REFUNDED": "Partially refunded",
+      "NONE": "No payment"
+    },
+    "PaymentMethod": {
+      "CASH": "Cash",
+      "CARD_ONLINE": "Card online",
+      "CARD_POS": "Card POS",
+      "BANK_TRANSFER": "Bank transfer",
+      "INSTALLMENT": "Installment",
+      "BALANCE": "Balance / credit"
+    },
+    "PaymentKind": {
+      "FULL": "Full",
+      "ADVANCE": "Advance",
+      "PARTIAL": "Partial"
+    },
+    "OrderKind": {
+      "SERVICE": "Service",
+      "SALES": "Sales",
+      "SUBSCRIPTION": "Subscription",
+      "B2B_INVOICE": "B2B invoice",
+      "B2B": "B2B",
+      "SETTLEMENT": "Settlement",
+      "TRANSFER": "Transfer"
+    },
+    "DocumentType": {
+      "FISCAL_RECEIPT": "Fiscal receipt",
+      "INVOICE": "Invoice",
+      "E_INVOICE": "E-invoice",
+      "SERVICE_ACT": "Service act",
+      "WARRANTY": "Warranty document",
+      "RECONCILIATION_ACT": "Reconciliation act",
+      "INTAKE_ACT": "Intake act",
+      "HANDOVER_ACT": "Handover act",
+      "SETTLEMENT_ACT": "Settlement act"
+    },
+    "DocumentStatus": {
+      "DRAFT": "Draft",
+      "ISSUED": "Issued",
+      "CANCELLED": "Cancelled",
+      "CORRECTED": "Corrected"
+    },
+    "SyncStatus": {
+      "NOT_SENT": "Not sent",
+      "SENT": "Sent",
+      "FAILED": "Failed",
+      "ACKNOWLEDGED": "Acknowledged"
+    },
+    "WarrantyType": {
+      "MANUFACTURER": "Manufacturer warranty",
+      "SALES": "Sales warranty",
+      "WORK": "Work warranty",
+      "PART": "Part warranty",
+      "EXTENDED": "Extended warranty",
+      "NONE": "No warranty"
+    },
+    "WarrantyStatus": {
+      "ACTIVE": "Active",
+      "EXPIRING": "Expiring",
+      "EXPIRED": "Expired",
+      "VOID": "Void",
+      "NONE": "None"
+    },
+    "ClaimStatus": {
+      "SUBMITTED": "Submitted",
+      "UNDER_REVIEW": "Under review",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected",
+      "CONVERTED": "Converted to order"
+    },
+    "DeviceLocation": {
+      "AT_CUSTOMER": "At customer",
+      "IN_TRANSIT": "In transit",
+      "SERVICE_CENTER": "At service center",
+      "DELIVERED": "Delivered"
+    },
+    "DeviceSource": {
+      "PURCHASE": "Bought on platform",
+      "MANUAL": "Added manually",
+      "SERVICE": "From service"
+    },
+    "SubscriptionStatus": {
+      "TRIAL": "Trial",
+      "ACTIVE": "Active",
+      "PAST_DUE": "Past due",
+      "GRACE_PERIOD": "Grace period",
+      "CANCELLED": "Cancelled",
+      "EXPIRED": "Expired"
+    },
+    "BillingPeriod": {
+      "MONTH_1": "1 month",
+      "MONTH_3": "3 months",
+      "MONTH_6": "6 months",
+      "MONTH_12": "12 months"
+    },
+    "PlanGroup": {
+      "CUSTOMER": "Customer plans",
+      "TECHNICIAN": "Technician plans",
+      "CORPORATE": "Corporate plans",
+      "CUSTOM": "Custom plans"
+    },
+    "PlanVisibility": {
+      "PUBLIC": "Public",
+      "INVITE_ONLY": "Invite only",
+      "ARCHIVED": "Archived"
+    },
+    "LogisticsStatus": {
+      "PLANNED": "Planned",
+      "ASSIGNED": "Assigned",
+      "ON_THE_WAY": "On the way",
+      "PICKED_UP": "Picked up",
+      "IN_TRANSIT": "In transit",
+      "DELIVERED": "Delivered",
+      "FAILED": "Failed",
+      "CANCELLED": "Cancelled"
+    },
+    "LogisticsType": {
+      "PICKUP": "Pickup",
+      "DELIVERY": "Delivery",
+      "TRANSFER": "Transfer"
+    },
+    "CargoKind": {
+      "DEVICE": "Device",
+      "PRODUCT": "Product",
+      "MATERIAL": "Material"
+    },
+    "TransferStatus": {
+      "DRAFT": "Draft",
+      "APPROVED": "Approved",
+      "IN_TRANSIT": "In transit",
+      "RECEIVED": "Received",
+      "PARTIALLY_RECEIVED": "Partially received",
+      "DISCREPANCY": "Discrepancy",
+      "CANCELLED": "Cancelled"
+    },
+    "PurchaseStatus": {
+      "DRAFT": "Draft",
+      "SENT": "Sent",
+      "CONFIRMED": "Confirmed",
+      "PARTIALLY_RECEIVED": "Partially received",
+      "RECEIVED": "Received",
+      "CLOSED": "Closed",
+      "CANCELLED": "Cancelled"
+    },
+    "StockCountStatus": {
+      "DRAFT": "Draft",
+      "IN_PROGRESS": "In progress",
+      "PENDING_APPROVAL": "Pending approval",
+      "APPROVED": "Approved",
+      "CANCELLED": "Cancelled"
+    },
+    "CountScope": {
+      "FULL": "Full",
+      "ZONE": "Zone",
+      "CATEGORY": "Category",
+      "MOBILE": "Mobile warehouse"
+    },
+    "MovementType": {
+      "RECEIPT": "Receipt",
+      "SALE_ISSUE": "Sales issue",
+      "SERVICE_CONSUMPTION": "Service consumption",
+      "TRANSFER_OUT": "Transfer out",
+      "TRANSFER_IN": "Transfer in",
+      "RETURN": "Return",
+      "WRITE_OFF": "Write-off",
+      "PURPOSE_CHANGE": "Purpose change",
+      "ADJUSTMENT": "Adjustment"
+    },
+    "ReservationStatus": {
+      "ACTIVE": "Active",
+      "RELEASED": "Released",
+      "CONSUMED": "Consumed",
+      "EXPIRED": "Expired"
+    },
+    "ReservationSource": {
+      "SERVICE_ORDER": "Service order",
+      "SALES_ORDER": "Sales order",
+      "TECHNICIAN": "Technician",
+      "TRANSFER": "Transfer"
+    },
+    "WarehouseType": {
+      "CENTRAL": "Central warehouse",
+      "BRANCH": "Branch warehouse",
+      "SERVICE_CENTER": "Service center warehouse",
+      "MOBILE": "Mobile warehouse",
+      "TECHNICIAN": "Technician stock",
+      "TRANSIT": "Transit",
+      "QUARANTINE": "Quarantine"
+    },
+    "StockPurpose": {
+      "SALES": "Sales stock",
+      "SERVICE": "Service stock"
+    },
+    "StockStatus": {
+      "IN_STOCK": "In stock",
+      "LOW": "Low stock",
+      "OUT_OF_STOCK": "Out of stock"
+    },
+    "CostingMethod": {
+      "WEIGHTED_AVERAGE": "Weighted average",
+      "FIFO": "FIFO"
+    },
+    "CostingLevel": {
+      "PRODUCT": "Product",
+      "CATEGORY": "Category",
+      "WAREHOUSE_GROUP": "Warehouse group",
+      "COMPANY": "Company"
+    },
+    "SettlementStatus": {
+      "PENDING": "Pending",
+      "APPROVED": "Approved",
+      "PAID": "Paid",
+      "ON_HOLD": "On hold"
+    },
+    "DeductionKind": {
+      "CASH_COLLECTED": "Cash collected",
+      "MATERIAL_CREDIT": "Material on credit",
+      "TAX": "Tax withholding",
+      "REFUND_ADJUSTMENT": "Refund adjustment"
+    },
+    "CommissionStatus": {
+      "PENDING": "Pending",
+      "APPROVED": "Approved",
+      "PAID": "Paid",
+      "CANCELLED": "Cancelled"
+    },
+    "CommissionModel": {
+      "PERCENT": "Percent",
+      "FIXED": "Fixed amount",
+      "BY_SERVICE_TYPE": "By service type",
+      "CONTRACT": "By contract"
+    },
+    "CommissionBase": {
+      "NET_OF_VAT": "Net of VAT",
+      "LABOR_ONLY": "Labor only",
+      "WHOLE_ORDER": "Whole order"
+    },
+    "Stacking": {
+      "STACKABLE": "Stackable",
+      "EXCLUSIVE": "Exclusive",
+      "COMBINABLE_WITH_LIST": "With selected campaigns"
+    },
+    "DiscountBase": {
+      "BASE_PRICE": "Base price",
+      "AFTER_PREVIOUS": "After previous discount"
+    },
+    "PromotionKind": {
+      "PERCENT": "Percent",
+      "FIXED": "Fixed",
+      "PROMO_CODE": "Promo code",
+      "SUBSCRIPTION": "Subscription discount"
+    },
+    "AppliesTo": {
+      "PRODUCTS": "Products",
+      "SERVICES": "Services",
+      "CART": "Cart"
+    },
+    "PriceType": {
+      "RETAIL": "Retail",
+      "TECHNICIAN": "Technician",
+      "PARTNER": "Partner",
+      "WHOLESALE": "Wholesale",
+      "CORPORATE": "Corporate"
+    },
+    "Segment": {
+      "RETAIL": "Retail",
+      "PARTNER": "Partner",
+      "WHOLESALE": "Wholesale",
+      "CORPORATE": "Corporate"
+    },
+    "Role": {
+      "GUEST": "Guest",
+      "CUSTOMER": "Customer",
+      "CORPORATE_CUSTOMER": "Corporate customer",
+      "PARTNER": "Partner",
+      "WHOLESALE_CUSTOMER": "Wholesale buyer",
+      "TECHNICIAN": "Technician",
+      "OPERATOR": "Operator",
+      "DISPATCHER": "Dispatcher",
+      "WAREHOUSE_EMPLOYEE": "Warehouse employee",
+      "COURIER": "Courier / Driver",
+      "SALES_EMPLOYEE": "Sales employee",
+      "ACCOUNTANT": "Accountant",
+      "MANAGER": "Manager",
+      "ADMIN": "Admin",
+      "SUPER_ADMIN": "Super Admin"
+    },
+    "Scope": {
+      "OWN": "Own",
+      "ASSIGNED": "Assigned",
+      "BRANCH": "Branch",
+      "ORGANIZATION": "Organization",
+      "PLATFORM": "Platform"
+    },
+    "Action": {
+      "view": "View",
+      "create": "Create",
+      "edit": "Edit",
+      "delete": "Delete",
+      "approve": "Approve",
+      "assign": "Assign",
+      "export": "Export",
+      "update_status": "Update status"
+    },
+    "Resource": {
+      "service_orders": "Service orders",
+      "assignments": "Assignments",
+      "estimates": "Estimates",
+      "workflow_templates": "Workflow templates",
+      "fee_rules": "Fee rules",
+      "reason_codes": "Reason codes",
+      "catalog": "Catalog & PIM",
+      "price_rules": "Price rules",
+      "inventory": "Inventory, transfers, counts",
+      "purchases": "Purchases & suppliers",
+      "sales_orders": "Sales orders",
+      "payments": "Payments, cash, invoices",
+      "finance_reports": "Finance reports",
+      "subscription_plans": "Subscription plans",
+      "b2b_accounts": "B2B accounts",
+      "partner_commissions": "Partner commissions",
+      "technician_settlements": "Technician settlements",
+      "logistics_tasks": "Logistics tasks",
+      "customers": "Customers",
+      "technicians": "Technicians",
+      "users": "Users",
+      "roles": "Roles & permissions",
+      "audit_logs": "Audit log",
+      "reviews": "Reviews",
+      "content": "Site content",
+      "notification_templates": "Notification templates",
+      "integrations": "Integrations",
+      "kpi_targets": "KPI targets",
+      "settings": "Settings",
+      "branches": "Branches"
+    },
+    "EmploymentType": {
+      "STAFF": "Staff",
+      "INDEPENDENT": "Independent"
+    },
+    "TechnicianStatus": {
+      "PENDING_VERIFICATION": "Pending verification",
+      "VERIFIED": "Verified",
+      "REJECTED": "Rejected",
+      "ACTIVE": "Active",
+      "SUSPENDED": "Suspended"
+    },
+    "VerificationStatus": {
+      "PENDING": "Pending",
+      "VERIFIED": "Verified",
+      "REJECTED": "Rejected",
+      "EXPIRED": "Expired"
+    },
+    "DocKind": {
+      "ID_CARD": "ID card",
+      "CERTIFICATE": "Certificate",
+      "DIPLOMA": "Diploma",
+      "CRIMINAL_RECORD": "Criminal record check",
+      "OTHER": "Other"
+    },
+    "SpecStatus": {
+      "ACTIVE": "Active",
+      "PENDING_APPROVAL": "Pending approval",
+      "INACTIVE_CERT_EXPIRED": "Certificate expired"
+    },
+    "ExperienceLevel": {
+      "BEGINNER": "Beginner",
+      "INTERMEDIATE": "Intermediate",
+      "EXPERT": "Expert"
+    },
+    "LicenseStatus": {
+      "ACTIVE": "Active",
+      "REVOKED": "Revoked",
+      "NONE": "None"
+    },
+    "PartnershipStatus": {
+      "PENDING": "Pending",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected",
+      "ENDED": "Ended"
+    },
+    "B2BStatus": {
+      "PENDING_REVIEW": "Pending review",
+      "ACTIVE": "Active",
+      "SUSPENDED": "Suspended",
+      "REJECTED": "Rejected"
+    },
+    "CompanyUserRole": {
+      "OWNER": "Account owner",
+      "ORDERER": "Orderer",
+      "APPROVER": "Approver",
+      "ACCOUNTANT": "Accountant",
+      "SITE_MANAGER": "Site manager"
+    },
+    "PaymentTerms": {
+      "PREPAID": "Prepaid",
+      "DEFERRED": "Deferred"
+    },
+    "VisitStatus": {
+      "PLANNED": "Planned",
+      "ORDER_CREATED": "Order created",
+      "DONE": "Done",
+      "MISSED": "Missed"
+    },
+    "ContractStatus": {
+      "ACTIVE": "Active",
+      "EXPIRED": "Expired",
+      "DRAFT": "Draft"
+    },
+    "ReviewStatus": {
+      "PENDING": "Pending moderation",
+      "PUBLISHED": "Published",
+      "REJECTED": "Rejected"
+    },
+    "ReviewTarget": {
+      "SERVICE": "Service",
+      "TECHNICIAN": "Technician",
+      "PRODUCT": "Product"
+    },
+    "NotificationChannel": {
+      "IN_APP": "In-app",
+      "PUSH": "Push",
+      "EMAIL": "Email",
+      "SMS": "SMS",
+      "WHATSAPP": "WhatsApp"
+    },
+    "NotificationGroup": {
+      "ORDER_STATUS": "Order status",
+      "ESTIMATE": "Estimates",
+      "PAYMENT": "Payments",
+      "REMINDERS": "Reminders",
+      "MARKETING": "Marketing"
+    },
+    "IntegrationArea": {
+      "PAYMENT": "Online payment",
+      "POS": "POS terminal",
+      "INSTALLMENT": "Installment",
+      "FISCAL": "Fiscal register",
+      "E_INVOICE": "E-invoice",
+      "SMS": "SMS",
+      "MESSAGING": "WhatsApp",
+      "EMAIL": "Email",
+      "PUSH": "Push",
+      "MAP": "Maps",
+      "STORAGE": "File storage",
+      "ACCOUNTING": "Accounting"
+    },
+    "Health": {
+      "OK": "Healthy",
+      "DEGRADED": "Degraded",
+      "DOWN": "Down",
+      "UNKNOWN": "Unknown"
+    },
+    "ProductType": {
+      "PHYSICAL": "Physical product",
+      "SPARE_PART": "Spare part",
+      "CONSUMABLE": "Consumable",
+      "BUNDLE": "Product + service bundle"
+    },
+    "ProductStatus": {
+      "ACTIVE": "Active",
+      "DRAFT": "Draft",
+      "ARCHIVED": "Archived"
+    },
+    "AttributeType": {
+      "TEXT": "Text",
+      "NUMBER": "Number",
+      "NUMBER_UNIT": "Number + unit",
+      "BOOLEAN": "Yes / no",
+      "SELECT": "Single select",
+      "MULTISELECT": "Multi select",
+      "DATE": "Date"
+    },
+    "FilterDisplay": {
+      "CHECKBOX": "Checkbox",
+      "RANGE": "Range",
+      "SLIDER": "Slider"
+    },
+    "UserStatus": {
+      "ACTIVE": "Active",
+      "INVITED": "Invited",
+      "BLOCKED": "Blocked",
+      "DISABLED": "Disabled",
+      "PENDING_VERIFICATION": "Pending verification"
+    },
+    "ReasonCategory": {
+      "ON_HOLD": "On hold",
+      "CANCELLED": "Cancellation",
+      "REJECTED": "Rejection",
+      "FAILED": "Failed stage",
+      "RESCHEDULE": "Reschedule",
+      "ESTIMATE_REJECT": "Estimate decline",
+      "DECLINE_JOB": "Job decline",
+      "FEE_WAIVE": "Fee waiver",
+      "RETURN": "Return"
+    },
+    "CashDeskType": {
+      "BRANCH": "Branch cash desk",
+      "TECHNICIAN": "Technician cash",
+      "COURIER": "Courier cash"
+    },
+    "CashOperation": {
+      "COLLECTION": "Cash collection",
+      "HANDOVER": "Handover",
+      "HANDOVER_CONFIRMED": "Handover confirmed",
+      "DISCREPANCY": "Discrepancy",
+      "SHIFT_OPEN": "Shift opened",
+      "SHIFT_CLOSE": "Shift closed"
+    },
+    "OpStatus": {
+      "PENDING": "Pending",
+      "CONFIRMED": "Confirmed",
+      "DISPUTED": "Disputed"
+    },
+    "ShiftStatus": {
+      "OPEN": "Open",
+      "CLOSED": "Closed"
+    },
+    "Comparator": {
+      "LTE": "≤ target",
+      "GTE": "≥ target"
+    },
+    "ContentStatus": {
+      "DRAFT": "Draft",
+      "PUBLISHED": "Published"
+    },
+    "Placement": {
+      "HOME_HERO": "Home — hero",
+      "HOME_STRIP": "Home — strip",
+      "SHOP_TOP": "Shop — top"
+    },
+    "IntegrationMode": {
+      "SANDBOX": "Sandbox",
+      "LIVE": "Live"
+    },
+    "SettlementPeriod": {
+      "WEEKLY": "Weekly",
+      "BIWEEKLY": "Biweekly",
+      "MONTHLY": "Monthly"
+    },
+    "Recipient": {
+      "CUSTOMER": "Customer",
+      "TECHNICIAN": "Technician",
+      "COURIER": "Courier",
+      "DISPATCHER": "Dispatcher",
+      "WAREHOUSE_EMPLOYEE": "Warehouse employee",
+      "MANAGER": "Manager"
+    },
+    "OldPart": {
+      "RETURN_TO_CUSTOMER": "Returned to customer",
+      "DISPOSE": "Disposed",
+      "WARRANTY_RETURN": "Warranty return"
+    }
+  }
+}

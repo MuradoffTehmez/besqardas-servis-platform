@@ -23,7 +23,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
   const nav = [
     { label: t("home"), href: "/" },
     { label: t("services"), href: "/services" },
-    { label: t("shop"), href: "/shop" },
+    { label: t("nav.shop"), href: "/shop" },
     { label: t("technicians"), href: "/technicians" },
     { label: t("nav.pricing"), href: "/pricing" },
     { label: t("nav.branches"), href: "/branches" },

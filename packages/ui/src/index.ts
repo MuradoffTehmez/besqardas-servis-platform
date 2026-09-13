@@ -40,7 +40,8 @@ export * from "./views/courier/courier-portal";
 export * from "./views/admin/admin-portal";
 
 // Integrated Platform Shell
-export { Platform } from "./platform";
+export { Platform } from "./app/platform";
+export { WebApp } from "./app/web";
 
 // Utilities
 export * from "./utils/i18n";

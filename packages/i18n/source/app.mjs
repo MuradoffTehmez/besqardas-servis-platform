@@ -66,8 +66,14 @@ export default {
     select: ["Seç", "Выбрать", "Select"],
     print: ["Çap et", "Печать", "Print"],
     history: ["Tarixçə", "История", "History"],
+    comment: ["Şərh", "Комментарий", "Comment"],
+    deleted: ["Silindi", "Удалено", "Deleted"],
+    send: ["Göndər", "Отправить", "Send"],
+    viewAll: ["Hamısına bax", "Смотреть все", "View all"],
   },
   nav: {
+    shop: ["Məhsullar", "Товары", "Shop"],
+    searchPlaceholder: ["Xidmət və ya məhsul axtar...", "Поиск услуг и товаров...", "Search services or products..."],
     pricing: ["Planlar", "Тарифы", "Plans"],
     branches: ["Filiallar", "Филиалы", "Branches"],
   },
@@ -277,6 +283,7 @@ export default {
     "6": ["Şənbə", "Суббота", "Saturday"],
   },
   fields: {
+    language: ["Dil", "Язык", "Language"],
     firstName: ["Ad", "Имя", "First name"],
     lastName: ["Soyad", "Фамилия", "Last name"],
     fullName: ["Ad, soyad", "ФИО", "Full name"],
@@ -347,6 +354,8 @@ export default {
     yourPlan: ["Planınız", "Ваш план", "Your plan"],
   },
   docs: {
+    none: ["Sənəd yoxdur", "Документов нет", "No documents"],
+    preview: ["Sənədin önizləməsi", "Просмотр документа", "Document preview"],
     voen: ["VÖEN", "ИНН (VÖEN)", "VÖEN"],
     counterparty: ["Alıcı", "Покупатель", "Customer"],
     order: ["Sifariş", "Заказ", "Order"],
@@ -364,6 +373,7 @@ export default {
     story3: ["Zəmanət, sənəd və cihaz tarixçəsi kabinetinizdə", "Гарантии, документы и история устройств в кабинете", "Warranties, documents and device history in your account"],
     backToSite: ["Sayta qayıt", "На сайт", "Back to site"],
     loginTitle: ["Hesabınıza daxil olun", "Войдите в аккаунт", "Sign in to your account"],
+    verifyTitle: ["Təsdiqləmə", "Подтверждение", "Verification"],
     loginText: ["Telefon nömrəsi və ya e-poçt ilə daxil olun.", "Войдите по телефону или e-mail.", "Sign in with phone or email."],
     adminLoginTitle: ["CRM panelinə giriş", "Вход в CRM", "Sign in to CRM"],
     adminLoginText: ["Daxili əməkdaşlar üçün. 2FA məcburidir.", "Для сотрудников. 2FA обязательна.", "For internal staff. 2FA is required."],
@@ -564,6 +574,7 @@ export default {
   },
   cart: {
     title: ["Səbət", "Корзина", "Cart"],
+    discount: ["Endirim", "Скидка", "Discount"],
     added: ["Səbətə əlavə edildi", "Добавлено в корзину", "Added to cart"],
     empty: ["Səbətiniz boşdur", "Корзина пуста", "Your cart is empty"],
     goShopping: ["Kataloqa keç", "В каталог", "Go to catalog"],
@@ -612,6 +623,7 @@ export default {
     backToCart: ["Səbətə qayıt", "Вернуться в корзину", "Back to cart"],
   },
   pay: {
+    title: ["Ödəniş", "Оплата", "Payment"],
     sandbox: ["Test ödəniş səhifəsi", "Тестовая страница оплаты", "Sandbox payment page"],
     order: ["Sifariş {number}", "Заказ {number}", "Order {number}"],
     noCardData: ["Demo mühitdə kart məlumatı daxil edilmir. Nəticəni simulyasiya edin.", "В демо данные карты не вводятся. Смоделируйте результат.", "No card details in the demo. Simulate an outcome."],
@@ -620,6 +632,7 @@ export default {
     cancel: ["Ödənişi ləğv et", "Отменить оплату", "Cancel payment"],
   },
   result: {
+    title: ["Ödəniş nəticəsi", "Результат оплаты", "Payment result"],
     successTitle: ["Sifariş qəbul edildi", "Заказ принят", "Order confirmed"],
     failTitle: ["Ödəniş alınmadı", "Оплата не прошла", "Payment failed"],
     cancelledTitle: ["Ödəniş ləğv edildi", "Оплата отменена", "Payment cancelled"],
