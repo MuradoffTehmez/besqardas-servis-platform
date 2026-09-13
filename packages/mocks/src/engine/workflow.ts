@@ -301,7 +301,7 @@ export function recomputeStatus(order: ServiceOrderRec, ctx: Ctx | null) {
 /* Logistika (§21)                                                      */
 /* ------------------------------------------------------------------ */
 
-function serviceCenterPoint(order: ServiceOrderRec) {
+function serviceCenterPoint(order: ServiceOrderRec): LogisticsTaskRec["from"] {
   const branch = db.branches.find((b) => b.hasServiceCenter && b.city === (order.address?.city ?? "Bakı")) ?? db.branches[0]!;
   return { label: `Servis mərkəzi — ${tr(branch.name, "az")}`, address: `${branch.city}, ${branch.address}`, location: branch.location };
 }
@@ -314,14 +314,15 @@ export function ensureLogisticsTask(order: ServiceOrderRec, stage: StageRec): Lo
   const key = templateStageKey(order, stage);
   const customer = userById(order.customerId);
   const addr = order.address;
-  const customerPoint = {
+  type Point = LogisticsTaskRec["from"];
+  const customerPoint: Point = {
     label: order.endCustomer?.name ?? (customer ? fullName(customer) : "Müştəri"),
     address: addr ? `${addr.city}, ${addr.street}${addr.apartment ? `, mənzil ${addr.apartment}` : ""}` : order.endCustomer?.address ?? "—",
     location: addr?.location ?? null,
   };
   const center = serviceCenterPoint(order);
   const central = db.warehouses[0]!;
-  const warehousePoint = { label: tr(central.name, "az"), address: "Bakı, Təbriz küç. 44 (anbar girişi)", location: db.branches[0]!.location };
+  const warehousePoint: Point = { label: tr(central.name, "az"), address: "Bakı, Təbriz küç. 44 (anbar girişi)", location: db.branches[0]!.location };
   const device = `${order.device.modelName}${order.device.serialNumber ? ` (S/N ${order.device.serialNumber})` : ""}`;
   let type: LogisticsTaskRec["type"] = "DELIVERY";
   let from = warehousePoint;
@@ -1219,7 +1220,7 @@ export function decideEstimate(order: ServiceOrderRec, req: EstimateDecisionRequ
   if (!est || est.status !== "SENT") throw apiError(409, "ACTION_NOT_ALLOWED", "error.actionNotAllowed");
   const approval = order.stages.find((s) => s.type === "ESTIMATE_APPROVAL" && !isDone(s));
   const reason = reasonLabel(req.reasonCode, ctx);
-  if (new Date(est.validUntil).getTime() < Date.now()) {
+  if (new Date(est.validUntil).getTime() < new Date(nowIso()).getTime()) {
     est.status = "EXPIRED";
     throw apiError(409, "ESTIMATE_EXPIRED", "error.actionNotAllowed");
   }
