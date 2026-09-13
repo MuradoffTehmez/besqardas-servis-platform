@@ -1,0 +1,11 @@
+{
+  "name": "@sp/config",
+  "version": "0.1.0",
+  "private": true,
+  "files": ["tsconfig", "tailwind"],
+  "exports": {
+    "./tsconfig/base.json": "./tsconfig/base.json",
+    "./tsconfig/nextjs.json": "./tsconfig/nextjs.json",
+    "./tsconfig/library.json": "./tsconfig/library.json"
+  }
+}

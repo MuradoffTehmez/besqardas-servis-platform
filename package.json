@@ -1,0 +1,36 @@
+{
+  "name": "service-platform",
+  "private": true,
+  "version": "0.1.0",
+  "description": "besqardasServis.az — Servis İdarəetmə Platforması (Phase 1 — Frontend)",
+  "packageManager": "pnpm@10.34.5",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "dev:web": "turbo run dev --filter=@sp/mocks --filter=@sp/web --parallel",
+    "dev:admin": "turbo run dev --filter=@sp/mocks --filter=@sp/admin --parallel",
+    "mock": "pnpm --filter @sp/mocks dev",
+    "build": "turbo run build",
+    "start": "turbo run start --parallel",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "format": "prettier --write \"**/*.{ts,tsx,json,css,md}\" --ignore-path .gitignore"
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2",
+    "turbo": "^2.10.12",
+    "typescript": "^5.9.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "msw",
+      "sharp",
+      "@tailwindcss/oxide",
+      "unrs-resolver"
+    ]
+  }
+}
