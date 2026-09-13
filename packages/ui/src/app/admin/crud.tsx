@@ -100,14 +100,14 @@ export function Cell({ row, col }: { row: any; col: ColumnDef }) {
   return <span>{main}{sub ? <small className="block">{typeof sub === "object" ? text(sub) : String(sub)}</small> : null}</span>;
 }
 
-function useOptions(f: { options?: { value: string; label: string }[]; enumGroup?: string; enumValues?: string[]; values?: string[]; lookup?: string }, lookups: any) {
+function useOptions(f: { options?: { value: string; label: string }[]; enumGroup?: string; enumValues?: string[]; values?: string[]; lookup?: string }, lookups: any): { value: string; label: string }[] {
   const { enumLabel, text } = useI18n();
   return useMemo(() => {
     if (f.options) return f.options;
     const values = f.enumValues ?? f.values ?? (f.enumGroup ? enumKeys(f.enumGroup) : undefined);
     if (values) return values.map((v) => ({ value: v, label: f.enumGroup ? enumLabel(f.enumGroup, v) : v }));
     if (f.lookup && lookups) return (lookups[f.lookup] ?? []).map((x: any) => ({ value: x.id ?? x.code, label: text(x.name ?? x.label ?? x.sku ?? x.code) }));
-    return [];
+    return [] as { value: string; label: string }[];
   }, [f, lookups, enumLabel, text]);
 }
 
@@ -265,7 +265,7 @@ export function FieldInput({ field: f, value, onChange, error, lookups }: { fiel
         <fieldset className={cn("kit-field", cls)}>
           <legend className="form-label mb-2">{f.label}</legend>
           <div className="flex flex-wrap gap-3">
-            {options.map((o) => <Check key={o.value} label={o.label} checked={(value ?? []).includes(o.value)} onValue={(c) => onChange(c ? [...(value ?? []), o.value] : (value ?? []).filter((x: string) => x !== o.value))} />)}
+            {options.map((o: { value: string; label: string }) => <Check key={o.value} label={o.label} checked={(value ?? []).includes(o.value)} onValue={(c) => onChange(c ? [...(value ?? []), o.value] : (value ?? []).filter((x: string) => x !== o.value))} />)}
           </div>
           {error && <p className="kit-field-error">{error[0]}</p>}
         </fieldset>
