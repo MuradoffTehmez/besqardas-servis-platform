@@ -302,15 +302,24 @@ importers:
       '@dnd-kit/core':
         specifier: ^6.3.1
         version: 6.3.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      '@sp/api-client':
+        specifier: workspace:*
+        version: link:../api-client
       '@sp/i18n':
         specifier: workspace:*
         version: link:../i18n
+      '@sp/schemas':
+        specifier: workspace:*
+        version: link:../schemas
       '@sp/types':
         specifier: workspace:*
         version: link:../types
       '@sp/utils':
         specifier: workspace:*
         version: link:../utils
+      '@tanstack/react-query':
+        specifier: ^5.102.8
+        version: 5.102.8(react@19.3.0)
       '@tanstack/react-table':
         specifier: ^8.21.3
         version: 8.21.3(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -338,6 +347,9 @@ importers:
       sonner:
         specifier: ^2.0.8
         version: 2.0.8(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      zod:
+        specifier: ^4.3.3
+        version: 4.6.4
     devDependencies:
       '@sp/config':
         specifier: workspace:*

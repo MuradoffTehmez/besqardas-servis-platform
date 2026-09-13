@@ -3,7 +3,7 @@ import { find, list, notFound, route } from "../lib/http";
 import { L } from "../lib/i18n";
 import { money } from "../lib/money";
 import { maskPhone } from "@sp/utils";
-import { planDto, serviceDto, technicianDto, technicianSummaryDto, warrantyDto } from "../dto";
+import { planDto, serviceDto, specName, technicianDto, technicianSummaryDto, warrantyDto } from "../dto";
 import { computeSlots, matchingTechnicians } from "../engine/slots";
 import { rankTechnicians, describeFees } from "../engine/workflow";
 import { productSummaryDto } from "../dto";
@@ -17,6 +17,8 @@ export const demoHandlers = [
   route.get("/branches", ({ url }) => list(url, db.branches.filter((b) => b.active), { ignoreEmpty: true })),
 
   route.get("/zones", () => db.zones.filter((z) => z.active)),
+
+  route.get("/specializations", () => db.specializations.map((s) => ({ id: s.id, name: specName(s.id), categoryId: s.categoryId, serviceType: s.serviceType, requiresCertificate: s.requiresCertificate }))),
 
   route.get("/home", ({ ctx }) => ({
     banners: db.banners.filter((b) => b.status === "PUBLISHED"),
