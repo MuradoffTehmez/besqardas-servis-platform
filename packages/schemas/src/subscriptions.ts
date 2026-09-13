@@ -3,7 +3,7 @@ import { Id, IsoDateTime, LocalizedText, Money } from "./common";
 import { BillingPeriod, PlanGroup, PlanVisibility, SubscriptionStatus } from "./enums";
 import { Entitlements } from "./auth";
 
-/** PRD §41–43 — dynamic plan system */
+/** Dinamik plan sistemi (PRD §41–43) */
 
 export const EntitlementDefinition = z.object({
   code: z.string(),

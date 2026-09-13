@@ -1,11 +1,11 @@
 import { z } from "zod";
 
-/** PRD §65.2 conventions */
+/** API konvensiyaları (PRD §65.2) */
 
 export const Id = z.string().min(1);
 export const IsoDateTime = z.string();
 
-/** Money is always a decimal string — floats are never used. */
+/** Pul həmişə onluq sətirdir — float istifadə olunmur. */
 export const Money = z.object({
   amount: z.string().regex(/^-?\d+(\.\d{1,4})?$/),
   currency: z.string().default("AZN"),
@@ -48,7 +48,7 @@ export const ApiError = z.object({
   fieldErrors: z.record(z.string(), z.array(z.string())).optional(),
 });
 
-/** Actions the backend allows for the current user on a resource (PRD §18.4). */
+/** Backend-in cari istifadəçiyə resurs üzrə icazə verdiyi əməliyyatlar (PRD §18.4). */
 export const AvailableAction = z.object({
   code: z.string(),
   stageId: z.string().optional(),

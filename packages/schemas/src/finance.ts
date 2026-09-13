@@ -13,7 +13,7 @@ import {
   SyncStatus,
 } from "./enums";
 
-/** PRD §47–51 payments, documents, cash, settlements */
+/** Ödənişlər, sənədlər, kassa, hesablaşmalar (PRD §47–51) */
 
 export const Payment = z.object({
   id: Id,

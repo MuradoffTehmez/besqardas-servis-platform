@@ -2,7 +2,7 @@ import { z } from "zod";
 import { Address, AvailableAction, GeoPoint, Id, IsoDateTime, Money } from "./common";
 import { B2BAccountStatus, CommissionBase, CommissionModel, CompanyUserRole, CustomerSegment, LogisticsStatus, LogisticsTaskType, PaymentTerms } from "./enums";
 
-/** PRD §44–45 B2B, §21 logistics */
+/** B2B (PRD §44–45), logistika (§21) */
 
 export const B2BAccount = z.object({
   id: Id,

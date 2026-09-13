@@ -2,7 +2,7 @@ import { z } from "zod";
 import { Id, Address } from "./common";
 import { CustomerSegment, EmploymentType, Locale, PermissionScope, Role } from "./enums";
 
-/** PRD §9 — Authentication. Validation messages are i18n keys resolved in the UI (`validation.*`). */
+/** Autentifikasiya (PRD §9). Validasiya mesajları UI-da həll olunan i18n açarlarıdır (`validation.*`). */
 
 const phone = z
   .string()

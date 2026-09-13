@@ -1,10 +1,10 @@
-/** +994 phone helpers (PRD §62) */
+/** +994 telefon köməkçiləri (PRD §62) */
 
 export function digitsOnly(value: string): string {
   return value.replace(/\D/g, "");
 }
 
-/** Normalizes any input to "+994XXXXXXXXX" (9 national digits) or returns partial digits. */
+/** İstənilən daxiletməni "+994XXXXXXXXX" formatına (9 milli rəqəm) çevirir. */
 export function normalizeAzPhone(value: string): string {
   let d = digitsOnly(value);
   if (d.startsWith("994")) d = d.slice(3);
@@ -12,7 +12,7 @@ export function normalizeAzPhone(value: string): string {
   return "+994" + d.slice(0, 9);
 }
 
-/** Formats national digits as "+994 (50) 123-45-67" while typing. */
+/** Yazarkən rəqəmləri "+994 (50) 123-45-67" formatında göstərir. */
 export function formatAzPhone(value: string): string {
   let d = digitsOnly(value);
   if (d.startsWith("994")) d = d.slice(3);
@@ -41,7 +41,7 @@ export function maskPhone(value: string | null | undefined): string {
   return `+994 (${d.slice(0, 2)}) ***-**-${d.slice(7, 9)}`;
 }
 
-/** VÖEN — 10 digits. "1234567891" → "12******91" */
+/** VÖEN — 10 rəqəm. "1234567891" → "12******91" */
 export function maskVoen(value: string | null | undefined): string {
   if (!value) return "";
   if (value.length < 4) return value;

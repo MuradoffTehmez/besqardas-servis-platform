@@ -2,7 +2,7 @@ import { z } from "zod";
 import { AvailableAction, Id, IsoDateTime, Money } from "./common";
 import { DeviceLocation, ReviewStatus, ReviewTarget, WarrantyStatus, WarrantyType } from "./enums";
 
-/** PRD §52–55 customer modules, §23 warranty */
+/** Müştəri modulları (PRD §52–55), zəmanət (§23) */
 
 export const Device = z.object({
   id: Id,

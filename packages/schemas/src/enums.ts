@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-/** Every enum used by the API contract. Values are stable codes; labels come from i18n (`status.*`, `enum.*`). */
+/** API müqaviləsindəki bütün enum-lar. Dəyərlər sabit kodlardır; etiketlər i18n-dən gəlir (`status.*`, `enum.*`). */
 
 export const LOCALES = ["az", "ru", "en"] as const;
 export const Locale = z.enum(LOCALES);

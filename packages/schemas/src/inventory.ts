@@ -13,7 +13,7 @@ import {
   WarehouseType,
 } from "./enums";
 
-/** PRD §34–40 warehouse */
+/** Anbar (PRD §34–40) */
 
 export const Warehouse = z.object({
   id: Id,

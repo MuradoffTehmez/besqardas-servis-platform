@@ -2,7 +2,7 @@ import { z } from "zod";
 import { GeoPoint, Id, IsoDateTime, LocalizedText } from "./common";
 import { ContentStatus, IntegrationArea, NotificationChannel, PermissionScope, Role } from "./enums";
 
-/** PRD §56 Tenant / branding, §57 branches, §8 users & roles, §58 notifications, content, integrations, audit */
+/** Tenant və brend (PRD §56), filiallar (§57), istifadəçi və rollar (§8), bildirişlər (§58), məzmun, inteqrasiyalar, audit */
 
 export const Branding = z.object({
   tenantId: Id,

@@ -26,7 +26,7 @@ import {
   DeviceLocation,
 } from "./enums";
 
-/** PRD §10–20: services, specializations, technicians, service orders, workflow, estimates, fees */
+/** Servislər, ixtisaslar, ustalar, servis sifarişləri, workflow, smeta, haqlar (PRD §10–20) */
 
 export const EquipmentCategory = z.object({
   id: Id,
@@ -178,7 +178,7 @@ export const Slot = z.object({
 
 export const SlotDay = z.object({ date: z.string(), slots: z.array(Slot) });
 
-/* ---------------- Workflow templates (§17) ---------------- */
+/* ---------------- Workflow şablonları (§17) ---------------- */
 
 export const StageTemplate = z.object({
   id: Id,
@@ -219,7 +219,7 @@ export const TemplateValidation = z.object({
   errors: z.array(z.object({ code: z.string(), message: z.string(), stageId: z.string().nullable() })),
 });
 
-/* ---------------- Estimate (§19) ---------------- */
+/* ---------------- Smeta (§19) ---------------- */
 
 export const EstimateLine = z.object({
   id: Id,
@@ -279,7 +279,7 @@ export const EstimateDecisionRequest = z.object({
   channel: z.enum(["CABINET", "SMS_LINK", "SIGNATURE", "PHONE"]).default("CABINET"),
 });
 
-/* ---------------- Service order (§13, §18) ---------------- */
+/* ---------------- Servis sifarişi (§13, §18) ---------------- */
 
 export const Stage = z.object({
   id: Id,
@@ -410,7 +410,7 @@ export const CreateServiceOrderRequest = z.object({
   urgent: z.boolean().default(false),
   contactChannel: ContactChannel,
   note: z.string().optional(),
-  // operator / partner fields
+  // operator / partner sahələri
   customerId: z.string().optional(),
   endCustomer: z.object({ name: z.string(), phone: z.string(), address: z.string() }).optional(),
   source: OrderSource.optional(),
@@ -430,9 +430,10 @@ export const ServiceOrderActionRequest = z.object({
   lines: z.array(EstimateLineInput).optional(),
   materials: z.array(z.object({ productId: z.string(), quantity: z.string(), unit: z.string(), ownMaterial: z.boolean() })).optional(),
   payment: z.object({ method: z.string(), amount: z.string() }).optional(),
+  declinedLineIds: z.array(z.string()).optional(),
 });
 
-/* ---------------- Fee rules (§20) ---------------- */
+/* ---------------- Haqq qaydaları (§20) ---------------- */
 
 export const FeeRule = z.object({
   id: Id,

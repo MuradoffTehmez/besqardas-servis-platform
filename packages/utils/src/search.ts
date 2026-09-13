@@ -1,12 +1,12 @@
 /**
- * Search text normalization (PRD §29):
+ * Axtarış mətninin normallaşdırılması (PRD §29):
  * - ə/e, ı/i, ö/o, ü/u, ş/sh, ç/ch, ğ/gh
- * - cyrillic ↔ latin transliteration
- * - AZ / RU / EN synonyms
- * - typo tolerance
- * - model codes insensitive to spaces and hyphens (X-123 = X123)
+ * - kirill ↔ latın transliterasiyası
+ * - AZ / RU / EN sinonimləri
+ * - yazı səhvlərinə tolerantlıq
+ * - model kodlarında boşluq və defisə həssas olmamaq (X-123 = X123)
  *
- * In production this lives in the search engine; here it powers the mock API.
+ * Production-da bu məntiq axtarış mühərrikində olacaq; burada mock API üçün işləyir.
  */
 
 const AZ_MAP: Record<string, string> = {
@@ -27,7 +27,7 @@ const CYRILLIC_MAP: Record<string, string> = {
   ш: "sh", щ: "shch", ъ: "", ы: "y", ь: "", э: "e", ю: "yu", я: "ya", ә: "e", ҹ: "j",
 };
 
-/** Canonical forms for multilingual synonyms. Keys are already normalized. */
+/** Çoxdilli sinonimlərin kanonik formaları. Açarlar artıq normallaşdırılıb. */
 const SYNONYMS: Record<string, string> = {
   kondisioner: "kondisioner",
   konditsioner: "kondisioner",
@@ -80,14 +80,14 @@ export function normalizeSearchText(input: string): string {
   s = transliterateCyrillic(s);
   let out = "";
   for (const ch of s) out += AZ_MAP[ch] ?? ch;
-  // strip diacritics that may remain
+  // qalan diakritik işarələri silirik
   out = out.normalize("NFD").replace(/[̀-ͯ]/g, "");
-  // collapse punctuation into spaces
+  // durğu işarələrini boşluğa çeviririk
   out = out.replace(/[^a-z0-9\s-]/g, " ").replace(/\s+/g, " ").trim();
   return out;
 }
 
-/** Model-code key: "LG X-123" → "lgx123" */
+/** Model kodu açarı: "LG X-123" → "lgx123" */
 export function compactKey(input: string): string {
   return normalizeSearchText(input).replace(/[\s-]+/g, "");
 }
@@ -98,7 +98,7 @@ export function canonicalToken(token: string): string {
 
 export function tokenize(input: string): string[] {
   const normalized = normalizeSearchText(input);
-  // multi-word synonyms first
+  // əvvəlcə çoxsözlü sinonimlər
   let replaced = normalized;
   for (const key of Object.keys(SYNONYMS)) {
     if (key.includes(" ") && replaced.includes(key)) replaced = replaced.replaceAll(key, SYNONYMS[key]!);
@@ -127,8 +127,8 @@ export function levenshtein(a: string, b: string): number {
 }
 
 /**
- * Scores how well `query` matches `haystack` (0 = no match).
- * Every query token must match some haystack token (prefix, compact or fuzzy).
+ * `query`-nin `haystack`-ə nə qədər uyğun olduğunu qiymətləndirir (0 — uyğun deyil).
+ * Hər sorğu tokeni ən azı bir tokenə uyğun gəlməlidir (prefiks, kompakt və ya qeyri-dəqiq).
  */
 export function searchScore(query: string, haystack: string): number {
   const qTokens = tokenize(query);
@@ -148,7 +148,7 @@ export function searchScore(query: string, haystack: string): number {
     if (!best) return 0;
     score += best;
   }
-  // whole compact query in compact haystack (model codes)
+  // bütöv kompakt sorğu kompakt mətndə (model kodları)
   if (hCompact.includes(compactKey(query))) score += 5;
   return score;
 }

@@ -56,7 +56,7 @@ export function slugify(input: string): string {
     .replace(/^-|-$/g, "");
 }
 
-/** Permission check helper: "resource:action" (PRD §8.1) */
+/** İcazə yoxlaması: "resurs:əməliyyat" formatı (PRD §8.1) */
 export function hasPermission(permissions: readonly string[] | undefined, permission: string): boolean {
   if (!permissions) return false;
   if (permissions.includes("*")) return true;

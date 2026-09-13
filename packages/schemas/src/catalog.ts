@@ -2,7 +2,7 @@ import { z } from "zod";
 import { Attachment, Id, IsoDateTime, LocalizedText, Money, Quantity } from "./common";
 import { AttributeType, CostingMethod, DiscountStacking, FilterDisplay, PriceType, ProductType } from "./enums";
 
-/** PRD §24–30 catalog, PIM, SKU, brand/model/compatibility, filters, search, §46 pricing */
+/** Kataloq, PIM, SKU, marka/model/uyğunluq, filtr, axtarış (PRD §24–30), qiymət (§46) */
 
 export const Category = z.object({
   id: Id,
@@ -69,7 +69,7 @@ export const DeviceModel = z.object({
   compatiblePartCount: z.number(),
 });
 
-/** PRD §46.4 — the price object exactly as returned by the backend */
+/** Backend-in qaytardığı qiymət obyekti (PRD §46.4) */
 export const AppliedDiscount = z.object({
   code: z.string(),
   label: z.string(),

@@ -3,7 +3,7 @@ import { Address, AvailableAction, HistoryEntry, Id, IsoDateTime, Money, Quantit
 import { DeliveryMethod, PaymentMethod, QuoteStatus, ReturnStatus, SalesOrderStatus } from "./enums";
 import { Price } from "./catalog";
 
-/** PRD §31–32 cart, checkout, sales orders, returns; §45.2 quotes */
+/** Səbət, checkout, satış sifarişləri, qaytarma (PRD §31–32); kommersiya təklifləri (§45.2) */
 
 export const CartItem = z.object({
   id: Id,
