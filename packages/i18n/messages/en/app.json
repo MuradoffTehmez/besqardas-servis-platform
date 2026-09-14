@@ -595,7 +595,19 @@
     "reviews": "Reviews ({count})",
     "noReviews": "No reviews yet",
     "verifiedPurchase": "Verified purchase",
-    "related": "Related products"
+    "related": "Related products",
+    "discountPct": "−{pct}%",
+    "youSave": "Save {amount}",
+    "sections": "Product sections",
+    "overview": "Overview",
+    "reviewsBased": "Based on {count} reviews",
+    "deliveryTitle": "Delivery & installation",
+    "quantity": "Quantity",
+    "availableAt": "Available at {count} branches",
+    "trustOriginal": "Original product with official warranty",
+    "trustInstall": "Installed by certified technicians",
+    "trustReturn": "14-day returns",
+    "photo": "Photo {n}"
   },
   "reviews": {
     "report": "Report",
@@ -674,7 +686,16 @@
     "deliveryAtCheckout": "Delivery is calculated at checkout.",
     "checkout": "Proceed to checkout",
     "loginToCheckout": "Sign in to check out",
-    "guestNote": "Your cart is kept and merged after sign-in."
+    "guestNote": "Your cart is kept and merged after sign-in.",
+    "itemCount": "{count} items",
+    "continueShopping": "Continue shopping",
+    "savings": "You save",
+    "securePayment": "Secure payment — card details are never stored",
+    "unitPrice": "{price} / {unit}",
+    "removeItem": "Remove from cart",
+    "havePromo": "Have a promo code?",
+    "total": "Total",
+    "installationShort": "Installation"
   },
   "checkout": {
     "title": "Checkout",

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { expectNoCriticalA11y, loginWithEmail, resetMock } from "./support";
+import { expectNoCriticalA11y, loginWithEmail, open, resetMock } from "./support";
 
 test.describe("SEO (§72)", () => {
   test("public səhifə serverdə məzmun, canonical, hreflang və JSON-LD ilə gəlir", async ({ request }) => {
@@ -37,7 +37,7 @@ test.describe("Əlçatanlıq — axe (§71)", () => {
   const publicPages = ["/az", "/az/services", "/az/services/kondisioner-periodik-servis", "/az/shop", "/az/product/midea-xtreme-save", "/az/technicians", "/az/pricing", "/az/branches", "/az/faq", "/az/contact", "/az/login", "/az/register", "/ru", "/en/shop"];
   for (const path of publicPages) {
     test(`public: ${path}`, async ({ page }) => {
-      await page.goto(path);
+      await open(page, path);
       await expect(page.locator("main, form").first()).toBeVisible();
       await page.waitForLoadState("networkidle");
       await expectNoCriticalA11y(page, path);
@@ -48,7 +48,7 @@ test.describe("Əlçatanlıq — axe (§71)", () => {
     await resetMock(request);
     await loginWithEmail(page, "aysel@demo.az");
     for (const path of ["/az/account", "/az/account/services", "/az/account/devices", "/az/account/profile", "/az/cart", "/az/checkout"]) {
-      await page.goto(path);
+      await open(page, path);
       await page.waitForLoadState("networkidle");
       await expectNoCriticalA11y(page, path);
     }

@@ -402,8 +402,8 @@ export function TechniciansPage() {
       <PageHeader title={t("techniciansPage.title")} subtitle={t("techniciansPage.text")} />
       <div className="flex gap-2 flex-wrap mb-4">
         <SearchBox value={query.get("q") ?? ""} onChange={(v) => setQuery({ q: v })} placeholder={t("techniciansPage.search")} />
-        <SelectField value={spec} onValue={(v) => setQuery({ spec: v })} placeholder={t("techniciansPage.allSpecs")} options={(specs.data ?? []).map((s) => ({ value: s.id, label: s.name }))} />
-        <SelectField value={query.get("sort") ?? ""} onValue={(v) => setQuery({ sort: v })} placeholder={t("techniciansPage.sortRating")} options={[{ value: "-completedJobs", label: t("techniciansPage.sortJobs") }, { value: "-experienceYears", label: t("techniciansPage.sortExperience") }]} />
+        <SelectField ariaLabel={t("techniciansPage.specializations")} value={spec} onValue={(v) => setQuery({ spec: v })} placeholder={t("techniciansPage.allSpecs")} options={(specs.data ?? []).map((s) => ({ value: s.id, label: s.name }))} />
+        <SelectField ariaLabel={t("shop.sortLabel")} value={query.get("sort") ?? ""} onValue={(v) => setQuery({ sort: v })} placeholder={t("techniciansPage.sortRating")} options={[{ value: "-completedJobs", label: t("techniciansPage.sortJobs") }, { value: "-experienceYears", label: t("techniciansPage.sortExperience") }]} />
       </div>
       {list.isLoading ? <Loading rows={6} /> : list.error ? <ErrorState error={list.error} onRetry={() => list.refetch()} /> : !items.length ? <EmptyState /> : (
         <div className="tech-grid">

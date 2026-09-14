@@ -595,7 +595,19 @@
     "reviews": "Rəylər ({count})",
     "noReviews": "Hələ rəy yoxdur",
     "verifiedPurchase": "Təsdiqlənmiş alış",
-    "related": "Əlaqəli məhsullar"
+    "related": "Əlaqəli məhsullar",
+    "discountPct": "−{pct}%",
+    "youSave": "{amount} qənaət",
+    "sections": "Məhsul bölmələri",
+    "overview": "Ümumi baxış",
+    "reviewsBased": "{count} rəy əsasında",
+    "deliveryTitle": "Çatdırılma və quraşdırma",
+    "quantity": "Miqdar",
+    "availableAt": "{count} filialda mövcuddur",
+    "trustOriginal": "Rəsmi zəmanətli orijinal məhsul",
+    "trustInstall": "Sertifikatlı ustalar tərəfindən quraşdırma",
+    "trustReturn": "14 gün ərzində qaytarma",
+    "photo": "Şəkil {n}"
   },
   "reviews": {
     "report": "Şikayət et",
@@ -674,7 +686,16 @@
     "deliveryAtCheckout": "Çatdırılma checkout-da hesablanır.",
     "checkout": "Sifarişi rəsmiləşdir",
     "loginToCheckout": "Daxil ol və rəsmiləşdir",
-    "guestNote": "Səbətiniz saxlanılacaq və girişdən sonra hesabınızla birləşəcək."
+    "guestNote": "Səbətiniz saxlanılacaq və girişdən sonra hesabınızla birləşəcək.",
+    "itemCount": "{count} məhsul",
+    "continueShopping": "Alış-verişə davam et",
+    "savings": "Qənaətiniz",
+    "securePayment": "Təhlükəsiz ödəniş — kart məlumatları saytda saxlanılmır",
+    "unitPrice": "{price} / {unit}",
+    "removeItem": "Səbətdən sil",
+    "havePromo": "Promo kodunuz var?",
+    "total": "Yekun məbləğ",
+    "installationShort": "Quraşdırma"
   },
   "checkout": {
     "title": "Sifarişin rəsmiləşdirilməsi",

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { ADMIN_URL, fillOtp, loginWithEmail, resetMock, t } from "./support";
+import { ADMIN_URL, fillOtp, loginWithEmail, open, resetMock, t } from "./support";
 
 test.describe("Giriş və rol əsaslı yönləndirmə (§9)", () => {
   test.beforeAll(async ({ request }) => resetMock(request));
@@ -11,7 +11,7 @@ test.describe("Giriş və rol əsaslı yönləndirmə (§9)", () => {
   });
 
   test("yanlış şifrə lokallaşdırılmış xəta göstərir", async ({ page }) => {
-    await page.goto("/az/login");
+    await open(page, "/az/login");
     await page.getByRole("tab", { name: t("auth.byEmail") }).click();
     await page.getByLabel(t("email")).fill("aysel@demo.az");
     await page.getByLabel(t("password")).fill("yanlis-sifre");
@@ -22,7 +22,7 @@ test.describe("Giriş və rol əsaslı yönləndirmə (§9)", () => {
   });
 
   test("kuryer telefon + OTP ilə daxil olur", async ({ page }) => {
-    await page.goto("/az/login");
+    await open(page, "/az/login");
     await page.getByLabel(t("auth.phone")).fill("553334455");
     await page.getByRole("button", { name: t("auth.sendCode") }).click();
     await fillOtp(page);
@@ -31,7 +31,7 @@ test.describe("Giriş və rol əsaslı yönləndirmə (§9)", () => {
   });
 
   test("qonaq kabinetə girəndə girişə yönləndirilir və sonra geri qaytarılır", async ({ page }) => {
-    await page.goto("/az/account/devices");
+    await open(page, "/az/account/devices");
     await expect(page).toHaveURL(/\/az\/login\?next=%2Faccount%2Fdevices/);
     await page.getByRole("tab", { name: t("auth.byEmail") }).click();
     await page.getByLabel(t("email")).fill("rashad@demo.az");

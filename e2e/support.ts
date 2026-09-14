@@ -22,10 +22,16 @@ export async function resetMock(request: APIRequestContext) {
   expect(r.ok()).toBeTruthy();
 }
 
+/** Səhifəyə keçir və React hidratasiyasını gözləyir (server HTML-i interaktiv olana qədər klik itə bilər). */
+export async function open(page: Page, url: string) {
+  await page.goto(url);
+  await page.waitForSelector("html[data-hydrated]", { timeout: 30_000 });
+}
+
 /** E-poçt və şifrə ilə UI vasitəsilə giriş. */
 export async function loginWithEmail(page: Page, email: string, opts: { next?: string; base?: string } = {}) {
   const base = opts.base ?? "";
-  await page.goto(`${base}/az/login${opts.next ? `?next=${encodeURIComponent(opts.next)}` : ""}`);
+  await open(page, `${base}/az/login${opts.next ? `?next=${encodeURIComponent(opts.next)}` : ""}`);
   const emailTab = page.getByRole("tab", { name: t("auth.byEmail") });
   if (await emailTab.isVisible()) await emailTab.click();
   await page.getByLabel(t("email")).fill(email);
