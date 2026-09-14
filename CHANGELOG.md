@@ -1,5 +1,15 @@
 # Dəyişiklik tarixçəsi
 
+## [Unreleased]
+
+### Əlavə edildi (Added)
+- **CRM/ERP admin paneli (PRD §61)**: `apps/admin` üçün bütün route-lar — dashboard, servis sifarişləri və operator sifarişi, dispetçer lövhəsi, həftəlik cədvəl, logistika, zəmanət iddiaları.
+- **Workflow şablon redaktoru**: mərhələ əlavə/sıralama/kopyalama, başlama şərtləri, tamamlama tələbləri, SLA, yoxlama və versiyalı saxlama.
+- **İstifadəçilər**: müştəri 360° kartı, usta detalı, sənəd/ixtisas yoxlaması, ştat lisenziyaları, əməkdaşlıqlar, istifadəçi dəvəti və rol × əməliyyat × əhatə matrisi.
+- **Kataloq, satış, anbar**: məhsul redaktoru (atribut, variant qiymətləri, vahid çevirmələri, uyğunluq), CSV uyğunluq importu, satış sifarişi, kommersiya təklifinə qiymət, qalıqlar, stok hərəkətləri, transfer və mal qəbulu, inventarizasiya, alışlar, maya dəyəri metodu.
+- **Maliyyə və təşkilat**: abunə planı və entitlement redaktoru, maliyyə icmalı, kassa təhvili, usta hesablaşmaları, ayarlar, brend önizləməsi, inteqrasiyalar, hesabatlar və KPI.
+- Admin mətnləri üçün AZ / RU / EN tərcümələr; i18n yoxlama skripti qısa köməkçi funksiyaları da tanıyır.
+
 ## [v0.2.0] - 2026-09-14
 
 ### Əlavə edildi (Added)

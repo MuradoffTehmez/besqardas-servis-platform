@@ -26,6 +26,10 @@ for (const f of files) {
   for (const m of src.matchAll(/(?<![\w.])(?:t|has)\(\s*"([a-zA-Z0-9_.-]+)"/g)) if (!has(az, m[1])) missing.set(m[1], rel);
   for (const m of src.matchAll(/(?:titleKey|labelKey|doneKey|title)\s*[:=]\s*"([a-z][a-zA-Z0-9_]*\.[a-zA-Z0-9_.]+)"/g)) if (!has(az, m[1])) missing.set(m[1], rel);
   for (const m of src.matchAll(/(?<![\w.])t\(\s*`([a-zA-Z0-9_.-]+)\.\$\{/g)) if (!hasPrefix(az, m[1])) dynamic.set(m[1], rel);
+  // Qısa köməkçilər: const f = (k) => t(`adm.f.${k}`) → f("name")
+  for (const def of src.matchAll(/const (\w+) = \(k: string\) => t\(`([a-zA-Z0-9_.]+)\.\$\{k\}`\)/g)) {
+    for (const m of src.matchAll(new RegExp(`(?<![\\w.])${def[1]}\\(\\s*"([a-zA-Z0-9_]+)"`, "g"))) if (!has(az, `${def[2]}.${m[1]}`)) missing.set(`${def[2]}.${m[1]}`, rel);
+  }
 }
 for (const [k, f] of [...missing].sort()) console.log(`MISSING ${k}  (${f})`);
 for (const [k, f] of [...dynamic].sort()) console.log(`PREFIX  ${k}.*  (${f})`);

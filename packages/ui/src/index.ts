@@ -42,6 +42,7 @@ export * from "./views/admin/admin-portal";
 // Integrated Platform Shell
 export { Platform } from "./app/platform";
 export { WebApp } from "./app/web";
+export { AdminApp } from "./app/admin";
 
 // Utilities
 export * from "./utils/i18n";
