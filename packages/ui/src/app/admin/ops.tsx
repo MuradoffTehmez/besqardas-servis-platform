@@ -303,7 +303,7 @@ export function DispatchPage() {
         subtitle={q.data ? date(`${q.data.date}T08:00:00Z`) : undefined}
         actions={
           <>
-            <SelectField className="kit-filter" value={branch} onValue={setBranch} placeholder={t("adm.f.allBranches")} options={(lookups.data?.branches ?? []).map((b: any) => ({ value: b.id, label: text(b.name) }))} />
+            <SelectField ariaLabel={t("adm.f.allBranches")} className="kit-filter" value={branch} onValue={setBranch} placeholder={t("adm.f.allBranches")} options={(lookups.data?.branches ?? []).map((b: any) => ({ value: b.id, label: text(b.name) }))} />
             <div className="kit-segment"><button type="button" onClick={() => setOffset((o) => o - 1)}>←</button><button type="button" className={cn(offset === 0 && "active")} onClick={() => setOffset(0)}>{t("courier.today")}</button><button type="button" onClick={() => setOffset((o) => o + 1)}>→</button></div>
             <div className="kit-segment"><button type="button" className={cn(view === "timeline" && "active")} onClick={() => setView("timeline")}>{t("adm.dispatch.timeline")}</button><button type="button" className={cn(view === "map" && "active")} onClick={() => setView("map")}>{t("map.label")}</button></div>
           </>

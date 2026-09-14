@@ -326,11 +326,11 @@ export function TextArea({ label, error, hint, required, onValue, className, row
   );
 }
 
-export function SelectField({ label, error, hint, required, options, value, onValue, placeholder, className, disabled }: { label?: React.ReactNode; error?: string | string[] | null; hint?: React.ReactNode; required?: boolean; options: { value: string; label: string; disabled?: boolean }[]; value: string; onValue: (v: string) => void; placeholder?: string; className?: string; disabled?: boolean }) {
+export function SelectField({ label, error, hint, required, options, value, onValue, placeholder, className, disabled, ariaLabel }: { ariaLabel?: string; label?: React.ReactNode; error?: string | string[] | null; hint?: React.ReactNode; required?: boolean; options: { value: string; label: string; disabled?: boolean }[]; value: string; onValue: (v: string) => void; placeholder?: string; className?: string; disabled?: boolean }) {
   return (
     <Field label={label} error={error} hint={hint} required={required} className={className}>
       {(id, d) => (
-        <select id={id} aria-describedby={d} aria-invalid={!!error || undefined} className={cn("form-input", error && "input-error")} value={value} onChange={(e) => onValue(e.target.value)} required={required} disabled={disabled}>
+        <select id={id} aria-label={ariaLabel} aria-describedby={d} aria-invalid={!!error || undefined} className={cn("form-input", error && "input-error")} value={value} onChange={(e) => onValue(e.target.value)} required={required} disabled={disabled}>
           {placeholder !== undefined && <option value="">{placeholder}</option>}
           {options.map((o) => (
             <option key={o.value} value={o.value} disabled={o.disabled}>

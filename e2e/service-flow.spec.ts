@@ -1,11 +1,11 @@
 import { expect, test } from "@playwright/test";
-import { loginWithEmail, resetMock, t } from "./support";
+import { loginWithEmail, open, resetMock, t } from "./support";
 
 test.describe("Servis sifarişi və smeta (§13, §19)", () => {
   test.beforeEach(async ({ request }) => resetMock(request));
 
   test("qonaq sifarişə başlayanda girişə yönləndirilir (§75.1)", async ({ page }) => {
-    await page.goto("/az/services/kondisioner-periodik-servis");
+    await open(page, "/az/services/kondisioner-periodik-servis");
     await page.getByRole("button", { name: t("book") }).first().click();
     await expect(page).toHaveURL(/\/az\/login\?next=/);
   });

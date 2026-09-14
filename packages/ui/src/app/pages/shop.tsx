@@ -1,15 +1,15 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { BadgeCheck, ChevronDown, ChevronLeft, Flag, Heart, Scale, ShoppingCart, SlidersHorizontal, Star, Truck, Wrench, X } from "lucide-react";
+import { BadgeCheck, ChevronDown, ChevronLeft, Flag, Heart, Scale, ShieldCheck, ShoppingCart, SlidersHorizontal, Star, Tag, Trash2, Truck, Wrench, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@sp/utils";
 import { ApiError, idempotencyKey, post, qs, useApi, useQueryClient, del, patch } from "@sp/api-client";
 import { useI18n } from "../core/i18n";
 import { Link, useRouter } from "../core/router";
 import { useSession } from "../core/session";
-import { Card, Check, EmptyState, ErrorState, FormError, KeyValue, Loading, Pagination, QueryView, Radios, SearchBox, SelectField, Stars, TextArea, TextField, errorText, useFormState } from "../kit/base";
+import { Card, EmptyState, ErrorState, FormError, Loading, Pagination, Radios, SearchBox, SelectField, Stars, TextArea, TextField, errorText, useFormState } from "../kit/base";
 import { ConfirmDialog, Dialog } from "../kit/actions";
-import { PriceTag, StockPill } from "../kit/domain";
+import { StockPill } from "../kit/domain";
 import { ProductVisual, QuantityInput } from "../kit/media";
 
 /* ------------------------------------------------------------------ */
@@ -338,8 +338,25 @@ function RangeFacet({ facet, onApply }: { facet: any; onApply: (min: string | nu
 /* Məhsul səhifəsi (§30)                                                */
 /* ------------------------------------------------------------------ */
 
+/** Mobil ekranda yığıla bilən bölmə; desktopda həmişə açıq qalır (CSS). */
+function PdpSection({ id, title, badge, defaultOpen = false, children, className }: { id: string; title: string; badge?: React.ReactNode; defaultOpen?: boolean; children: React.ReactNode; className?: string }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <section id={id} className={cn("pdp-section", !open && "is-collapsed", className)} aria-labelledby={`${id}-title`}>
+      <h2 className="pdp-section-title" id={`${id}-title`}>
+        <button type="button" aria-expanded={open} aria-controls={`${id}-body`} onClick={() => setOpen((x) => !x)}>
+          <span>{title}</span>
+          {badge}
+          <ChevronDown size={18} className="pdp-chevron" aria-hidden />
+        </button>
+      </h2>
+      <div className="pdp-section-body" id={`${id}-body`}>{children}</div>
+    </section>
+  );
+}
+
 export function ProductPage({ slug }: { slug: string }) {
-  const { t, text, money, qty, date, unit: unitName } = useI18n();
+  const { t, text, money, qty, date, num, unit: unitName } = useI18n();
   const { query, setQuery } = useRouter();
   const { user } = useSession();
   const { add } = useCartActions();
@@ -367,132 +384,249 @@ export function ProductPage({ slug }: { slug: string }) {
   const currentUnit = unit ?? p.baseUnit;
   const unitPrice = variant.price.unitPrices?.find((u: any) => u.unit === currentUnit);
   const groups = p.attributes.reduce((acc: Record<string, any[]>, a: any) => ((acc[a.group] ||= []).push(a), acc), {});
-  const jsonLd = { "@context": "https://schema.org", "@type": "Product", name: p.name, sku: variant.sku, brand: { "@type": "Brand", name: p.brandName }, aggregateRating: p.reviewCount ? { "@type": "AggregateRating", ratingValue: p.rating, reviewCount: p.reviewCount } : undefined, offers: { "@type": "Offer", priceCurrency: "AZN", price: variant.price.effectivePrice.amount, availability: variant.stockStatus === "OUT_OF_STOCK" ? "https://schema.org/OutOfStock" : "https://schema.org/InStock" } };
+  const price = variant.price;
+  const discounted = price.basePrice.amount !== price.effectivePrice.amount;
+  const pct = discounted ? Math.round((1 - Number(price.effectivePrice.amount) / Number(price.basePrice.amount)) * 100) : 0;
+  const saving = discounted ? { amount: (Number(price.basePrice.amount) - Number(price.effectivePrice.amount)).toFixed(2), currency: price.effectivePrice.currency } : null;
+  const outOfStock = variant.stockStatus === "OUT_OF_STOCK";
+  const canAdd = !outOfStock && Number(amount) > 0;
+  const addToCart = () => add(variant.id, amount, currentUnit, install);
+  const branchesWithStock = p.branchStock.filter((b: any) => Number(b.available.value) > 0).length;
+  const gallery = p.gallery.length ? p.gallery : [{ id: "main", url: p.imageUrl }];
+  const jsonLd = { "@context": "https://schema.org", "@type": "Product", name: p.name, sku: variant.sku, brand: { "@type": "Brand", name: p.brandName }, aggregateRating: p.reviewCount ? { "@type": "AggregateRating", ratingValue: p.rating, reviewCount: p.reviewCount } : undefined, offers: { "@type": "Offer", priceCurrency: "AZN", price: price.effectivePrice.amount, availability: outOfStock ? "https://schema.org/OutOfStock" : "https://schema.org/InStock" } };
+  const sections = [
+    ["pdp-overview", t("shop.overview")],
+    ["pdp-specs", t("shop.specs")],
+    ...(p.compatibleModels.length > 0 || p.type === "SPARE_PART" ? [["pdp-compat", t("shop.compatibleDevices")]] : []),
+    ["pdp-stock", t("shop.stockByBranch")],
+    ["pdp-reviews", t("shop.reviews", { count: p.reviews.length })],
+  ];
+
   return (
-    <div className="container py-6 product-page">
+    <div className="container pdp">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <nav className="pg-crumbs mb-3" aria-label={t("common.breadcrumbs")}>
+      <nav className="pg-crumbs pdp-crumbs" aria-label={t("common.breadcrumbs")}>
         <Link to="/">{t("home")}</Link> › <Link to="/shop">{t("nav.shop")}</Link> › <Link to={`/shop/${p.categoryPath.join("/")}`}>{p.categoryName}</Link> › <span aria-current="page">{p.name}</span>
       </nav>
-      <div className="product-detail-grid">
-        <section className="kit-card product-gallery">
-          <div className="product-hero-visual">
-            <ProductVisual kind={p.gallery[image]?.url ?? p.imageUrl} tone={image % 2 ? "slate" : p.imageTone} label={p.name} size="lg" />
-            {p.videoUrl && <span className="badge badge-info product-video">{t("shop.video")}</span>}
-          </div>
-          <div className="product-thumbs" role="tablist" aria-label={t("shop.gallery")}>
-            {p.gallery.map((g: any, i: number) => (
-              <button key={g.id} type="button" role="tab" aria-selected={i === image} className={cn(i === image && "active")} onClick={() => setImage(i)}>
-                <ProductVisual kind={g.url} tone={i % 2 ? "slate" : p.imageTone} size="sm" label={`${p.name} ${i + 1}`} />
-              </button>
-            ))}
-          </div>
-        </section>
-        <section className="kit-card product-buy">
-          <div className="kit-card-body">
-            <span className="product-brand">{p.brandName}{p.modelName ? ` · ${p.modelName}` : ""}</span>
-            <h1>{p.name}</h1>
-            <div className="flex gap-3 items-center flex-wrap mb-3">
-              <Stars value={p.rating} count={p.reviewCount} />
-              <small className="text-muted">SKU: {variant.sku}</small>
-              <StockPill status={variant.stockStatus} label={`${text(t(`enum.StockStatus.${variant.stockStatus}`))} · ${qty(variant.available)}`} />
-            </div>
-            {p.variantAttributes.map((va: any) => (
-              <div key={va.code} className="mb-3">
-                <span className="form-label">{va.name}</span>
-                <div className="flex gap-2 flex-wrap">
-                  {va.options.map((o: string) => {
-                    const exists = p.variants.some((v: any) => v.attributes[va.code] === o);
-                    return <button key={o} type="button" className={cn("chip", selected[va.code] === o && "active")} disabled={!exists} aria-pressed={selected[va.code] === o} onClick={() => pick(va.code, o)}>{p.attributes.find((a: any) => a.code === va.code)?.displayValue && va.code !== "color" ? `${o}` : o}</button>;
-                  })}
-                </div>
-              </div>
-            ))}
-            <PriceTag price={variant.price} size="lg" showVat showInstallment />
-            {variant.price.appliedDiscounts?.some((d: any) => d.applied) && (
-              <ul className="product-discounts">
-                {variant.price.appliedDiscounts.map((d: any) => <li key={d.code} className={cn(!d.applied && "text-muted")}>{d.applied ? "✓" : "—"} {d.label}{d.applied ? ` −${money(d.amount)}` : d.skippedReason ? ` (${d.skippedReason})` : ""}</li>)}
-              </ul>
-            )}
-            {variant.price.unitPrices?.length > 1 && (
-              <div className="product-units">
-                {variant.price.unitPrices.map((u: any) => <span key={u.unit} className={cn("chip", currentUnit === u.unit && "active")}>{u.factor === "1" ? `1 ${unitName(u.unit)}` : `1 ${unitName(u.unit)} = ${u.factor} ${unitName(p.baseUnit)}`}: <strong>{money(u.price)}</strong></span>)}
-              </div>
-            )}
-            {variant.price.tiers?.length > 0 && <p className="text-sm">{t("shop.tiers")}: {variant.price.tiers.map((tr: any) => `≥${tr.minQuantity}: ${money(tr.price)}`).join(" · ")}</p>}
-            <div className="flex gap-3 items-center flex-wrap my-4">
-              <QuantityInput value={amount} onValue={setAmount} unit={currentUnit} units={p.unitConversions.length ? [p.baseUnit, ...p.unitConversions.map((c: any) => c.unit)] : undefined} onUnit={setUnit} step={p.baseUnit === "pcs" || currentUnit !== p.baseUnit ? 1 : 0.5} />
-              {unitPrice && <small className="text-muted">{t("shop.lineTotal")}: {money({ amount: (Number(unitPrice.price.amount) * Number(amount || 0)).toFixed(2), currency: "AZN" })}</small>}
-            </div>
-            {p.installationService && <Check checked={install} onValue={setInstall} label={t("shop.addInstallation", { name: p.installationService.name, price: money(p.installationService.price) })} />}
-            {p.returnRestriction && <p className="kit-note text-sm">{p.returnRestriction}</p>}
-            <div className="flex gap-2 flex-wrap mt-4">
-              <button type="button" className="btn primary btn-lg flex-1" disabled={variant.stockStatus === "OUT_OF_STOCK" || !(Number(amount) > 0)} onClick={() => add(variant.id, amount, currentUnit, install)}><ShoppingCart size={18} /> {t("add")}</button>
-              <button type="button" className={cn("icon-button product-fav", p.isFavorite && "active")} aria-pressed={!!p.isFavorite} aria-label={t("shop.addFavorite")} title={t("shop.addFavorite")} onClick={() => toggleFavorite(p)}><Heart size={18} fill={p.isFavorite ? "currentColor" : "none"} /></button>
-            </div>
-            <div className="product-secondary-actions">
-              <button type="button" className={cn("btn btn-sm ghost", p.inCompare && "active")} aria-pressed={!!p.inCompare} onClick={() => toggleCompare(p)}><Scale size={16} /> {p.inCompare ? t("shop.inCompare") : t("shop.addCompare")}</button>
-              {p.inCompare && <Link to="/compare" className="btn btn-sm ghost text-brand">{t("shop.viewCompare")} →</Link>}
-            </div>
-            <ul className="product-delivery mt-4">
-              {p.deliveryOptions.map((d: any) => <li key={d.method}>{d.method === "WITH_INSTALLATION" ? <Wrench size={15} /> : <Truck size={15} />} <span>{d.label}</span> <small>{d.price ? (Number(d.price.amount) ? money(d.price) : t("shop.free")) : "—"} · {d.eta}</small></li>)}
-            </ul>
-            <p className="text-sm mt-2"><BadgeCheck size={14} /> {p.warranty.months ? t("shop.warrantyMonths", { months: p.warranty.months }) : t("shop.noWarranty")}</p>
-          </div>
-        </section>
-      </div>
 
-      <div className="kit-grid cols-2 mt-6">
-        <Card title={t("shop.specs")}>
-          {Object.entries(groups).map(([g, attrs]) => (
-            <div key={g} className="mb-3">
-              <h3 className="text-sm text-muted">{g}</h3>
-              <KeyValue items={(attrs as any[]).map((a) => [a.name, a.displayValue])} />
+      <div className="pdp-hero">
+        {/* Qalereya: desktopda əsas şəkil + miniatürlər, mobildə sürüşdürülən lent */}
+        <section className="pdp-gallery" aria-label={t("shop.gallery")}>
+          <div className="pdp-main-image">
+            <ProductVisual kind={gallery[image]?.url ?? p.imageUrl} tone={image % 2 ? "slate" : p.imageTone} label={text(gallery[image]?.altI18n ?? gallery[image]?.alt) || p.name} size="lg" />
+            <div className="pdp-flags">
+              {discounted && <span className="pdp-badge-sale">{t("shop.discountPct", { pct })}</span>}
+              {p.isNew && <span className="badge badge-info">{t("shop.new")}</span>}
+              {p.videoUrl && <span className="badge badge-info">{t("shop.video")}</span>}
+            </div>
+          </div>
+          {gallery.length > 1 && (
+            <div className="pdp-thumbs" role="tablist" aria-label={t("shop.gallery")}>
+              {gallery.map((g: any, i: number) => (
+                <button key={g.id} type="button" role="tab" aria-selected={i === image} aria-label={t("shop.photo", { n: i + 1 })} className={cn(i === image && "active")} onClick={() => setImage(i)}>
+                  <ProductVisual kind={g.url} tone={i % 2 ? "slate" : p.imageTone} size="sm" />
+                </button>
+              ))}
+            </div>
+          )}
+          <div className="pdp-swipe" aria-hidden={false}>
+            {gallery.map((g: any, i: number) => (
+              <div key={g.id} className="pdp-swipe-item">
+                <ProductVisual kind={g.url} tone={i % 2 ? "slate" : p.imageTone} size="lg" label={`${p.name} — ${t("shop.photo", { n: i + 1 })}`} />
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Alış bloku */}
+        <section className="pdp-buy" aria-label={p.name}>
+          <div className="pdp-brand">
+            <Link to={`/shop?brand=${p.brandSlug}`}>{p.brandName}</Link>
+            {p.modelName && <span>{p.modelName}</span>}
+          </div>
+          <h1 className="pdp-title">{p.name}</h1>
+          <div className="pdp-meta">
+            {p.reviewCount > 0 && <a href="#pdp-reviews" className="pdp-rating"><Stars value={p.rating} count={p.reviewCount} /></a>}
+            <StockPill status={variant.stockStatus} label={`${t(`enum.StockStatus.${variant.stockStatus}`)} · ${qty(variant.available)}`} />
+            <span className="pdp-sku">SKU {variant.sku}</span>
+          </div>
+
+          {p.variantAttributes.map((va: any) => (
+            <div key={va.code} className="pdp-variant">
+              <span className="pdp-label">{va.name}: <strong>{selected[va.code]}</strong></span>
+              <div className="pdp-variant-options">
+                {va.options.map((o: string) => {
+                  const exists = p.variants.some((v: any) => v.attributes[va.code] === o);
+                  return <button key={o} type="button" className={cn("pdp-option", selected[va.code] === o && "active")} disabled={!exists} aria-pressed={selected[va.code] === o} onClick={() => pick(va.code, o)}>{o}</button>;
+                })}
+              </div>
             </div>
           ))}
-        </Card>
-        <Card title={t("shop.stockByBranch")}>
-          <ul className="kit-list">
-            {p.branchStock.map((b: any) => <li key={b.branchId} className="flex justify-between"><span>{b.branchName}</span><StockPill status={b.status} label={qty(b.available)} /></li>)}
-          </ul>
-        </Card>
-        {(p.compatibleModels.length > 0 || p.type === "SPARE_PART") && (
-          <Card title={t("shop.compatibleDevices")}>
-            {p.compatibleModels.length ? <ul className="kit-chip-grid mb-3">{p.compatibleModels.map((m: any) => <li key={m.id} className="chip">{m.fullName}</li>)}</ul> : <p className="text-muted">{t("shop.noCompatibility")}</p>}
-            {devices.data?.items?.length > 0 && (
-              <div className="kit-note">
-                <SelectField label={t("shop.fitsMyDeviceQ")} value={checkDevice} onValue={setCheckDevice} placeholder={t("common.choose")} options={devices.data.items.map((d: any) => ({ value: d.id, label: d.nickname ?? d.modelName }))} />
-                {compat.data && <p className={compat.data.compatible ? "text-success" : "text-danger"}>{compat.data.compatible ? t("shop.fitsYes", { model: compat.data.modelName }) : t("shop.fitsNo", { model: compat.data.modelName ?? "—" })}</p>}
+
+          <div className="pdp-price-box">
+            <div className="pdp-price-row">
+              <strong className={cn("pdp-price", discounted && "is-sale")}>{money(price.effectivePrice)}</strong>
+              {discounted && <s className="pdp-price-old">{money(price.basePrice)}</s>}
+              {saving && <span className="pdp-saving">{t("shop.youSave", { amount: money(saving) })}</span>}
+              {price.priceType !== "RETAIL" && <span className="badge badge-info">{t(`enum.PriceType.${price.priceType}`)}</span>}
+            </div>
+            <small className="text-muted">{price.vat.included ? t("price.vatIncluded", { rate: Number(price.vat.rate) }) : t("price.vatExcluded", { rate: Number(price.vat.rate) })}</small>
+            {price.installment && <div className="pdp-installment">{t("price.installment", { months: price.installment.months, monthly: money(price.installment.monthly), provider: price.installment.provider })}</div>}
+            {price.appliedDiscounts?.some((d: any) => d.applied) && (
+              <ul className="pdp-discounts">
+                {price.appliedDiscounts.filter((d: any) => d.applied).map((d: any) => <li key={d.code}><BadgeCheck size={14} aria-hidden /> {d.label} <strong>−{money(d.amount)}</strong></li>)}
+              </ul>
+            )}
+            {price.unitPrices?.length > 1 && (
+              <div className="pdp-units">
+                {price.unitPrices.map((u: any) => <span key={u.unit} className={cn("chip", currentUnit === u.unit && "active")}>{u.factor === "1" ? `1 ${unitName(u.unit)}` : `1 ${unitName(u.unit)} = ${u.factor} ${unitName(p.baseUnit)}`}: <strong>{money(u.price)}</strong></span>)}
               </div>
             )}
-            {p.analogs.length > 0 && <><h3 className="text-sm mt-3">{t("shop.analogs")}</h3><ul>{p.analogs.map((a: any) => <li key={a.id}><Link to={`/product/${a.slug}`} className="text-brand">{a.name}</Link>{a.oemCode ? ` · OEM ${a.oemCode}` : ""}</li>)}</ul></>}
-          </Card>
-        )}
-        <Card title={t("shop.description")}><p style={{ whiteSpace: "pre-line" }}>{p.description}</p></Card>
+            {price.tiers?.length > 0 && <p className="text-sm m-0">{t("shop.tiers")}: {price.tiers.map((tr: any) => `≥${tr.minQuantity}: ${money(tr.price)}`).join(" · ")}</p>}
+          </div>
+
+          {p.installationService && (
+            <label className={cn("pdp-install", install && "active")}>
+              <input type="checkbox" checked={install} onChange={(e) => setInstall(e.target.checked)} />
+              <Wrench size={18} aria-hidden />
+              <span className="grow">{t("shop.addInstallation", { name: p.installationService.name, price: money(p.installationService.price) })}</span>
+            </label>
+          )}
+
+          <div className="pdp-actions">
+            <div className="pdp-qty">
+              <span className="pdp-label">{t("shop.quantity")}</span>
+              <QuantityInput value={amount} onValue={setAmount} unit={currentUnit} units={p.unitConversions.length ? [p.baseUnit, ...p.unitConversions.map((c: any) => c.unit)] : undefined} onUnit={setUnit} step={p.baseUnit === "pcs" || currentUnit !== p.baseUnit ? 1 : 0.5} />
+              {unitPrice && Number(amount) > 1 && <small className="text-muted">{t("shop.lineTotal")}: {money({ amount: (Number(unitPrice.price.amount) * Number(amount || 0)).toFixed(2), currency: "AZN" })}</small>}
+            </div>
+            <div className="pdp-cta">
+              <button type="button" className="btn primary btn-lg pdp-add" disabled={!canAdd} onClick={addToCart}><ShoppingCart size={19} /> {t("add")}</button>
+              <button type="button" className={cn("pdp-icon-btn", p.isFavorite && "is-fav")} aria-pressed={!!p.isFavorite} aria-label={t("shop.addFavorite")} title={t("shop.addFavorite")} onClick={() => toggleFavorite(p)}><Heart size={19} fill={p.isFavorite ? "currentColor" : "none"} /></button>
+              <button type="button" className={cn("pdp-icon-btn", p.inCompare && "is-compare")} aria-pressed={!!p.inCompare} aria-label={p.inCompare ? t("shop.inCompare") : t("shop.addCompare")} title={p.inCompare ? t("shop.inCompare") : t("shop.addCompare")} onClick={() => toggleCompare(p)}><Scale size={19} /></button>
+            </div>
+            {p.inCompare && <Link to="/compare" className="pdp-compare-link">{t("shop.viewCompare")} →</Link>}
+          </div>
+          {p.returnRestriction && <p className="kit-note text-sm m-0">{p.returnRestriction}</p>}
+
+          <div className="pdp-delivery">
+            <strong className="pdp-label">{t("shop.deliveryTitle")}</strong>
+            <ul>
+              {p.deliveryOptions.map((d: any) => (
+                <li key={d.method}>
+                  <span className="pdp-delivery-icon">{d.method === "WITH_INSTALLATION" ? <Wrench size={16} /> : <Truck size={16} />}</span>
+                  <span className="grow">{d.label}<small>{d.eta}</small></span>
+                  <strong>{d.price ? (Number(d.price.amount) ? money(d.price) : t("shop.free")) : "—"}</strong>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <ul className="pdp-trust">
+            <li><BadgeCheck size={16} aria-hidden /> {p.warranty.months ? t("shop.warrantyMonths", { months: p.warranty.months }) : t("shop.noWarranty")}</li>
+            {branchesWithStock > 0 && <li><Truck size={16} aria-hidden /> {t("shop.availableAt", { count: branchesWithStock })}</li>}
+            {p.installable && <li><Wrench size={16} aria-hidden /> {t("shop.trustInstall")}</li>}
+          </ul>
+        </section>
       </div>
 
-      <Card title={t("shop.reviews", { count: p.reviews.length })} className="mt-6" actions={p.canReview && <button type="button" className="btn outline btn-sm" onClick={() => setReviewOpen(true)}><Star size={14} /> {t("reviews.write")}</button>}>
-        {!p.reviews.length ? <EmptyState title={t("shop.noReviews")} /> : (
-          <ul className="kit-reviews">
-            {p.reviews.map((r: any) => (
-              <li key={r.id}>
-                <div className="flex justify-between"><strong>{r.authorName}</strong><Stars value={r.rating} /></div>
-                {r.verifiedPurchase && <small className="text-success">{t("shop.verifiedPurchase")}</small>}
-                <p>{r.comment}</p>
-                {(r.pros || r.cons) && <p className="text-sm">{r.pros && <>+ {r.pros} </>}{r.cons && <>− {r.cons}</>}</p>}
-                {r.reply && <p className="kit-note text-sm">{r.reply}</p>}
-                <div className="flex justify-between items-center gap-2"><small className="text-muted">{date(r.createdAt)}</small><ReportReviewButton reviewId={r.id} reported={r.reported} /></div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
+      <nav className="pdp-tabs" aria-label={t("shop.sections")}>
+        {sections.map(([id, label]) => <a key={id} href={`#${id}`}>{label}</a>)}
+      </nav>
+
+      <div className="pdp-body">
+        <div className="pdp-main">
+          <PdpSection id="pdp-overview" title={t("shop.overview")} defaultOpen>
+            {p.highlights?.length > 0 && <ul className="pdp-highlights">{p.highlights.map((h: string) => <li key={h}><BadgeCheck size={16} aria-hidden /> {h}</li>)}</ul>}
+            <p className="pdp-description">{p.description}</p>
+          </PdpSection>
+
+          <PdpSection id="pdp-specs" title={t("shop.specs")}>
+            <div className="pdp-specs">
+              {Object.entries(groups).map(([g, attrs]) => (
+                <div key={g} className="pdp-spec-group">
+                  <h3>{g}</h3>
+                  <dl>
+                    {(attrs as any[]).map((a) => <div key={a.code}><dt>{a.name}</dt><dd>{a.displayValue}</dd></div>)}
+                  </dl>
+                </div>
+              ))}
+            </div>
+          </PdpSection>
+
+          {(p.compatibleModels.length > 0 || p.type === "SPARE_PART") && (
+            <PdpSection id="pdp-compat" title={t("shop.compatibleDevices")} badge={p.compatibleModels.length ? <span className="pdp-count">{p.compatibleModels.length}</span> : undefined}>
+              {p.compatibleModels.length ? <ul className="kit-chip-grid mb-3">{p.compatibleModels.map((m: any) => <li key={m.id} className="chip">{m.fullName}</li>)}</ul> : <p className="text-muted">{t("shop.noCompatibility")}</p>}
+              {devices.data?.items?.length > 0 && (
+                <div className="kit-note">
+                  <SelectField label={t("shop.fitsMyDeviceQ")} value={checkDevice} onValue={setCheckDevice} placeholder={t("common.choose")} options={devices.data.items.map((d: any) => ({ value: d.id, label: d.nickname ?? d.modelName }))} />
+                  {compat.data && <p className={compat.data.compatible ? "text-success" : "text-danger"}>{compat.data.compatible ? t("shop.fitsYes", { model: compat.data.modelName }) : t("shop.fitsNo", { model: compat.data.modelName ?? "—" })}</p>}
+                </div>
+              )}
+              {p.analogs.length > 0 && <><h3 className="text-sm mt-3">{t("shop.analogs")}</h3><ul>{p.analogs.map((a: any) => <li key={a.id}><Link to={`/product/${a.slug}`} className="text-brand">{a.name}</Link>{a.oemCode ? ` · OEM ${a.oemCode}` : ""}</li>)}</ul></>}
+            </PdpSection>
+          )}
+
+          <PdpSection id="pdp-reviews" title={t("shop.reviews", { count: p.reviews.length })}>
+            <div className="pdp-reviews-head">
+              <div className="pdp-score">
+                <strong>{p.reviewCount ? num(p.rating, 1) : "—"}</strong>
+                <span className="pdp-stars" role="img" aria-label={t("common.ratingOf", { value: p.rating })}>{[1, 2, 3, 4, 5].map((n) => <span key={n} className={cn(n > Math.round(p.rating) && "off")}>★</span>)}</span>
+                <small className="text-muted">{t("shop.reviewsBased", { count: p.reviewCount })}</small>
+              </div>
+              {p.canReview && <button type="button" className="btn outline" onClick={() => setReviewOpen(true)}><Star size={15} /> {t("reviews.write")}</button>}
+            </div>
+            {!p.reviews.length ? <EmptyState title={t("shop.noReviews")} /> : (
+              <ul className="pdp-reviews">
+                {p.reviews.map((r: any) => (
+                  <li key={r.id}>
+                    <div className="pdp-review-top">
+                      <span className="pdp-avatar" aria-hidden>{r.authorName?.[0]}</span>
+                      <div className="grow">
+                        <strong>{r.authorName}</strong>
+                        <div className="flex items-center gap-2 flex-wrap"><Stars value={r.rating} /><small className="text-muted">{date(r.createdAt)}</small>{r.verifiedPurchase && <small className="text-success">✓ {t("shop.verifiedPurchase")}</small>}</div>
+                      </div>
+                    </div>
+                    <p>{r.comment}</p>
+                    {(r.pros || r.cons) && (
+                      <div className="pdp-proscons">
+                        {r.pros && <span className="is-pro">+ {r.pros}</span>}
+                        {r.cons && <span className="is-con">− {r.cons}</span>}
+                      </div>
+                    )}
+                    {r.reply && <p className="kit-note text-sm">{r.reply}</p>}
+                    <div className="flex justify-end"><ReportReviewButton reviewId={r.id} reported={r.reported} /></div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </PdpSection>
+        </div>
+
+        <aside className="pdp-aside">
+          <PdpSection id="pdp-stock" title={t("shop.stockByBranch")}>
+            <ul className="pdp-stock">
+              {p.branchStock.map((b: any) => <li key={b.branchId}><span className="grow">{b.branchName}</span><StockPill status={b.status} label={qty(b.available)} /></li>)}
+            </ul>
+          </PdpSection>
+        </aside>
+      </div>
+
       {p.related.length > 0 && (
-        <section className="mt-6">
+        <section className="pdp-related">
           <h2>{t("shop.related")}</h2>
-          <div className="shop-grid">{p.related.slice(0, 4).map((r: any) => <ProductTile key={r.id} p={r} />)}</div>
+          <div className="shop-grid">{p.related.slice(0, 5).map((r: any) => <ProductTile key={r.id} p={r} />)}</div>
         </section>
       )}
+
+      {/* Mobil alış paneli — ekranın altında sabit */}
+      <div className="pdp-buybar">
+        <div className="pdp-buybar-price">
+          {discounted && <s>{money(price.basePrice)}</s>}
+          <strong className={cn(discounted && "is-sale")}>{money(price.effectivePrice)}</strong>
+        </div>
+        <button type="button" className={cn("pdp-icon-btn", p.isFavorite && "is-fav")} aria-label={t("shop.addFavorite")} onClick={() => toggleFavorite(p)}><Heart size={19} fill={p.isFavorite ? "currentColor" : "none"} /></button>
+        <button type="button" className="btn primary pdp-buybar-add" disabled={!canAdd} onClick={addToCart}><ShoppingCart size={18} /> {t("add")}</button>
+      </div>
+
       {reviewOpen && <ReviewDialog target="PRODUCT" targetId={p.id} onClose={() => setReviewOpen(false)} />}
     </div>
   );
@@ -640,64 +774,118 @@ export function CartPage() {
   const { refresh } = useCartActions();
   const cart = useApi<any>("/cart");
   const [promo, setPromo] = useState("");
+  const [busy, setBusy] = useState<string | null>(null);
   const update = async (id: string, body: Record<string, unknown>) => {
-    try { await patch(`/cart/items/${id}`, body); await refresh(); } catch (e) { toast.error(errorText(e, t("errors.generic"))); }
+    setBusy(id);
+    try { await patch(`/cart/items/${id}`, body); await refresh(); } catch (e) { toast.error(errorText(e, t("errors.generic"))); } finally { setBusy(null); }
   };
+  const remove = async (id: string) => {
+    setBusy(id);
+    try { await del(`/cart/items/${id}`); await refresh(); } catch (e) { toast.error(errorText(e, t("errors.generic"))); } finally { setBusy(null); }
+  };
+  const applyPromo = async (code: string | null) => {
+    try { await post("/cart/promo", { code }); await refresh(); } catch (e) { toast.error(errorText(e, t("errors.generic"))); }
+  };
+  if (cart.isLoading) return <div className="container py-8"><Loading rows={6} /></div>;
+  if (cart.error) return <div className="container py-8"><ErrorState error={cart.error} onRetry={() => cart.refetch()} /></div>;
+  const c = cart.data;
+  if (!c?.items?.length) {
+    return <div className="container py-10"><EmptyState icon={ShoppingCart} title={t("cart.empty")} action={<Link to="/shop" className="btn primary">{t("cart.goShopping")}</Link>} /></div>;
+  }
+  const count = c.items.length;
+  const savings = c.totals.appliedDiscounts.filter((d: any) => d.applied).reduce((s: number, d: any) => s + Number(d.amount.amount), 0);
+  const blocked = c.items.some((i: any) => i.stockStatus === "OUT_OF_STOCK");
+  const goCheckout = () => navigate(user ? "/checkout" : "/login?next=/checkout");
+  const checkoutLabel = user ? t("cart.checkout") : t("cart.loginToCheckout");
+
   return (
-    <div className="container py-6">
-      <h1>{t("cart.title")}</h1>
-      <QueryView query={cart} isEmpty={(c: any) => !c.items.length} empty={<EmptyState icon={ShoppingCart} title={t("cart.empty")} action={<Link to="/shop" className="btn primary">{t("cart.goShopping")}</Link>} />}>
-        {(c: any) => (
-          <div className="cart-grid">
-            <section className="kit-card">
-              <ul className="cart-lines">
-                {c.merged && <li className="alert alert-success">{t("cart.merged")}</li>}
-                {c.items.map((i: any) => (
-                  <li key={i.id} className="cart-line">
-                    <Link to={`/product/${i.slug}`} className="cart-line-media"><ProductVisual kind={i.imageUrl} tone={i.imageTone} size="sm" label={i.name} /></Link>
-                    <div className="cart-line-info">
-                      <Link to={`/product/${i.slug}`} className="font-semibold">{i.name}</Link>
-                      <small className="block text-muted">{i.variantName} · {i.sku}</small>
-                      <small className="block">{money(i.unitPriceForUnit)} / {unit(i.quantity.unit)}{i.quantity.unit !== i.baseQuantity.unit ? ` · ${t("cart.baseEquivalent", { qty: qty(i.baseQuantity) })}` : ""}</small>
-                      {i.warnings.map((w: any) => <small key={w.code} className={cn("block", w.code === "OUT_OF_STOCK" ? "text-danger" : "text-warning")}>⚠ {w.message}</small>)}
-                      {i.installationAvailable && <Check checked={!!i.installation} onValue={(v) => update(i.id, { withInstallation: v })} label={t("cart.withInstallation", { price: money(i.installationAvailable.price) })} />}
-                      {i.returnRestriction && <small className="block text-muted">{i.returnRestriction}</small>}
-                    </div>
-                    <div className="cart-line-qty">
-                      <QuantityInput value={i.quantity.value} onValue={(v) => Number(v) > 0 && update(i.id, { quantity: v })} unit={i.quantity.unit} units={i.availableUnits.length > 1 ? i.availableUnits.map((u: any) => u.unit) : undefined} onUnit={(u) => update(i.id, { unit: u })} />
-                    </div>
-                    <div className="cart-line-total">
-                      <strong>{money(i.lineTotal)}</strong>
-                      <button type="button" className="btn ghost btn-sm" onClick={async () => { await del(`/cart/items/${i.id}`); await refresh(); }}>{t("common.remove")}</button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </section>
-            <aside className="kit-card cart-summary-card">
-              <div className="kit-card-body">
-                <h2>{t("cart.summary")}</h2>
-                <form className="flex gap-2 mb-3" onSubmit={async (e) => { e.preventDefault(); await post("/cart/promo", { code: promo }); await refresh(); }}>
-                  <input className="form-input" placeholder={t("cart.promoPlaceholder")} aria-label={t("cart.promo")} value={promo || c.promoCode || ""} onChange={(e) => setPromo(e.target.value.toUpperCase())} />
-                  <button className="btn outline">{t("shop.apply")}</button>
-                </form>
-                {c.promoError && <p className="kit-field-error">{c.promoError}</p>}
-                {c.promoCode && !c.promoError && <button type="button" className="btn ghost btn-sm mb-2" onClick={async () => { setPromo(""); await post("/cart/promo", { code: null }); await refresh(); }}>{t("cart.removePromo", { code: c.promoCode })}</button>}
-                <dl className="kit-totals">
-                  <div><dt>{t("cart.itemsTotal")}</dt><dd>{money(c.totals.subtotal)}</dd></div>
-                  {c.totals.appliedDiscounts.map((d: any) => <div key={d.code} className={d.applied ? "text-success" : "text-muted"}><dt>{d.label}{!d.applied && d.skippedReason ? ` (${d.skippedReason})` : ""}</dt><dd>{d.applied ? `−${money(d.amount)}` : "—"}</dd></div>)}
-                  {Number(c.totals.installationTotal.amount) > 0 && <div><dt>{t("cart.installation")}</dt><dd>{money(c.totals.installationTotal)}</dd></div>}
-                  <div className="text-muted"><dt>{c.totals.vatIncluded ? t("estimate.vatIncluded") : t("cart.vatOnTop")}</dt><dd>{money(c.totals.vatTotal)}</dd></div>
-                  <div className="grand"><dt>{t("common.total")}</dt><dd>{money(c.totals.total)}</dd></div>
-                </dl>
-                <p className="text-sm text-muted">{t("cart.deliveryAtCheckout")}</p>
-                <button type="button" className="btn primary btn-lg w-full mt-3" disabled={c.items.some((i: any) => i.stockStatus === "OUT_OF_STOCK")} onClick={() => navigate(user ? "/checkout" : "/login?next=/checkout")}>{user ? t("cart.checkout") : t("cart.loginToCheckout")}</button>
-                {!user && <p className="text-sm text-muted mt-2">{t("cart.guestNote")}</p>}
+    <div className="container cartx">
+      <header className="cartx-head">
+        <div>
+          <h1>{t("cart.title")}</h1>
+          <p className="text-muted">{t("cart.itemCount", { count })}</p>
+        </div>
+        <Link to="/shop" className="btn ghost cartx-continue">← {t("cart.continueShopping")}</Link>
+      </header>
+
+      <div className="cartx-grid">
+        <section className="cartx-lines" aria-label={t("cart.title")}>
+          {c.merged && <div className="alert alert-success">{t("cart.merged")}</div>}
+          {c.items.map((i: any) => (
+            <article key={i.id} className={cn("cartx-line", busy === i.id && "is-busy")}>
+              <Link to={`/product/${i.slug}`} className="cartx-media" tabIndex={-1} aria-hidden>
+                <ProductVisual kind={i.imageUrl} tone={i.imageTone} size="sm" label={i.name} />
+              </Link>
+              <div className="cartx-info">
+                <Link to={`/product/${i.slug}`} className="cartx-name">{i.name}</Link>
+                <span className="cartx-variant">{[i.variantName, i.sku].filter(Boolean).join(" · ")}</span>
+                <span className="cartx-unit">{t("cart.unitPrice", { price: money(i.unitPriceForUnit), unit: unit(i.quantity.unit) })}{i.quantity.unit !== i.baseQuantity.unit ? ` · ${t("cart.baseEquivalent", { qty: qty(i.baseQuantity) })}` : ""}</span>
+                {i.warnings.length > 0 && (
+                  <div className="cartx-warnings">
+                    {i.warnings.map((w: any) => <span key={w.code} className={cn("cartx-warning", w.code === "OUT_OF_STOCK" && "is-danger")}>{w.message}</span>)}
+                  </div>
+                )}
+                {i.installationAvailable && (
+                  <label className={cn("cartx-install", i.installation && "active")}>
+                    <input type="checkbox" checked={!!i.installation} disabled={busy === i.id} onChange={(e) => update(i.id, { withInstallation: e.target.checked })} />
+                    <Wrench size={15} aria-hidden />
+                    <span>{t("cart.withInstallation", { price: money(i.installationAvailable.price) })}</span>
+                  </label>
+                )}
+                {i.returnRestriction && <small className="cartx-note">{i.returnRestriction}</small>}
               </div>
-            </aside>
+              <div className="cartx-qty">
+                <QuantityInput value={i.quantity.value} onValue={(v) => Number(v) > 0 && update(i.id, { quantity: v })} unit={i.quantity.unit} units={i.availableUnits.length > 1 ? i.availableUnits.map((u: any) => u.unit) : undefined} onUnit={(u) => update(i.id, { unit: u })} />
+              </div>
+              <div className="cartx-total">
+                <strong>{money(i.lineTotal)}</strong>
+              </div>
+              <button type="button" className="cartx-remove" aria-label={`${t("cart.removeItem")}: ${i.name}`} title={t("cart.removeItem")} disabled={busy === i.id} onClick={() => remove(i.id)}>
+                <Trash2 size={17} />
+              </button>
+            </article>
+          ))}
+        </section>
+
+        <aside className="cartx-summary" aria-label={t("cart.summary")}>
+          <div className="cartx-summary-card">
+            <h2>{t("cart.summary")}</h2>
+            <details className="cartx-promo" open={!!c.promoCode || !!c.promoError}>
+              <summary><Tag size={15} aria-hidden /> {t("cart.havePromo")}</summary>
+              <form className="cartx-promo-form" onSubmit={(e) => { e.preventDefault(); void applyPromo(promo || c.promoCode || ""); }}>
+                <input className="form-input" placeholder={t("cart.promoPlaceholder")} aria-label={t("cart.promo")} value={promo || c.promoCode || ""} onChange={(e) => setPromo(e.target.value.toUpperCase())} />
+                <button className="btn outline">{t("shop.apply")}</button>
+              </form>
+              {c.promoError && <p className="kit-field-error">{c.promoError}</p>}
+              {c.promoCode && !c.promoError && <button type="button" className="btn ghost btn-sm" onClick={() => { setPromo(""); void applyPromo(null); }}>{t("cart.removePromo", { code: c.promoCode })}</button>}
+            </details>
+            <dl className="cartx-totals">
+              <div><dt>{t("cart.itemsTotal")} ({count})</dt><dd>{money(c.totals.subtotal)}</dd></div>
+              {c.totals.appliedDiscounts.map((d: any) => <div key={d.code} className={d.applied ? "is-discount" : "is-muted"}><dt>{d.label}{!d.applied && d.skippedReason ? ` (${d.skippedReason})` : ""}</dt><dd>{d.applied ? `−${money(d.amount)}` : "—"}</dd></div>)}
+              {Number(c.totals.installationTotal.amount) > 0 && <div><dt>{t("cart.installationShort")}</dt><dd>{money(c.totals.installationTotal)}</dd></div>}
+              <div className="is-muted"><dt>{c.totals.vatIncluded ? t("estimate.vatIncluded") : t("cart.vatOnTop")}</dt><dd>{money(c.totals.vatTotal)}</dd></div>
+            </dl>
+            <div className="cartx-grand">
+              <span>{t("cart.total")}</span>
+              <strong>{money(c.totals.total)}</strong>
+            </div>
+            {savings > 0 && <div className="cartx-savings">{t("cart.savings")}: <strong>{money({ amount: savings.toFixed(2), currency: "AZN" })}</strong></div>}
+            <button type="button" className="btn primary btn-lg w-full" disabled={blocked} onClick={goCheckout}>{checkoutLabel}</button>
+            <p className="cartx-hint"><Truck size={14} aria-hidden /> {t("cart.deliveryAtCheckout")}</p>
+            <p className="cartx-hint"><ShieldCheck size={14} aria-hidden /> {t("cart.securePayment")}</p>
+            {!user && <p className="cartx-hint">{t("cart.guestNote")}</p>}
           </div>
-        )}
-      </QueryView>
+        </aside>
+      </div>
+
+      {/* Mobil: ekranın altında sabit yekun və rəsmiləşdirmə düyməsi */}
+      <div className="cartx-bar">
+        <div>
+          <small>{t("cart.total")}</small>
+          <strong>{money(c.totals.total)}</strong>
+        </div>
+        <button type="button" className="btn primary" disabled={blocked} onClick={goCheckout}>{checkoutLabel}</button>
+      </div>
     </div>
   );
 }
@@ -818,7 +1006,7 @@ export function CheckoutPage() {
               </div>
             </Card>
           )}
-          <Card title={t("common.note")}><TextArea value={v.note} onValue={(x) => form.set("note", x)} rows={2} /></Card>
+          <Card title={t("common.note")}><TextArea aria-label={t("common.note")} value={v.note} onValue={(x) => form.set("note", x)} rows={2} /></Card>
         </div>
         <aside className="kit-card cart-summary-card">
           <div className="kit-card-body">

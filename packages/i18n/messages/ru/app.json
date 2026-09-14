@@ -595,7 +595,19 @@
     "reviews": "Отзывы ({count})",
     "noReviews": "Пока нет отзывов",
     "verifiedPurchase": "Подтверждённая покупка",
-    "related": "Похожие товары"
+    "related": "Похожие товары",
+    "discountPct": "−{pct}%",
+    "youSave": "Экономия {amount}",
+    "sections": "Разделы товара",
+    "overview": "Обзор",
+    "reviewsBased": "На основе отзывов: {count}",
+    "deliveryTitle": "Доставка и установка",
+    "quantity": "Количество",
+    "availableAt": "В наличии в {count} филиалах",
+    "trustOriginal": "Оригинальный товар с гарантией",
+    "trustInstall": "Установка сертифицированными мастерами",
+    "trustReturn": "Возврат в течение 14 дней",
+    "photo": "Фото {n}"
   },
   "reviews": {
     "report": "Пожаловаться",
@@ -674,7 +686,16 @@
     "deliveryAtCheckout": "Доставка рассчитывается при оформлении.",
     "checkout": "Оформить заказ",
     "loginToCheckout": "Войти и оформить",
-    "guestNote": "Корзина сохранится и объединится после входа."
+    "guestNote": "Корзина сохранится и объединится после входа.",
+    "itemCount": "Товаров: {count}",
+    "continueShopping": "Продолжить покупки",
+    "savings": "Ваша экономия",
+    "securePayment": "Безопасная оплата — данные карты не хранятся",
+    "unitPrice": "{price} / {unit}",
+    "removeItem": "Удалить из корзины",
+    "havePromo": "Есть промокод?",
+    "total": "Итого к оплате",
+    "installationShort": "Установка"
   },
   "checkout": {
     "title": "Оформление заказа",

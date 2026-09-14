@@ -52,6 +52,10 @@ export function AppProviders({ children, initial, state }: { children: React.Rea
  * uğursuz sorğuları yenidən yükləyir — istifadəçi səhifəni yeniləmək məcburiyyətində qalmır.
  */
 function ConnectionWatch() {
+  // Hidratasiya bitdi siqnalı — E2E testləri və analitika server HTML-i interaktiv olana qədər gözləyir
+  useEffect(() => {
+    document.documentElement.dataset.hydrated = "1";
+  }, []);
   const { t } = useI18n();
   const qc = useQueryClient();
   const [offline, setOffline] = useState(false);
