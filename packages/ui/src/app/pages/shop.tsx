@@ -35,7 +35,7 @@ export function useCartActions() {
 }
 
 export function ProductTile({ p, compatibleBadge }: { p: any; compatibleBadge?: boolean }) {
-  const { t } = useI18n();
+  const { t, money } = useI18n();
   const { add } = useCartActions();
   const { user } = useSession();
   const qc = useQueryClient();
@@ -45,31 +45,39 @@ export function ProductTile({ p, compatibleBadge }: { p: any; compatibleBadge?: 
     await qc.invalidateQueries({ queryKey: ["api"] });
     toast.success(t("shop.favoritesUpdated"));
   };
+  const discounted = p.price && p.price.basePrice.amount !== p.price.effectivePrice.amount;
+  const outOfStock = p.stockStatus === "OUT_OF_STOCK";
   return (
     <article className="shop-tile">
-      <Link to={`/product/${p.slug}`} className="shop-tile-media" aria-label={p.name}>
-        <ProductVisual kind={p.imageUrl} tone={p.imageTone} label={p.name} />
+      <div className="shop-tile-media">
+        <Link to={`/product/${p.slug}`} tabIndex={-1} aria-hidden>
+          <ProductVisual kind={p.imageUrl} tone={p.imageTone} label={p.name} />
+        </Link>
         <div className="shop-tile-flags">
           {p.isNew && <span className="badge badge-info">{t("shop.new")}</span>}
           {p.hasPromotion && <span className="badge badge-warning">{t("shop.sale")}</span>}
           {compatibleBadge && <span className="badge badge-success"><BadgeCheck size={12} /> {t("shop.fits")}</span>}
         </div>
-      </Link>
+        <button type="button" className={cn("shop-tile-fav", p.isFavorite && "active")} aria-pressed={!!p.isFavorite} aria-label={`${t("shop.addFavorite")}: ${p.name}`} title={t("shop.addFavorite")} onClick={toggleFav}>
+          <Heart size={16} fill={p.isFavorite ? "currentColor" : "none"} />
+        </button>
+      </div>
       <div className="shop-tile-body">
-        <span className="product-brand">{p.brandName}</span>
-        <h3><Link to={`/product/${p.slug}`}>{p.name}</Link></h3>
-        <div className="flex gap-2 items-center flex-wrap">
-          <Stars value={p.rating} count={p.reviewCount} />
+        {p.brandName && <span className="shop-tile-brand">{p.brandName}</span>}
+        <h3 className="shop-tile-title"><Link to={`/product/${p.slug}`}>{p.name}</Link></h3>
+        <div className="shop-tile-meta">
+          {p.reviewCount > 0 && <Stars value={p.rating} count={p.reviewCount} />}
           <StockPill status={p.stockStatus} />
         </div>
-        {p.highlights?.length > 0 && <ul className="shop-tile-hl">{p.highlights.slice(0, 2).map((h: string) => <li key={h}>{h}</li>)}</ul>}
       </div>
       <div className="shop-tile-foot">
-        <PriceTag price={p.price} size="sm" />
-        <div className="flex gap-1">
-          <button type="button" className="icon-button" aria-label={t("shop.addFavorite")} onClick={toggleFav}><Heart size={16} /></button>
-          <button type="button" className="icon-button add" aria-label={t("add")} disabled={p.stockStatus === "OUT_OF_STOCK"} onClick={() => add(p.defaultVariantId, "1", p.baseUnit)}><ShoppingCart size={16} /></button>
+        <div className="shop-tile-price">
+          {discounted && <s>{money(p.price.basePrice)}</s>}
+          <strong className={cn(discounted && "is-sale")}>{p.price ? money(p.price.effectivePrice) : "—"}</strong>
         </div>
+        <button type="button" className="shop-tile-add" aria-label={`${t("add")}: ${p.name}`} title={t("add")} disabled={outOfStock} onClick={() => add(p.defaultVariantId, "1", p.baseUnit)}>
+          <ShoppingCart size={17} aria-hidden />
+        </button>
       </div>
     </article>
   );
@@ -111,7 +119,7 @@ export function ShopPage({ categoryPath }: { categoryPath?: string }) {
         const open = categoryPath?.startsWith(n.path.join("/"));
         return (
           <li key={n.id}>
-            <Link to={href} className={cn(active && "active")}>{n.name} <small>{n.productCount}</small></Link>
+            <Link to={href} className={cn(active && "active")} aria-current={active ? "page" : undefined}><span>{n.name}</span> <small>{n.productCount}</small></Link>
             {open && n.children?.length > 0 && <Tree nodes={n.children} depth={depth + 1} />}
           </li>
         );
@@ -130,8 +138,8 @@ export function ShopPage({ categoryPath }: { categoryPath?: string }) {
             f.options.map((o: any) => (
               <label key={o.value} className={cn("kit-check", o.count === 0 && !o.selected && "disabled")}>
                 <input type="checkbox" checked={f.code === "rating" || f.code.startsWith("in") || f.code === "promo" || f.code === "isNew" ? query.get(f.code) === o.value : o.selected} disabled={o.count === 0 && !o.selected} onChange={() => (["inStock", "promo", "isNew", "rating"].includes(f.code) ? setQuery({ [f.code]: query.get(f.code) === o.value ? null : o.value, page: null }) : toggleOption(f.code, o.value))} />
-                <span>{o.label}</span>
-                <small className="text-muted">{o.count}</small>
+                <span className="grow">{o.label}</span>
+                <small className="shop-count">{o.count}</small>
               </label>
             ))
           ) : f.range ? (
@@ -147,21 +155,16 @@ export function ShopPage({ categoryPath }: { categoryPath?: string }) {
         <Link to="/">{t("home")}</Link> › <Link to="/shop">{t("nav.shop")}</Link>
         {data?.breadcrumbs?.map((b: any) => <span key={b.slug}> › <Link to={b.href}>{b.name}</Link></span>)}
       </nav>
-      <div className="flex justify-between items-end flex-wrap gap-3 mb-4">
+      <header className="shop-head">
         <div>
           <h1>{data?.category?.name ?? t("shop.title")}</h1>
           <p className="text-muted">{data ? t("shop.resultCount", { count: data.meta.total }) : t("common.loading")}{data?.compatibleWith ? ` · ${t("shop.compatibleWith", { model: data.compatibleWith })}` : ""}</p>
         </div>
-        <div className="flex gap-2 items-center flex-wrap">
-          <SearchBox value={query.get("q") ?? ""} onChange={(v) => setQuery({ q: v, page: null })} placeholder={t("shop.searchInCatalog")} />
-          <SelectField value={query.get("sort") ?? ""} onValue={(v) => setQuery({ sort: v, page: null })} placeholder={t("shop.sortPopular")} options={[{ value: "price", label: t("shop.sortPriceAsc") }, { value: "-price", label: t("shop.sortPriceDesc") }, { value: "rating", label: t("shop.sortRating") }, { value: "new", label: t("shop.sortNew") }]} />
-          <button type="button" className="btn outline shop-filter-btn" onClick={() => setFiltersOpen(true)}><SlidersHorizontal size={16} /> {t("shop.filters")}</button>
-        </div>
-      </div>
+      </header>
       {data?.children?.length > 0 && (
-        <div className="category-chips mb-4">
+        <nav className={cn("shop-subcats", !categoryPath && "is-root")} aria-label={t("shop.categories")}>
           {data.children.map((c: any) => <Link key={c.id} to={`/shop/${c.path.join("/")}`} className="chip">{c.name} <small>{c.productCount}</small></Link>)}
-        </div>
+        </nav>
       )}
       {activeChips.length > 0 && (
         <div className="shop-active mb-3" aria-label={t("shop.activeFilters")}>
@@ -178,7 +181,17 @@ export function ShopPage({ categoryPath }: { categoryPath?: string }) {
           <Card title={t("shop.categories")}>{categories.isLoading ? <Loading /> : <Tree nodes={categories.data ?? []} />}</Card>
           <Card title={t("shop.filters")}><Facets /></Card>
         </aside>
-        <section aria-live="polite">
+        <section className="shop-results" aria-live="polite">
+          <div className="shop-toolbar">
+            <SearchBox value={query.get("q") ?? ""} onChange={(v) => setQuery({ q: v, page: null })} placeholder={t("shop.searchInCatalog")} />
+            <label className="shop-sort">
+              <span>{t("shop.sortLabel")}</span>
+              <select className="form-input" value={query.get("sort") ?? ""} onChange={(e) => setQuery({ sort: e.target.value, page: null })}>
+                {[["", t("shop.sortPopular")], ["price", t("shop.sortPriceAsc")], ["-price", t("shop.sortPriceDesc")], ["rating", t("shop.sortRating")], ["new", t("shop.sortNew")]].map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              </select>
+            </label>
+            <button type="button" className="btn outline shop-filter-btn" onClick={() => setFiltersOpen(true)}><SlidersHorizontal size={16} /> {t("shop.filters")}{activeChips.length > 0 && <span className="shop-count on">{activeChips.length}</span>}</button>
+          </div>
           {list.isLoading ? <Loading rows={6} /> : list.error ? <ErrorState error={list.error} onRetry={() => list.refetch()} /> : !data.items.length ? (
             <EmptyState title={t("shop.noProducts")} text={t("shop.noProductsText")} action={<button type="button" className="btn outline" onClick={() => navigate("/shop")}>{t("shop.resetAll")}</button>} />
           ) : (
