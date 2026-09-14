@@ -40,7 +40,7 @@ export function useCartActions() {
  * istifadəçi siyahının harada olduğunu itirmir; qonaq girişə yönləndirilir və geri qaytarılır.
  */
 export function useProductActions() {
-  const { t } = useI18n();
+  const { t, text } = useI18n();
   const { navigate, path, search } = useRouter();
   const { user, role } = useSession();
   const qc = useQueryClient();
@@ -66,11 +66,13 @@ export function useProductActions() {
     toggleCompare: async (p: { id: string; inCompare?: boolean }) => {
       if (requireLogin()) return;
       try {
-        const before = (qc.getQueryData<any>(["api", "/auth/session"])?.compareCount ?? 0) as number;
         const r = await post("/compare", { productId: p.id, action: p.inCompare ? "remove" : "add" });
         await refresh();
         if (p.inCompare) toast.success(t("shop.compareRemoved"));
-        else toast.success(before >= 4 ? t("shop.compareFull") : t("shop.compareAdded", { count: r.ids.length }), { action: { label: t("shop.viewCompare"), onClick: () => navigate("/compare") } });
+        else {
+          const vars = { category: text(r.groupName), count: r.groupCount };
+          toast.success(r.replaced ? t("shop.compareFull", vars) : t("shop.compareAdded", vars), { action: { label: t("shop.viewCompare"), onClick: () => navigate(`/compare?group=${r.groupId}`) } });
+        }
       } catch (e) {
         toast.error(errorText(e, t("errors.generic")));
       }
@@ -623,46 +625,6 @@ export function SearchPage() {
           {d.faq.length > 0 && <Card title="FAQ"><ul className="kit-list">{d.faq.map((f: any) => <li key={f.id}><Link to="/faq" className="text-brand">{f.question}</Link></li>)}</ul></Card>}
         </div>
       ))}
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* Müqayisə                                                             */
-/* ------------------------------------------------------------------ */
-
-export function ComparePage() {
-  const { t } = useI18n();
-  const { user } = useSession();
-  const qc = useQueryClient();
-  const [onlyDiff, setOnlyDiff] = useState(false);
-  const q = useApi<any>(user ? "/compare" : null);
-  if (!user) return <div className="container py-8"><EmptyState title={t("compare.loginTitle")} action={<Link to="/login?next=/compare" className="btn primary">{t("login")}</Link>} /></div>;
-  return (
-    <div className="container py-6">
-      <div className="flex justify-between items-center flex-wrap gap-2">
-        <h1>{t("compare.title")}</h1>
-        <div className="flex gap-2">
-          <Check checked={onlyDiff} onValue={setOnlyDiff} label={t("compare.onlyDiff")} />
-          <button type="button" className="btn outline btn-sm" onClick={async () => { await post("/compare", { action: "clear", productId: "" }); await qc.invalidateQueries({ queryKey: ["api"] }); }}>{t("compare.clear")}</button>
-        </div>
-      </div>
-      <QueryView query={q} isEmpty={(d: any) => !d.products.length} empty={<EmptyState title={t("compare.empty")} action={<Link to="/shop" className="btn primary">{t("nav.shop")}</Link>} />}>
-        {(d: any) => (
-          <div className="table-wrap">
-            <table className="compare-table">
-              <thead>
-                <tr><th scope="col">{t("compare.feature")}</th>{d.products.map((p: any) => <th key={p.id} scope="col"><ProductVisual kind={p.imageUrl} tone={p.imageTone} size="sm" /><Link to={`/product/${p.slug}`}>{p.name}</Link><PriceTag price={p.price} size="sm" /><button type="button" className="btn ghost btn-sm" onClick={async () => { await post("/compare", { productId: p.id, action: "remove" }); await qc.invalidateQueries({ queryKey: ["api"] }); }}><X size={12} /> {t("common.remove")}</button></th>)}</tr>
-              </thead>
-              <tbody>
-                {d.rows.filter((r: any) => !onlyDiff || r.different).map((r: any) => (
-                  <tr key={r.code} className={cn(r.different && "diff")}><th scope="row">{r.name}</th>{r.values.map((v: any, i: number) => <td key={i}>{v ? v.join(", ") : "—"}</td>)}</tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </QueryView>
     </div>
   );
 }

@@ -84,6 +84,15 @@ function collectCategoryIds(slugPath: string[] | null): string[] | null {
   return db.productCategories.filter((c) => categoryAncestors(c.id).includes(leaf.id)).map((c) => c.id);
 }
 
+const COMPARE_PER_GROUP = 4;
+
+/** Müqayisə qrupu — məhsulun əsas (kök) kateqoriyası. */
+function compareGroupOf(p: ProductRec) {
+  let c = db.productCategories.find((x) => x.id === p.categoryId)!;
+  while (c.parentId) c = db.productCategories.find((x) => x.id === c.parentId)!;
+  return c;
+}
+
 export const catalogHandlers = [
   route.get("/categories", () => {
     const all = db.productCategories.filter((c) => c.active).sort((a, b) => a.order - b.order).map(productCategoryDto);
@@ -217,30 +226,58 @@ export const catalogHandlers = [
     };
   }),
 
+  // Müqayisə yalnız eyni əsas kateqoriya daxilində aparılır (§30): kondisioner nasosla müqayisə olunmur
   route.get("/compare", ({ ctx, url }) => {
     const ids = url.searchParams.get("ids")?.split(",").filter(Boolean) ?? ctx.user?.compare ?? [];
-    const products = ids.map((id) => db.products.find((p) => p.id === id)).filter((p): p is ProductRec => !!p && productVisible(p, ctx));
+    const all = ids.map((id) => db.products.find((p) => p.id === id)).filter((p): p is ProductRec => !!p && productVisible(p, ctx));
+    const countOf = (gid: string) => all.filter((p) => compareGroupOf(p).id === gid).length;
+    // Ən çox məhsulu olan qrup öndə; bərabər olduqda ən son əlavə edilən
+    const groupIds = [...new Set([...all].reverse().map((p) => compareGroupOf(p).id))].sort((a, b) => countOf(b) - countOf(a));
+    const requested = url.searchParams.get("group");
+    const activeGroup = requested && groupIds.includes(requested) ? requested : groupIds[0] ?? null;
+    const products = all.filter((p) => compareGroupOf(p).id === activeGroup);
     const codes = [...new Set(products.flatMap((p) => inheritedAttributeCodes(p.categoryId)))].filter((c) => db.attributes.find((a) => a.code === c)?.comparable);
+    const group = activeGroup ? db.productCategories.find((c) => c.id === activeGroup)! : null;
     return {
-      products: products.map((p) => productSummaryDto(p, ctx)),
-      rows: codes.map((code) => {
-        const a = db.attributes.find((x) => x.code === code)!;
-        const values = products.map((p) => {
-          const v = attrValues(p, code);
-          return v.length ? v.map((x) => attributeDisplay(code, x)) : null;
-        });
-        return { code, name: a.name, group: a.group, values, different: new Set(values.map((v) => JSON.stringify(v))).size > 1 };
+      maxPerGroup: COMPARE_PER_GROUP,
+      groups: groupIds.map((gid) => {
+        const c = db.productCategories.find((x) => x.id === gid)!;
+        return { id: c.id, slug: c.slug, name: c.name, path: productCategoryDto(c).path, count: all.filter((p) => compareGroupOf(p).id === gid).length };
       }),
+      activeGroup: group ? { id: group.id, name: group.name, path: productCategoryDto(group).path } : null,
+      products: products.map((p) => productSummaryDto(p, ctx)),
+      rows: codes
+        .map((code) => {
+          const a = db.attributes.find((x) => x.code === code)!;
+          const values = products.map((p) => {
+            const v = attrValues(p, code);
+            return v.length ? v.map((x) => attributeDisplay(code, x)) : null;
+          });
+          return { code, name: a.name, group: a.group, values, different: products.length > 1 && new Set(values.map((v) => JSON.stringify(v))).size > 1 };
+        })
+        // Heç bir məhsulda dəyəri olmayan xüsusiyyət göstərilmir
+        .filter((r) => r.values.some((v) => v !== null)),
     };
   }),
 
   route.post("/compare", async ({ ctx, body }) => {
     const user = requireAuth(ctx);
-    const { productId, action } = await body<{ productId: string; action: "add" | "remove" | "clear" }>();
+    const { productId, action, group } = await body<{ productId: string; action: "add" | "remove" | "clear" | "clearGroup"; group?: string }>();
+    const product = productId ? db.products.find((p) => p.id === productId) : undefined;
+    let replaced = false;
     if (action === "clear") user.compare = [];
+    else if (action === "clearGroup") user.compare = user.compare.filter((id) => { const p = db.products.find((x) => x.id === id); return !p || compareGroupOf(p).id !== group; });
     else if (action === "remove") user.compare = user.compare.filter((x) => x !== productId);
-    else if (!user.compare.includes(productId)) user.compare = [...user.compare, productId].slice(-4);
-    return { ids: user.compare };
+    else if (product && !user.compare.includes(productId)) {
+      const gid = compareGroupOf(product).id;
+      const same = user.compare.filter((id) => { const p = db.products.find((x) => x.id === id); return p && compareGroupOf(p).id === gid; });
+      // Hər kateqoriyada ən çox 4 məhsul: ən köhnəsi çıxarılır
+      if (same.length >= COMPARE_PER_GROUP) { user.compare = user.compare.filter((id) => id !== same[0]); replaced = true; }
+      user.compare = [...user.compare, productId];
+    }
+    const gid = product ? compareGroupOf(product).id : null;
+    const groupCount = gid ? user.compare.filter((id) => { const p = db.products.find((x) => x.id === id); return p && compareGroupOf(p).id === gid; }).length : 0;
+    return { ids: user.compare, groupId: gid, groupName: gid ? db.productCategories.find((c) => c.id === gid)!.name : null, groupCount, replaced };
   }),
 
   route.get("/favorites", ({ ctx, url }) => {
