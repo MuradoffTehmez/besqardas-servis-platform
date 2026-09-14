@@ -540,6 +540,7 @@
     "sortPriceDesc": "Price: high to low",
     "sortRating": "Rating",
     "sortNew": "Newest",
+    "sortLabel": "Sort by",
     "filters": "Filters",
     "categories": "Categories",
     "activeFilters": "Active filters",

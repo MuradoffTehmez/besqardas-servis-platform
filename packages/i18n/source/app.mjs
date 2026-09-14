@@ -528,6 +528,7 @@ export default {
     sortPriceDesc: ["Bahadan ucuza", "Сначала дорогие", "Price: high to low"],
     sortRating: ["Reytinq", "По рейтингу", "Rating"],
     sortNew: ["Yeni", "Новинки", "Newest"],
+    sortLabel: ["Sıralama", "Сортировка", "Sort by"],
     filters: ["Filtrlər", "Фильтры", "Filters"],
     categories: ["Kateqoriyalar", "Категории", "Categories"],
     activeFilters: ["Aktiv filtrlər", "Активные фильтры", "Active filters"],
