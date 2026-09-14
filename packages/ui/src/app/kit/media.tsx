@@ -5,6 +5,7 @@ import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Legend, Line, Line
 import { cn, formatAzPhone, normalizeAzPhone } from "@sp/utils";
 import { useI18n } from "../core/i18n";
 import { Field } from "./base";
+import { fileToDataUrl } from "./upload";
 
 /* ------------------------------------------------------------------ */
 /* Məhsul illüstrasiyası (real şəkil yoxdur — mock media)               */
@@ -19,6 +20,13 @@ const TONES: Record<string, [string, string]> = {
 };
 
 export function ProductVisual({ kind, tone = "slate", label, className, size = "md" }: { kind?: string | null; tone?: string; label?: string; className?: string; size?: "sm" | "md" | "lg" }) {
+  if (kind && /^(data:image\/|https?:\/\/|blob:|\/)/.test(kind)) {
+    return (
+      <div className={cn("kit-visual is-photo", `size-${size}`, className)}>
+        <img src={kind} alt={label ?? ""} loading="lazy" />
+      </div>
+    );
+  }
   const k = (kind ?? "box").replace(/^illu:/, "").split(":")[0];
   const [bg, fg] = TONES[tone] ?? TONES.slate!;
   const shapes: Record<string, React.ReactNode> = {
@@ -178,6 +186,8 @@ export interface PickedFile {
   size: number;
   mimeType: string;
   preview?: string;
+  /** Sıxılmış məzmun (data URL) — serverə yükləmə üçün */
+  dataUrl?: string;
 }
 
 /** Drag & drop yükləmə (PRD §33). Real storage yoxdur — fayl metadata-sı API-yə göndərilir. */
@@ -186,23 +196,33 @@ export function FileDrop({ files, onChange, accept = "image/*,application/pdf", 
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<number | null>(null);
   const input = useRef<HTMLInputElement>(null);
-  const add = (list: FileList | null) => {
+  const add = async (list: FileList | null) => {
     if (!list) return;
     const next = [...files];
+    const accepted: File[] = [];
     for (const f of Array.from(list)) {
-      if (next.length >= max) { setError(t("media.tooMany", { max })); break; }
+      if (next.length + accepted.length >= max) { setError(t("media.tooMany", { max })); break; }
       if (f.size > maxSizeMb * 1024 * 1024) { setError(t("media.tooLarge", { name: f.name, max: maxSizeMb })); continue; }
       const okType = accept.split(",").some((a) => (a.endsWith("/*") ? f.type.startsWith(a.slice(0, -1)) : f.type === a.trim()));
       if (!okType) { setError(t("media.badType", { name: f.name })); continue; }
-      next.push({ name: f.name, size: f.size, mimeType: f.type, preview: f.type.startsWith("image/") ? URL.createObjectURL(f) : undefined });
+      accepted.push(f);
     }
-    setProgress(0);
-    const timer = setInterval(() => setProgress((p) => { if (p === null || p >= 100) { clearInterval(timer); return null; } return p + 25; }), 80);
+    if (!accepted.length) return;
+    setProgress(10);
+    let done = 0;
+    for (const f of accepted) {
+      // şəkillər brauzerdə sıxılır; məzmun data URL kimi API-yə gedir
+      const dataUrl = await fileToDataUrl(f).catch(() => undefined);
+      next.push({ name: f.name, size: dataUrl ? Math.floor((dataUrl.length * 3) / 4) : f.size, mimeType: dataUrl?.startsWith("data:image/jpeg") ? "image/jpeg" : f.type, preview: f.type.startsWith("image/") ? dataUrl ?? URL.createObjectURL(f) : undefined, dataUrl });
+      done += 1;
+      setProgress(Math.round((done / accepted.length) * 100));
+    }
+    setTimeout(() => setProgress(null), 300);
     onChange(next);
   };
   return (
     <div>
-      <div className="kit-drop" onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); setError(null); add(e.dataTransfer.files); }}>
+      <div className="kit-drop" onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); setError(null); void add(e.dataTransfer.files); }}>
         <Upload size={22} aria-hidden />
         <p>{label ?? t("media.dropHere")}</p>
         <div className="flex gap-2 flex-wrap justify-center">
@@ -212,11 +232,11 @@ export function FileDrop({ files, onChange, accept = "image/*,application/pdf", 
           {capture && (
             <label className="btn outline btn-sm">
               <Camera size={14} /> {t("media.camera")}
-              <input type="file" accept="image/*" capture="environment" hidden onChange={(e) => add(e.target.files)} />
+              <input type="file" accept="image/*" capture="environment" hidden onChange={(e) => { void add(e.target.files); e.target.value = ""; }} />
             </label>
           )}
         </div>
-        <input ref={input} type="file" accept={accept} multiple hidden onChange={(e) => { setError(null); add(e.target.files); }} />
+        <input ref={input} type="file" accept={accept} multiple hidden onChange={(e) => { setError(null); void add(e.target.files); e.target.value = ""; }} />
         <small className="text-muted">{t("media.limits", { size: maxSizeMb, max })}</small>
       </div>
       {progress !== null && <div className="kit-progress" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}><span style={{ width: `${progress}%` }} /></div>}
@@ -269,12 +289,12 @@ export function OtpInput({ value, onChange, length = 6, autoFocus }: { value: st
 }
 
 /** +994 formatında maskalı telefon (PRD §62). */
-export function PhoneField({ label, value, onValue, error, required, hint }: { label?: React.ReactNode; value: string; onValue: (normalized: string) => void; error?: string | string[] | null; required?: boolean; hint?: React.ReactNode }) {
+export function PhoneField({ label, value, onValue, error, required, hint, disabled }: { label?: React.ReactNode; value: string; onValue: (normalized: string) => void; error?: string | string[] | null; required?: boolean; hint?: React.ReactNode; disabled?: boolean }) {
   const [display, setDisplay] = useState(value ? formatAzPhone(value) : "+994 ");
   useEffect(() => { if (value && normalizeAzPhone(display) !== value) setDisplay(formatAzPhone(value)); }, [value]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <Field label={label} error={error} required={required} hint={hint}>
-      {(id, d) => <input id={id} aria-describedby={d} type="tel" inputMode="tel" autoComplete="tel" className={cn("form-input", error && "input-error")} value={display} placeholder="+994 (50) 123-45-67" onChange={(e) => { const f = formatAzPhone(e.target.value); setDisplay(f); onValue(normalizeAzPhone(f)); }} />}
+      {(id, d) => <input id={id} aria-describedby={d} type="tel" inputMode="tel" autoComplete="tel" className={cn("form-input", error && "input-error")} disabled={disabled} value={display} placeholder="+994 (50) 123-45-67" onChange={(e) => { const f = formatAzPhone(e.target.value); setDisplay(f); onValue(normalizeAzPhone(f)); }} />}
     </Field>
   );
 }

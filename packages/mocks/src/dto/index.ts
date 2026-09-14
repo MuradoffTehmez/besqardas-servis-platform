@@ -87,6 +87,7 @@ export function technicianSummaryDto(tech: TechnicianRec) {
     id: tech.id,
     fullName: fullName(user),
     avatarTone: user.avatarTone,
+    avatarUrl: user.avatarUrl ?? null,
     rating: tech.rating,
     reviewCount: tech.reviewCount,
     completedJobs: tech.completedJobs,
@@ -202,7 +203,7 @@ export function productSummaryDto(p: ProductRec, ctx: Ctx) {
     categoryId: p.categoryId,
     categoryName: cat.name,
     categoryPath: productCategoryDto(cat).path,
-    imageUrl: `illu:${p.imageKind}`,
+    imageUrl: productImageUrl(p),
     imageTone: p.imageTone,
     rating: p.rating,
     reviewCount: p.reviewCount,
@@ -217,6 +218,17 @@ export function productSummaryDto(p: ProductRec, ctx: Ctx) {
     country: p.country,
     installable: !!p.installServiceId,
   };
+}
+
+/** Əsas şəkil: yüklənmiş media varsa onun ünvanı, yoxdursa illüstrasiya açarı. */
+export function productImageUrl(p: ProductRec) {
+  const media = p.media ?? [];
+  return (media.find((m) => m.primary) ?? media[0])?.url ?? `illu:${p.imageKind}`;
+}
+
+export function productGallery(p: ProductRec) {
+  if (p.media?.length) return [...p.media].sort((a, b) => Number(b.primary) - Number(a.primary)).map((m) => ({ id: m.id, url: m.url, name: m.name, mimeType: m.mimeType, size: m.size, alt: m.alt, altI18n: m.alt, primary: m.primary, synthetic: false }));
+  return [0, 1, 2, 3].map((i) => ({ id: `${p.id}-g${i}`, url: `illu:${p.imageKind}:${i}`, name: `${p.slug}-${i}.jpg`, mimeType: "image/jpeg", size: 180000, alt: p.name, altI18n: p.name, primary: i === 0, synthetic: true }));
 }
 
 export function productDto(p: ProductRec, ctx: Ctx) {
@@ -236,7 +248,7 @@ export function productDto(p: ProductRec, ctx: Ctx) {
     description: p.description,
     descriptionI18n: p.description,
     sku: p.variants[0]!.sku,
-    gallery: [0, 1, 2, 3].map((i) => ({ id: `${p.id}-g${i}`, url: `illu:${p.imageKind}:${i}`, name: `${p.slug}-${i}.jpg`, mimeType: "image/jpeg", size: 180000, alt: p.name })),
+    gallery: productGallery(p),
     videoUrl: p.videoUrl,
     variants: p.variants.map((v) => {
       const st = stockSummary(v.id);
@@ -508,7 +520,7 @@ export function salesOrderDto(s: SalesOrderRec, ctx: Ctx) {
     ...salesOrderSummaryDto(s),
     lines: s.lines.map((l) => {
       const p = db.products.find((x) => x.id === l.productId);
-      return { id: l.id, productId: l.productId, slug: p?.slug ?? "", name: l.name, sku: l.sku, quantity: qty(l.quantity, l.unit, 3), unitPrice: money(l.unitCents), total: money(l.totalCents), returnable: !p?.returnRestriction, returnedQuantity: Number(l.returnedQuantity) ? qty(l.returnedQuantity, l.unit) : null, imageTone: p?.imageTone ?? "slate", imageUrl: p ? `illu:${p.imageKind}` : null };
+      return { id: l.id, productId: l.productId, slug: p?.slug ?? "", name: l.name, sku: l.sku, quantity: qty(l.quantity, l.unit, 3), unitPrice: money(l.unitCents), total: money(l.totalCents), returnable: !p?.returnRestriction, returnedQuantity: Number(l.returnedQuantity) ? qty(l.returnedQuantity, l.unit) : null, imageTone: p?.imageTone ?? "slate", imageUrl: p ? productImageUrl(p) : null };
     }),
     subtotal: money(s.subtotalCents),
     discountTotal: money(s.discountCents),
@@ -880,6 +892,7 @@ export function userDto(u: (typeof db.users)[number]) {
     lastLoginAt: u.lastLoginAt,
     createdAt: u.createdAt,
     avatarTone: u.avatarTone,
+    avatarUrl: u.avatarUrl ?? null,
     companyName: u.companyId ? db.b2bAccounts.find((c) => c.id === u.companyId)?.legalName ?? null : null,
   };
 }

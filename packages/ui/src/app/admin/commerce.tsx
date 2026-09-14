@@ -1,9 +1,9 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { AlertTriangle, ArrowRightLeft, ClipboardCheck, PackagePlus, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, ArrowRightLeft, ClipboardCheck, ImagePlus, PackagePlus, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@sp/utils";
-import { del, patch, post, useApi } from "@sp/api-client";
+import { del, patch, post, put, useApi } from "@sp/api-client";
 import { useI18n } from "../core/i18n";
 import { Link, useRouter } from "../core/router";
 import { useSession } from "../core/session";
@@ -11,6 +11,8 @@ import { Card, Check, EmptyState, EnumBadge, FormError, Grid, KeyValue, Loading,
 import { ActionBar, Dialog, ReasonDialog, ResourceTable, type ApiAction } from "../kit/actions";
 import { PriceTag } from "../kit/domain";
 import { ProductVisual } from "../kit/media";
+import { GalleryManager, ImagePicker, type GalleryItem } from "../kit/upload";
+import { categoryOptions, generateEan13 } from "./receipts";
 import { HistoryList, DocumentsList, useRefresh } from "../pages/common";
 import { I18nInput, enumKeys, useLookups } from "./crud";
 
@@ -24,10 +26,9 @@ export function ProductsAdminPage() {
   const { t, text, money, enumLabel } = useI18n();
   const { can } = useSession();
   const lookups = useLookups();
-  const [creating, setCreating] = useState(false);
   return (
     <>
-      <PageHeader title={t("adm.nav.products")} actions={can("catalog:create") || can("catalog:edit") ? <button type="button" className="btn primary" onClick={() => setCreating(true)}><Plus size={16} /> {t("common.create")}</button> : null} />
+      <PageHeader title={t("adm.nav.products")} actions={<>{can("inventory:create") || can("inventory:edit") ? <Link to="/goods-receipts/new" className="btn outline"><PackagePlus size={16} /> {t("adm.grn.new")}</Link> : null}{can("catalog:create") || can("catalog:edit") ? <Link to="/products/new" className="btn primary"><Plus size={16} /> {t("adm.products.create")}</Link> : null}</>} />
       <ResourceTable
         path="/admin/products"
         rowTo={(p: any) => `/products/${p.id}`}
@@ -47,32 +48,134 @@ export function ProductsAdminPage() {
           { key: "status", header: t("common.status"), render: (p: any) => <EnumBadge group="ProductStatus" code={p.status} /> },
         ]}
       />
-      {creating && <ProductCreateDialog onClose={() => setCreating(false)} />}
     </>
   );
 }
 
-function ProductCreateDialog({ onClose }: { onClose: () => void }) {
-  const { t, text, enumLabel } = useI18n();
+/** Yeni məhsul: əsas məlumat, identifikatorlar, qiymətlər, şəkillər və ilkin anbar qalığı bir səhifədə. */
+export function ProductCreatePage() {
+  const { t, text, enumLabel, money } = useI18n();
   const lookups = useLookups();
   const { navigate } = useRouter();
-  const [v, setV] = useState<any>({ nameI18n: { az: "", ru: "", en: "" }, slug: "", brandId: "", categoryId: "", baseUnit: "pcs", type: "PHYSICAL", sku: "", retailPrice: "" });
+  const [v, setV] = useState({ nameI18n: { az: "", ru: "", en: "" }, descriptionI18n: { az: "", ru: "", en: "" }, slug: "", sku: "", barcode: "", brandId: "", categoryId: "", type: "PHYSICAL", baseUnit: "pcs", status: "ACTIVE", warrantyMonths: "12", retailPrice: "", weightKg: "", dimensionsCm: "" });
+  const [slugTouched, setSlugTouched] = useState(false);
+  const [custom, setCustom] = useState(false);
+  const [prices, setPrices] = useState({ TECHNICIAN: "", PARTNER: "", WHOLESALE: "" });
+  const [images, setImages] = useState<{ dataUrl: string; name: string }[]>([]);
+  const [stockOn, setStockOn] = useState(false);
+  const [stock, setStock] = useState({ warehouseId: "", quantity: "", unitCost: "", purpose: "SALES", zone: "" });
   const [error, setError] = useState<any>(null);
+  const [busy, setBusy] = useState(false);
   const fe = error?.fieldErrors ?? {};
+  const retail = Number(v.retailPrice.replace(",", ".")) || 0;
+  const auto = { TECHNICIAN: retail * 0.8, PARTNER: retail * 0.75, WHOLESALE: retail * 0.7 };
+  const slugify = (s: string) => s.toLowerCase().replace(/ə/g, "e").replace(/ı/g, "i").replace(/ö/g, "o").replace(/ü/g, "u").replace(/ş/g, "s").replace(/ç/g, "c").replace(/ğ/g, "g").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const suggestSku = () => {
+    const brand = (lookups.data?.brands ?? []).find((b: any) => b.id === v.brandId)?.name ?? "BQ";
+    setV({ ...v, sku: `${slugify(brand).slice(0, 3).toUpperCase()}-${slugify(v.nameI18n.az).split("-").filter(Boolean).slice(0, 2).map((x) => x.slice(0, 3).toUpperCase()).join("-") || "ITEM"}-${Math.floor(100 + Math.random() * 900)}` });
+  };
+  const margin = stockOn && Number(stock.unitCost) > 0 && retail > 0 ? Math.round(((retail / 1.18 - Number(stock.unitCost)) / (retail / 1.18)) * 100) : null;
+  const submit = async (andNew: boolean) => {
+    setError(null);
+    setBusy(true);
+    try {
+      const r = await post("/admin/products", {
+        ...v,
+        barcode: v.barcode || undefined,
+        retailPrice: v.retailPrice.replace(",", "."),
+        warrantyMonths: Number(v.warrantyMonths || 0),
+        prices: custom ? prices : undefined,
+        images,
+        initialStock: stockOn ? { ...stock, quantity: stock.quantity.replace(",", "."), unitCost: stock.unitCost.replace(",", ".") } : undefined,
+      });
+      toast.success(r.movementNumber ? t("adm.pnew.createdWithStock", { movement: r.movementNumber }) : t("adm.pnew.created"));
+      if (andNew) {
+        setV({ ...v, nameI18n: { az: "", ru: "", en: "" }, descriptionI18n: { az: "", ru: "", en: "" }, slug: "", sku: "", barcode: "", retailPrice: "" });
+        setImages([]);
+        setSlugTouched(false);
+        window.scrollTo({ top: 0 });
+      } else navigate(`/products/${r.id}`);
+    } catch (e) {
+      setError(e);
+      toast.error(errorText(e, t("errors.generic")));
+    } finally {
+      setBusy(false);
+    }
+  };
   return (
-    <Dialog open onClose={onClose} size="lg" title={t("adm.products.create")} footer={<><button type="button" className="btn outline" onClick={onClose}>{t("common.cancel")}</button><button type="button" className="btn primary" onClick={async () => { setError(null); try { const r = await post("/admin/products", v); toast.success(t("common.saved")); navigate(`/products/${r.id}`); } catch (e) { setError(e); } }}>{t("common.create")}</button></>}>
-      <FormError error={error} />
-      <I18nInput label={t("adm.f.name")} required value={v.nameI18n} onChange={(x) => setV({ ...v, nameI18n: x, slug: v.slug || x.az.toLowerCase().replace(/[^a-z0-9]+/g, "-") })} error={fe.nameI18n} />
-      <div className="kit-form-grid">
-        <TextField label={t("adm.f.slug")} required value={v.slug} onValue={(x) => setV({ ...v, slug: x })} error={fe.slug} />
-        <TextField label="SKU" required value={v.sku} onValue={(x) => setV({ ...v, sku: x })} error={fe.sku} />
-        <SelectField label={t("adm.f.brand")} required value={v.brandId} onValue={(x) => setV({ ...v, brandId: x })} placeholder={t("common.choose")} options={(lookups.data?.brands ?? []).map((b: any) => ({ value: b.id, label: b.name }))} error={fe.brandId} />
-        <SelectField label={t("adm.f.category")} required value={v.categoryId} onValue={(x) => setV({ ...v, categoryId: x })} placeholder={t("common.choose")} options={(lookups.data?.categories ?? []).map((c: any) => ({ value: c.id, label: text(c.name) }))} error={fe.categoryId} />
-        <SelectField label={t("adm.f.type")} value={v.type} onValue={(x) => setV({ ...v, type: x })} options={enumKeys("ProductType").map((x) => ({ value: x, label: enumLabel("ProductType", x) }))} />
-        <SelectField label={t("adm.f.baseUnit")} value={v.baseUnit} onValue={(x) => setV({ ...v, baseUnit: x })} options={(lookups.data?.units ?? []).map((u: any) => ({ value: u.code, label: text(u.name) }))} />
-        <TextField label={t("adm.f.retailPrice")} required inputMode="decimal" value={v.retailPrice} onValue={(x) => setV({ ...v, retailPrice: x.replace(",", ".") })} error={fe.retailPrice} hint="AZN, ƏDV daxil" />
+    <>
+      <PageHeader back="/products" title={t("adm.products.create")} subtitle={t("adm.pnew.subtitle")} actions={<><button type="button" className="btn outline" disabled={busy} onClick={() => submit(true)}>{t("adm.pnew.saveAndNew")}</button><button type="button" className="btn primary" disabled={busy} onClick={() => submit(false)}>{t("common.create")}</button></>} />
+      <FormError error={error && !Object.keys(fe).length ? error : null} />
+      <div className="grn-layout">
+        <div className="kit-stack">
+          <Card title={t("adm.pnew.basics")}>
+            <I18nInput label={t("adm.f.name")} required value={v.nameI18n} onChange={(x) => setV({ ...v, nameI18n: x, slug: slugTouched ? v.slug : slugify(x.az) })} error={fe.nameI18n} />
+            <I18nInput label={t("adm.f.description")} multiline value={v.descriptionI18n} onChange={(x) => setV({ ...v, descriptionI18n: x })} />
+            <div className="kit-form-grid">
+              <SelectField label={t("adm.f.category")} required value={v.categoryId} onValue={(x) => setV({ ...v, categoryId: x })} placeholder={t("common.choose")} options={categoryOptions(lookups.data?.categories ?? [], text)} error={fe.categoryId} />
+              <SelectField label={t("adm.f.brand")} required value={v.brandId} onValue={(x) => setV({ ...v, brandId: x })} placeholder={t("common.choose")} options={(lookups.data?.brands ?? []).map((b: any) => ({ value: b.id, label: b.name })).sort((a: any, b: any) => a.label.localeCompare(b.label))} error={fe.brandId} />
+              <SelectField label={t("adm.f.type")} value={v.type} onValue={(x) => setV({ ...v, type: x })} options={enumKeys("ProductType").map((x) => ({ value: x, label: enumLabel("ProductType", x) }))} />
+              <SelectField label={t("adm.f.baseUnit")} value={v.baseUnit} onValue={(x) => setV({ ...v, baseUnit: x })} options={(lookups.data?.units ?? []).map((u: any) => ({ value: u.code, label: text(u.name) }))} />
+              <SelectField label={t("common.status")} value={v.status} onValue={(x) => setV({ ...v, status: x })} options={enumKeys("ProductStatus").map((s) => ({ value: s, label: enumLabel("ProductStatus", s) }))} />
+              <TextField label={t("adm.f.warrantyMonths")} type="number" value={v.warrantyMonths} onValue={(x) => setV({ ...v, warrantyMonths: x })} />
+            </div>
+          </Card>
+          <Card title={t("adm.pnew.identifiers")} subtitle={t("adm.pnew.identifiersHint")}>
+            <div className="kit-form-grid">
+              <div className="kit-field">
+                <TextField label="SKU" required value={v.sku} onValue={(x) => setV({ ...v, sku: x.toUpperCase() })} error={fe.sku} />
+                <button type="button" className="btn ghost btn-sm" onClick={suggestSku}>{t("adm.pnew.suggestSku")}</button>
+              </div>
+              <div className="kit-field">
+                <TextField label={t("adm.products.barcode")} inputMode="numeric" value={v.barcode} onValue={(x) => setV({ ...v, barcode: x.replace(/\D/g, "") })} error={fe.barcode} hint="EAN-13" />
+                <button type="button" className="btn ghost btn-sm" onClick={() => setV({ ...v, barcode: generateEan13() })}>{t("adm.pnew.generateBarcode")}</button>
+              </div>
+              <TextField label={t("adm.f.slug")} required value={v.slug} onValue={(x) => { setSlugTouched(true); setV({ ...v, slug: slugify(x) }); }} error={fe.slug} hint={`/product/${v.slug || "…"}`} />
+              <TextField label={t("adm.pnew.weight")} inputMode="decimal" value={v.weightKg} onValue={(x) => setV({ ...v, weightKg: x })} />
+              <TextField label={t("adm.pnew.dimensions")} value={v.dimensionsCm} onValue={(x) => setV({ ...v, dimensionsCm: x })} placeholder="80 × 30 × 25" />
+            </div>
+          </Card>
+          <Card title={t("adm.pnew.pricing")}>
+            <div className="kit-form-grid">
+              <TextField label={t("adm.f.retailPrice")} required inputMode="decimal" value={v.retailPrice} onValue={(x) => setV({ ...v, retailPrice: x })} error={fe.retailPrice} hint={t("adm.pnew.vatIncluded")} />
+              <div className="kit-field"><Toggle label={t("adm.pnew.customPrices")} checked={custom} onValue={setCustom} /></div>
+            </div>
+            <div className="kit-form-grid">
+              {(["TECHNICIAN", "PARTNER", "WHOLESALE"] as const).map((pt) => custom ? (
+                <TextField key={pt} label={enumLabel("PriceType", pt)} inputMode="decimal" value={prices[pt]} onValue={(x) => setPrices({ ...prices, [pt]: x.replace(",", ".") })} placeholder={auto[pt].toFixed(2)} />
+              ) : (
+                <div key={pt} className="kit-field"><span className="kit-label">{enumLabel("PriceType", pt)}</span><strong>{money({ amount: auto[pt].toFixed(2), currency: "AZN" })}</strong><small className="text-muted">{t("adm.pnew.autoPrice", { pct: pt === "TECHNICIAN" ? 20 : pt === "PARTNER" ? 25 : 30 })}</small></div>
+              ))}
+            </div>
+          </Card>
+        </div>
+        <div className="kit-stack grn-side">
+          <Card title={t("adm.products.media")} subtitle={t("adm.pnew.imagesHint")}>
+            <ImagePicker images={images} onChange={setImages} max={8} />
+          </Card>
+          <Card title={t("adm.pnew.initialStock")} actions={<Toggle label="" checked={stockOn} onValue={setStockOn} />}>
+            {!stockOn ? <p className="text-sm text-muted">{t("adm.pnew.initialStockHint")}</p> : (
+              <>
+                <SelectField label={t("adm.f.warehouse")} required value={stock.warehouseId} onValue={(x) => setStock({ ...stock, warehouseId: x })} placeholder={t("common.choose")} options={(lookups.data?.warehouses ?? []).map((w: any) => ({ value: w.id, label: `${text(w.name)} · ${enumLabel("WarehouseType", w.type)}` }))} error={fe["initialStock.warehouseId"]} />
+                <div className="kit-form-grid">
+                  <TextField label={`${t("common.quantity")} (${v.baseUnit})`} inputMode="decimal" value={stock.quantity} onValue={(x) => setStock({ ...stock, quantity: x })} />
+                  <TextField label={t("adm.f.unitCost")} inputMode="decimal" value={stock.unitCost} onValue={(x) => setStock({ ...stock, unitCost: x })} error={fe["initialStock.unitCost"]} hint={margin !== null ? t("adm.pnew.margin", { pct: margin }) : undefined} />
+                  <SelectField label={t("adm.inv.purpose")} value={stock.purpose} onValue={(x) => setStock({ ...stock, purpose: x })} options={enumKeys("StockPurpose").map((x) => ({ value: x, label: enumLabel("StockPurpose", x) }))} />
+                  <TextField label={t("adm.inv.zone")} value={stock.zone} onValue={(x) => setStock({ ...stock, zone: x })} placeholder="A-01" />
+                </div>
+                <p className="text-sm text-muted">{t("adm.pnew.stockMovementHint")}</p>
+              </>
+            )}
+          </Card>
+          <Card title={t("adm.products.preview")}>
+            <ProductVisual kind={images[0]?.dataUrl ?? "box"} tone="slate" label={v.nameI18n.az} />
+            <strong className="block mt-3">{v.nameI18n.az || t("adm.f.name")}</strong>
+            <small className="block text-muted">{v.sku || "SKU"} · {(lookups.data?.brands ?? []).find((b: any) => b.id === v.brandId)?.name ?? "—"}</small>
+            {retail > 0 && <strong className="block mt-2 text-brand">{money({ amount: retail.toFixed(2), currency: "AZN" })}</strong>}
+          </Card>
+        </div>
       </div>
-    </Dialog>
+    </>
   );
 }
 
@@ -85,6 +188,7 @@ export function ProductEditorPage({ id }: { id: string }) {
   const tab = query.get("tab") ?? "main";
   const [draft, setDraft] = useState<any | null>(null);
   const [error, setError] = useState<any>(null);
+  const [altFor, setAltFor] = useState<GalleryItem | null>(null);
   useEffect(() => {
     if (!q.data) return;
     const p = q.data;
@@ -102,7 +206,7 @@ export function ProductEditorPage({ id }: { id: string }) {
     <>
       <PageHeader back="/products" title={text(p.name)} badge={<EnumBadge group="ProductStatus" code={draft.status} />} subtitle={`${p.brandName} · ${p.categoryName} · ${enumLabel("ProductType", p.type)}`} actions={<Link to={`/product/${p.slug}`} className="btn outline" target="_blank">{t("adm.products.onSite")}</Link>} />
       <FormError error={error} />
-      <Tabs value={tab} onChange={(v) => setQuery({ tab: v })} tabs={[{ id: "main", label: t("adm.products.main") }, { id: "attributes", label: t("adm.nav.attributes"), badge: p.attributeSchema.length }, { id: "variants", label: t("adm.products.variants"), badge: p.variantsAdmin.length }, { id: "units", label: t("adm.nav.units") }, { id: "compatibility", label: t("adm.nav.compatibility"), badge: draft.compatibleModelIds.length }, { id: "stock", label: t("adm.f.stock") }, { id: "media", label: t("adm.products.media") }]} />
+      <Tabs value={tab} onChange={(v) => setQuery({ tab: v })} tabs={[{ id: "main", label: t("adm.products.main") }, { id: "attributes", label: t("adm.nav.attributes"), badge: p.attributeSchema.length }, { id: "variants", label: t("adm.products.variants"), badge: p.variantsAdmin.length }, { id: "units", label: t("adm.nav.units") }, { id: "compatibility", label: t("adm.nav.compatibility"), badge: draft.compatibleModelIds.length }, { id: "stock", label: t("adm.f.stock") }, { id: "media", label: t("adm.products.media"), badge: p.gallery.filter((g: any) => !g.synthetic).length || null }]} />
       {tab === "main" && (
         <div className="kit-split">
           <Card>
@@ -118,6 +222,7 @@ export function ProductEditorPage({ id }: { id: string }) {
           </Card>
           <Card title={t("adm.products.preview")}>
             <ProductVisual kind={p.imageUrl} tone={p.imageTone} label={text(p.name)} />
+            <button type="button" className="btn ghost btn-sm mt-2" onClick={() => setQuery({ tab: "media" })}><ImagePlus size={14} /> {t("adm.products.manageImages")}</button>
             <div className="mt-3"><PriceTag price={p.price} showVat showInstallment /></div>
             <p className="text-sm text-muted mt-2">{t("adm.products.previewHint")}</p>
           </Card>
@@ -188,7 +293,7 @@ export function ProductEditorPage({ id }: { id: string }) {
         </Card>
       )}
       {tab === "stock" && (
-        <Card flush>
+        <Card flush title={t("adm.f.stock")} actions={<Link to="/goods-receipts/new" className="btn outline btn-sm"><PackagePlus size={14} /> {t("adm.grn.new")}</Link>}>
           <div className="table-wrap">
             <table>
               <thead><tr><th>SKU</th><th>{t("adm.f.warehouse")}</th><th>{t("adm.inv.purpose")}</th><th className="num">{t("tech.inv.physical")}</th><th className="num">{t("tech.inv.reserved")}</th><th className="num">{t("tech.inv.available")}</th><th className="num">{t("adm.inv.avgCost")}</th></tr></thead>
@@ -199,9 +304,18 @@ export function ProductEditorPage({ id }: { id: string }) {
       )}
       {tab === "media" && (
         <Card title={t("adm.products.media")} subtitle={t("adm.products.mediaHint")}>
-          <div className="photo-grid">{p.gallery.map((g: any) => <div key={g.id} style={{ padding: 0 }}><ProductVisual kind={g.url} tone={p.imageTone} label={text(g.altI18n)} />{g.primary && <span className="badge badge-info">{t("media.primary")}</span>}</div>)}</div>
+          <GalleryManager
+            items={p.gallery}
+            renderFallback={(g) => <ProductVisual kind={g.url} tone={p.imageTone} label={text(g.altI18n)} />}
+            onUpload={async (files) => { await post(`/admin/products/${id}/media`, { files }); await refresh(); toast.success(t("adm.products.imagesUploaded", { count: files.length })); }}
+            onPrimary={async (mediaId) => { await patch(`/admin/products/${id}/media/${mediaId}`, { primary: true }); await refresh(); }}
+            onDelete={async (mediaId) => { await del(`/admin/products/${id}/media/${mediaId}`); await refresh(); }}
+            onReorder={async (ids) => { await put(`/admin/products/${id}/media-order`, { ids }); await refresh(); }}
+            onAlt={(g) => setAltFor(g)}
+          />
         </Card>
       )}
+      {altFor && <AltTextDialog item={altFor} onClose={() => setAltFor(null)} onSave={async (alt) => { await patch(`/admin/products/${id}/media/${altFor.id}`, { alt }); await refresh(); setAltFor(null); }} />}
     </>
   );
 }
@@ -373,7 +487,7 @@ export function InventoryPage() {
   const belowMin = query.get("belowMin") === "true";
   return (
     <>
-      <PageHeader title={t("adm.nav.inventory")} actions={<><button type="button" className="btn outline" onClick={() => setMovement("RECEIPT")}><PackagePlus size={16} /> {t("adm.inv.receipt")}</button><button type="button" className="btn outline" onClick={() => setMovement("WRITE_OFF")}>{t("adm.inv.writeOff")}</button><button type="button" className="btn outline" onClick={() => setMovement("PURPOSE_CHANGE")}>{t("adm.inv.purposeChange")}</button><Link to="/transfers" className="btn primary"><ArrowRightLeft size={16} /> {t("adm.nav.transfers")}</Link></>} />
+      <PageHeader title={t("adm.nav.inventory")} actions={<><Link to="/goods-receipts/new" className="btn primary"><PackagePlus size={16} /> {t("adm.grn.new")}</Link><button type="button" className="btn outline" onClick={() => setMovement("RECEIPT")}>{t("adm.inv.receipt")}</button><button type="button" className="btn outline" onClick={() => setMovement("WRITE_OFF")}>{t("adm.inv.writeOff")}</button><button type="button" className="btn outline" onClick={() => setMovement("PURPOSE_CHANGE")}>{t("adm.inv.purposeChange")}</button><Link to="/transfers" className="btn outline"><ArrowRightLeft size={16} /> {t("adm.nav.transfers")}</Link></>} />
       {totals.data && (
         <Grid cols={4}>
           <Stat label="SKU" value={totals.data.totals.skus} />
@@ -685,5 +799,18 @@ export function CostingMethodsPage() {
         </Card>
       </div>
     </>
+  );
+}
+
+function AltTextDialog({ item, onClose, onSave }: { item: GalleryItem; onClose: () => void; onSave: (alt: { az: string; ru: string; en: string }) => Promise<unknown> }) {
+  const { t } = useI18n();
+  const [alt, setAlt] = useState(item.altI18n ?? { az: "", ru: "", en: "" });
+  const [error, setError] = useState<unknown>(null);
+  return (
+    <Dialog open onClose={onClose} size="sm" title={t("adm.products.altTitle")} subtitle={t("adm.products.altHint")} footer={<><button type="button" className="btn outline" onClick={onClose}>{t("common.cancel")}</button><button type="button" className="btn primary" onClick={async () => { try { await onSave(alt); } catch (e) { setError(e); } }}>{t("common.save")}</button></>}>
+      <FormError error={error} />
+      <img src={item.url} alt="" className="alt-preview" />
+      <I18nInput label={t("adm.products.altText")} value={alt} onChange={setAlt} />
+    </Dialog>
   );
 }

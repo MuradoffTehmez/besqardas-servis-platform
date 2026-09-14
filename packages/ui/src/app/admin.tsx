@@ -3,7 +3,7 @@ import React from "react";
 import {
   Award, BadgePercent, BarChart3, Bell, Boxes, Building2, CalendarDays, ClipboardCheck, ClipboardList, Coins, CreditCard, FileSpreadsheet, FileText, FolderTree, Gauge, GitBranch, Globe, HandCoins, KeyRound,
   LayoutDashboard, ListChecks, Map, MessageSquare, Package, PackageSearch, Palette, Plug, Receipt, RotateCcw, ScrollText, Settings, ShieldAlert, ShieldCheck, ShoppingCart, Star, Tag, Tags, Truck, Undo2, User,
-  UserCog, Users, Wallet, Warehouse, Wrench, Workflow, Ruler, Link2, Layers, Percent, Image, HelpCircle, Timer, Plus, FileBadge, Handshake, ArrowLeftRight,
+  UserCog, Users, Wallet, Warehouse, Wrench, Workflow, Ruler, Link2, Layers, Percent, Image, HelpCircle, Timer, Plus, FileBadge, PackagePlus, Handshake, ArrowLeftRight,
 } from "lucide-react";
 import { useI18n } from "./core/i18n";
 import { useSession, INTERNAL_ROLES } from "./core/session";
@@ -16,7 +16,8 @@ import { NotificationsPage } from "./pages/account";
 import { Resource } from "./admin/resources";
 import { AdminDashboardPage, AdminSchedulePage, AdminServiceOrderDetailPage, AdminServiceOrdersPage, CreateServiceOrderPage, DispatchPage, LogisticsPage, WarrantyClaimsAdminPage, WorkflowTemplateEditorPage, WorkflowTemplatesPage } from "./admin/ops";
 import { CustomerDetailPage, LicensesPage, PartnershipsPage, RolesPage, TechnicianAdminDetailPage, TechniciansAdminPage, UsersPage, VerificationPage } from "./admin/people";
-import { CompatibilityPage, CostingMethodsPage, InventoryPage, ProductEditorPage, ProductsAdminPage, PurchasesPage, QuotesAdminPage, SalesOrderAdminDetailPage, StockCountDetailPage, StockCountsPage, TransfersPage } from "./admin/commerce";
+import { GoodsReceiptDetailPage, GoodsReceiptEditorPage, GoodsReceiptsPage } from "./admin/receipts";
+import { CompatibilityPage, CostingMethodsPage, InventoryPage, ProductCreatePage, ProductEditorPage, ProductsAdminPage, PurchasesPage, QuotesAdminPage, SalesOrderAdminDetailPage, StockCountDetailPage, StockCountsPage, TransfersPage } from "./admin/commerce";
 import { AdminProfilePage, BrandingPage, CashDesksPage, FinancePage, IntegrationsPage, ReportsPage, SettingsPage, SettlementsPage, SubscriptionPlansAdminPage } from "./admin/finance";
 
 /**
@@ -76,6 +77,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
       { to: "/promotions", label: n("promotions"), icon: Percent, permission: "price_rules:view" },
     ] },
     { label: n("gWarehouse"), items: [
+      { to: "/goods-receipts", label: n("goodsReceipts"), icon: PackagePlus, permission: "inventory:view" },
       { to: "/inventory", label: n("inventory"), icon: Boxes, permission: "inventory:view" },
       { to: "/warehouses", label: n("warehouses"), icon: Warehouse, permission: "inventory:view" },
       { to: "/stock-movements", label: n("stockMovements"), icon: GitBranch, permission: "inventory:view" },
@@ -127,6 +129,8 @@ function AdminShell({ children }: { children: React.ReactNode }) {
   const quick = t("panel.quick");
   const commands: Command[] = [
     ...(can("service_orders:create") ? [{ id: "a:new-order", label: t("adm.orders.create"), group: quick, icon: Plus, run: () => navigate("/service-orders/new") }] : []),
+    ...(can("inventory:create") || can("inventory:edit") ? [{ id: "a:new-grn", label: t("adm.grn.new"), group: quick, icon: PackagePlus, run: () => navigate("/goods-receipts/new") }] : []),
+    ...(can("catalog:create") ? [{ id: "a:new-product", label: t("adm.products.create"), group: quick, icon: Package, run: () => navigate("/products/new") }] : []),
     ...(can("technicians:view") ? [{ id: "a:verification", label: n("verification"), group: quick, icon: ShieldCheck, run: () => navigate("/technicians/verification") }] : []),
   ];
   return <PanelShell nav={nav} title="CRM" app="admin" homeLink={false} commands={commands}>{children}</PanelShell>;
@@ -176,6 +180,7 @@ export const adminRoutes: RouteDef[] = [
   R("/roles", () => <RolesPage />, "adm.nav.roles"),
 
   R("/products", () => <ProductsAdminPage />, "adm.nav.products"),
+  R("/products/new", () => <ProductCreatePage />, "adm.products.create"),
   R("/products/:id", (p) => <ProductEditorPage id={p.id!} />, "adm.nav.products"),
   res("/categories", "categories", "adm.nav.categories"),
   res("/brands", "brands", "adm.nav.brands"),
@@ -193,6 +198,10 @@ export const adminRoutes: RouteDef[] = [
   res("/price-lists", "priceLists", "adm.nav.priceLists"),
   res("/promotions", "promotions", "adm.nav.promotions"),
 
+  R("/goods-receipts", () => <GoodsReceiptsPage />, "adm.nav.goodsReceipts"),
+  R("/goods-receipts/new", () => <GoodsReceiptEditorPage key="new" />, "adm.grn.new"),
+  R("/goods-receipts/:id/edit", (p) => <GoodsReceiptEditorPage key={p.id} id={p.id!} />, "adm.nav.goodsReceipts"),
+  R("/goods-receipts/:id", (p) => <GoodsReceiptDetailPage id={p.id!} />, "adm.nav.goodsReceipts"),
   R("/inventory", () => <InventoryPage />, "adm.nav.inventory"),
   res("/warehouses", "warehouses", "adm.nav.warehouses"),
   res("/stock-movements", "stockMovements", "adm.nav.stockMovements"),

@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
-import { BarChart3, Boxes, CalendarDays, ClipboardList, Crown, FileBadge, LayoutDashboard, MapPin, MessageSquare, Navigation, Phone, Settings, Star, Trash2, Users, Wallet, Wrench, Plus, BadgeCheck, Clock, AlertTriangle, Lock } from "lucide-react";
+import { BarChart3, Boxes, CalendarDays, ClipboardList, Crown, FileBadge, LayoutDashboard, MapPin, MessageSquare, Navigation, Phone, Settings, Star, Trash2, Users, Wallet, Wrench, Plus, BadgeCheck, Clock, AlertTriangle, Lock, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@sp/utils";
 import { del, patch, post, put, qs, useApi } from "@sp/api-client";
@@ -9,13 +9,13 @@ import { Link, useRouter } from "../core/router";
 import { useSession } from "../core/session";
 import { PanelShell, type NavGroup } from "../core/shells";
 import type { RouteDef } from "../core/router";
-import { Card, Check, EmptyState, EnumBadge, FormError, Grid, KeyValue, Loading, PageHeader, QueryView, SearchBox, SelectField, Stars, Stat, Tabs, TextArea, TextField, Toggle, errorText } from "../kit/base";
+import { Avatar, Card, Check, EmptyState, EnumBadge, FormError, Grid, KeyValue, Loading, PageHeader, QueryView, SearchBox, SelectField, Stars, Stat, Tabs, TextArea, TextField, Toggle, errorText } from "../kit/base";
 import { ConfirmDialog, Dialog, ResourceTable } from "../kit/actions";
 import { EstimateView, StageTimeline } from "../kit/domain";
 import { BarsChart, DonutChart, FileDrop, LinesChart, MapView, QuantityInput, type PickedFile } from "../kit/media";
 import { DocumentsList, HistoryList, Progress, PromptDialog, UsageBar, pct, useOrderAction, useRefresh } from "./common";
 import { OrderActions } from "./workflow";
-import { SubscriptionPage } from "./account";
+import { ProfilePage, SubscriptionPage } from "./account";
 
 /* ------------------------------------------------------------------ */
 /* Shell və route-lar (PRD §60.4)                                       */
@@ -48,6 +48,7 @@ export function TechnicianShell({ children }: { children: React.ReactNode }) {
     {
       label: t("tech.nav.profile"),
       items: [
+        { to: "/technician/profile", label: t("acc.nav.profile"), icon: UserRound },
         { to: "/technician/reviews", label: t("tech.nav.reviews"), icon: Star },
         { to: "/technician/documents", label: t("tech.nav.documents"), icon: FileBadge },
         { to: "/technician/subscription", label: staff ? t("tech.nav.license") : t("tech.nav.subscription"), icon: Crown },
@@ -77,6 +78,7 @@ export const technicianRoutes: RouteDef[] = [
   r("/technician/documents", () => <TechDocumentsPage />, "tech.nav.documents"),
   r("/technician/statistics", () => <StatisticsPage />, "tech.nav.statistics"),
   r("/technician/settings", () => <TechSettingsPage />, "tech.nav.settings"),
+  r("/technician/profile", () => <ProfilePage />, "acc.nav.profile"),
 ];
 
 /* ------------------------------------------------------------------ */
@@ -829,7 +831,7 @@ function TechSettingsPage() {
   const [state, setState] = useState<any | null>(null);
   const [error, setError] = useState<unknown>(null);
   useEffect(() => {
-    if (q.data) setState({ bio: text(q.data.profile.bio), workingHours: q.data.profile.workingHours, zoneIds: q.data.zones.filter((z: any) => z.selected).map((z: any) => z.id), languages: q.data.profile.languages, promoted: q.data.profile.promoted });
+    if (q.data) setState({ experienceYears: String(q.data.profile.experienceYears ?? ""), bio: text(q.data.profile.bio), workingHours: q.data.profile.workingHours, zoneIds: q.data.zones.filter((z: any) => z.selected).map((z: any) => z.id), languages: q.data.profile.languages, promoted: q.data.profile.promoted });
   }, [q.data]); // eslint-disable-line react-hooks/exhaustive-deps
   if (q.isLoading || !state) return <Loading rows={8} />;
   const d = q.data;
@@ -839,16 +841,25 @@ function TechSettingsPage() {
   };
   return (
     <>
-      <PageHeader title={t("tech.nav.settings")} actions={<Link to={`/technicians/${d.profile.id}`} className="btn outline">{t("tech.settings.publicProfile")}</Link>} />
+      <PageHeader title={t("tech.nav.settings")} actions={<><Link to="/technician/profile" className="btn outline">{t("acc.nav.profile")}</Link><Link to={`/technicians/${d.profile.id}`} className="btn outline">{t("tech.settings.publicProfile")}</Link></>} />
+      <div className="profile-hero compact mb-4">
+        <Avatar name={d.profile.fullName} tone={d.profile.avatarTone} src={d.profile.avatarUrl} size={64} />
+        <div className="profile-hero-main">
+          <strong>{d.profile.fullName}</strong>
+          <small className="text-muted">{d.profile.avatarUrl ? t("tech.settings.photoOk") : t("tech.settings.photoMissing")}</small>
+        </div>
+        <Link to="/technician/profile" className="btn outline btn-sm">{d.profile.avatarUrl ? t("media.changePhoto") : t("media.uploadPhoto")}</Link>
+      </div>
       <FormError error={error} />
       <Grid cols={2}>
         <Card title={t("tech.settings.profile")}>
-          <TextArea label={t("tech.settings.bio")} value={state.bio} onValue={(v) => setState({ ...state, bio: v })} rows={5} />
+          <TextArea label={t("tech.settings.bio")} value={state.bio} onValue={(v) => setState({ ...state, bio: v })} rows={5} hint={`${state.bio.length} / 600`} />
+          <TextField label={t("tech.settings.experience")} type="number" min={0} max={60} value={state.experienceYears} onValue={(v) => setState({ ...state, experienceYears: v })} />
           <p className="form-label mb-2">{t("tech.settings.languages")}</p>
           <div className="flex gap-3 mb-3">{["az", "ru", "en", "tr"].map((l) => <Check key={l} label={l.toUpperCase()} checked={state.languages.includes(l)} onValue={(v) => setState({ ...state, languages: v ? [...state.languages, l] : state.languages.filter((x: string) => x !== l) })} />)}</div>
           <Toggle label={t("tech.settings.promoted")} checked={state.promoted} disabled={!ent("promote")} onValue={(v) => setState({ ...state, promoted: v })} />
           {!ent("promote") && <small className="block text-muted">{t("tech.settings.promoteLocked")}</small>}
-          <button type="button" className="btn primary mt-3" onClick={() => save({ bio: state.bio, languages: state.languages, ...(ent("promote") ? { promoted: state.promoted } : {}) })}>{t("common.save")}</button>
+          <button type="button" className="btn primary mt-3" onClick={() => save({ bio: state.bio, experienceYears: state.experienceYears === "" ? undefined : Number(state.experienceYears), languages: state.languages, ...(ent("promote") ? { promoted: state.promoted } : {}) })}>{t("common.save")}</button>
         </Card>
         <Card title={t("tech.settings.hours")}>
           {DAYS.map((day) => {

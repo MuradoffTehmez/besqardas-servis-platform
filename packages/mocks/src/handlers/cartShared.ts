@@ -7,7 +7,7 @@ import { money, vatIncluded } from "../lib/money";
 import { newId } from "../lib/rng";
 import { nowIso } from "../lib/time";
 import { t, tr } from "../lib/i18n";
-import { attributeDisplay } from "../dto";
+import { attributeDisplay, productImageUrl } from "../dto";
 
 /** Səbət hesablamaları (backend məntiqi, PRD §31.1, §46.3). */
 
@@ -93,7 +93,7 @@ export function computeCart(cart: CartRec, ctx: Ctx) {
         variantName: Object.entries(variant.attributes).map(([c, v]) => tr(attributeDisplay(c, v), ctx.locale)).join(" · "),
         sku: variant.sku,
         imageTone: product.imageTone,
-        imageUrl: `illu:${product.imageKind}`,
+        imageUrl: productImageUrl(product),
         quantity: { value: item.quantity, unit: item.unit },
         baseQuantity: { value: String(+baseQty.toFixed(3)), unit: product.baseUnit },
         availableUnits: [{ unit: product.baseUnit, label: product.baseUnit, factor: "1" }, ...product.conversions.map((c) => ({ unit: c.unit, label: c.unit, factor: String(c.factor) }))],

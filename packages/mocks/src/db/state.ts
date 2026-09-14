@@ -27,6 +27,7 @@ import type {
   SubscriptionRec,
   TransferRec,
   WarrantyRec,
+  GoodsReceiptRec,
 } from "./types";
 
 /** In-memory verilənlər bazası. Hər `resetDb()` çağırışında seed-lərdən eyni vəziyyət qurulur. */
@@ -108,6 +109,7 @@ function baseState() {
       id: string; number: string; supplierId: string; warehouseId: string; status: "DRAFT" | "SENT" | "CONFIRMED" | "PARTIALLY_RECEIVED" | "RECEIVED" | "CLOSED" | "CANCELLED";
       lines: { id: string; variantId: string; quantity: number; receivedQuantity: number; unitCostCents: number }[]; expectedAt: string | null; createdAt: string; invoiceNumber: string | null;
     }[],
+    goodsReceipts: [] as GoodsReceiptRec[],
     stockCounts: [] as {
       id: string; number: string; scope: "FULL" | "ZONE" | "CATEGORY" | "MOBILE"; warehouseId: string; status: "DRAFT" | "IN_PROGRESS" | "PENDING_APPROVAL" | "APPROVED" | "CANCELLED";
       blockMovements: boolean; lines: { id: string; variantId: string; system: number; counted: number | null }[]; scheduledAt: string; createdBy: string;

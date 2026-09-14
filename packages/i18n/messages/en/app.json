@@ -1,5 +1,7 @@
 {
   "common": {
+    "manage": "Manage",
+    "showMore": "Show more",
     "save": "Save",
     "saved": "Saved",
     "cancel": "Cancel",
@@ -87,6 +89,19 @@
     "backOnline": "Connection restored"
   },
   "validation": {
+    "emailRequired": "An email address is required for this",
+    "linesRequired": "Add at least one item",
+    "fileInvalid": "The file couldn't be read",
+    "tooManyFiles": "Too many files",
+    "serialsCount": "Serial count must equal the quantity",
+    "serialsDuplicate": "Duplicate serial numbers",
+    "warehouseBlocked": "A stock count is in progress — movements are blocked",
+    "reverseStock": "Some items were already used — reversal isn't possible",
+    "barcode": "Barcode must be 8–14 digits",
+    "iban": "IBAN must be in AZ format (28 characters)",
+    "url": "The address must start with https://",
+    "tooLong": "The text is too long",
+    "date": "Invalid date",
     "invalid": "Invalid value",
     "required": "This field is required",
     "email": "Invalid email address",
@@ -264,6 +279,18 @@
     "open_shift": "Open shift"
   },
   "media": {
+    "addImages": "Add images",
+    "limitsImages": "JPG, PNG, WebP · {max} more",
+    "makePrimary": "Make primary",
+    "moveLeft": "Move left",
+    "moveRight": "Move right",
+    "syntheticHint": "No uploaded photos — an illustration is shown. The first upload becomes primary.",
+    "uploadPhoto": "Upload photo",
+    "changePhoto": "Change photo",
+    "photoHint": "JPG, PNG or WebP, up to 10 MB",
+    "cropTitle": "Adjust photo",
+    "cropHint": "Drag to position, use the slider to zoom",
+    "zoom": "Zoom",
     "dropHere": "Drag files here",
     "choose": "Choose file",
     "camera": "Camera",

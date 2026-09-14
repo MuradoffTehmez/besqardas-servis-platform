@@ -25,7 +25,7 @@ export interface HeaderProps {
   currentPath: string;
   locale: "az" | "ru" | "en";
   cartCount?: number;
-  user?: { fullName?: string; email?: string; role?: string } | null;
+  user?: { fullName?: string; email?: string; role?: string; avatarUrl?: string | null } | null;
   /** Daxil olmuş istifadəçi üçün menyu bəndləri (kabinet bölmələri, panellər) */
   userMenu?: { label: string; href: string; icon?: React.ComponentType<{ size?: number }> }[];
   userMenuTitle?: string;
@@ -209,7 +209,7 @@ export function Header({
               aria-expanded={hasMenu ? userOpen : undefined}
               onClick={() => (hasMenu ? setUserOpen((o) => !o) : handleNavClick(user ? "/account" : "/login"))}
             >
-              <UserRound size={16} />
+              {user?.avatarUrl ? <img src={user.avatarUrl} alt="" className="user-btn-avatar" /> : <UserRound size={16} />}
               <span className="user-btn-label">
                 {user ? user.fullName || "Hesabım" : locale === "az" ? "Daxil ol" : locale === "ru" ? "Войти" : "Login"}
               </span>

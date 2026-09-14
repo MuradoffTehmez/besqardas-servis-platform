@@ -12,6 +12,7 @@ import { L } from "../lib/i18n";
 import { money } from "../lib/money";
 import { newId } from "../lib/rng";
 import { daysFromNow, nowIso } from "../lib/time";
+import { checkDataUrl } from "../lib/upload";
 import { deviceDto, documentDto, paymentDto, planDto, salesOrderDto, salesOrderSummaryDto, serviceOrderDto, serviceOrderSummaryDto, subscriptionDto, warrantyDto, categoryName, brandName } from "../dto";
 
 /** Müştəri kabineti (PRD §52–55) və servis sifarişlərinin ümumi API-si (§13, §18–19). */
@@ -181,12 +182,20 @@ export const accountHandlers = [
 
   route.get("/account/profile", ({ ctx }) => {
     const u = requireAuth(ctx);
-    return { id: u.id, firstName: u.firstName, lastName: u.lastName, email: u.email, phone: u.phone, emailVerified: u.emailVerified, phoneVerified: u.phoneVerified, locale: u.locale, birthDate: u.birthDate, marketingConsent: u.marketingConsent, createdAt: u.createdAt, avatarTone: u.avatarTone };
+    const filled = [u.firstName, u.lastName, u.email, u.phone, u.birthDate, u.city, u.avatarUrl, u.gender].filter(Boolean).length;
+    return {
+      id: u.id, firstName: u.firstName, lastName: u.lastName, email: u.email, phone: u.phone, emailVerified: u.emailVerified, phoneVerified: u.phoneVerified,
+      locale: u.locale, birthDate: u.birthDate, marketingConsent: u.marketingConsent, createdAt: u.createdAt, lastLoginAt: u.lastLoginAt, avatarTone: u.avatarTone,
+      avatarUrl: u.avatarUrl ?? null, gender: u.gender ?? null, city: u.city, preferredChannel: u.preferredChannel ?? "PHONE", jobTitle: u.jobTitle ?? null,
+      roles: u.roles, activeRole: ctx.role, companyName: ctx.company?.legalName ?? null, companyRole: u.companyRole, branchName: u.branchId ? db.branches.find((b) => b.id === u.branchId)?.name ?? null : null,
+      twoFactorEnabled: u.twoFactorEnabled, completeness: Math.round((filled / 8) * 100),
+    };
   }),
 
   route.patch("/account/profile", async ({ ctx, body }) => {
     const u = requireAuth(ctx);
-    const data = parse(S.ProfileUpdate, await body());
+    const raw = await body<Record<string, unknown>>();
+    const data = parse(S.ProfileUpdate, raw);
     if (data.email && data.email !== u.email) {
       if (db.users.some((x) => x.email === data.email && x.id !== u.id)) throw validationError({ email: ["validation.alreadyExists"] });
       u.email = data.email;
@@ -197,7 +206,48 @@ export const accountHandlers = [
       u.phoneVerified = false;
     }
     Object.assign(u, { firstName: data.firstName, lastName: data.lastName, locale: data.locale, birthDate: data.birthDate ?? u.birthDate });
+    // əlavə sahələr (sxemdən kənar, istəyə bağlı)
+    const extra = raw as { city?: string; gender?: "MALE" | "FEMALE" | null; preferredChannel?: "PHONE" | "SMS" | "WHATSAPP" | "EMAIL"; jobTitle?: string | null; marketingConsent?: boolean };
+    if (extra.city !== undefined) u.city = extra.city.trim() || u.city;
+    if (extra.gender !== undefined) u.gender = extra.gender === "MALE" || extra.gender === "FEMALE" ? extra.gender : null;
+    if (extra.preferredChannel) {
+      if (!["PHONE", "SMS", "WHATSAPP", "EMAIL"].includes(extra.preferredChannel)) throw validationError({ preferredChannel: ["validation.invalid"] });
+      if (extra.preferredChannel === "EMAIL" && !u.email) throw validationError({ preferredChannel: ["validation.emailRequired"] });
+      u.preferredChannel = extra.preferredChannel;
+    }
+    if (extra.jobTitle !== undefined) u.jobTitle = extra.jobTitle?.trim() || null;
+    if (extra.marketingConsent !== undefined) u.marketingConsent = !!extra.marketingConsent;
+    audit(ctx, "edit_profile", "users", u.id, fullName(u));
     return { ok: true };
+  }),
+
+  /* ---------------- Profil şəkli ---------------- */
+  route.put("/account/avatar", async ({ ctx, body }) => {
+    const u = requireAuth(ctx);
+    const { dataUrl } = await body<{ dataUrl: string }>();
+    checkDataUrl(dataUrl, "avatar", { maxMb: 2 });
+    u.avatarUrl = dataUrl;
+    audit(ctx, "upload_avatar", "users", u.id, fullName(u));
+    return { avatarUrl: u.avatarUrl };
+  }),
+
+  route.delete("/account/avatar", ({ ctx }) => {
+    const u = requireAuth(ctx);
+    u.avatarUrl = null;
+    audit(ctx, "delete_avatar", "users", u.id, fullName(u));
+    return { avatarUrl: null };
+  }),
+
+  /* ---------------- Son fəaliyyət ---------------- */
+  route.get("/account/activity", ({ ctx, url }) => {
+    const u = requireAuth(ctx);
+    const name = fullName(u);
+    const events = [
+      ...db.auditLogs.filter((a) => a.actorName === name).map((a) => ({ id: a.id, at: a.at, action: a.action, resource: a.resource, label: a.resourceLabel, ip: a.ip, kind: "ACTION" as const })),
+      { id: `login-${u.id}`, at: u.lastLoginAt ?? u.createdAt, action: "login", resource: "auth", label: "Chrome · Windows", ip: "85.132.44.10", kind: "LOGIN" as const },
+      { id: `login2-${u.id}`, at: new Date(Date.now() - 2 * 86400_000).toISOString(), action: "login", resource: "auth", label: "Safari · iPhone", ip: "94.20.61.7", kind: "LOGIN" as const },
+    ].sort((a, b) => b.at.localeCompare(a.at));
+    return list(url, events, { dateField: "at", defaultSort: "-at", defaultPageSize: 10 });
   }),
 
   /* ---------------- Ünvanlar ---------------- */

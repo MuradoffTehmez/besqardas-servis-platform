@@ -39,6 +39,11 @@ export interface UserRec {
   marketingConsent: boolean;
   birthDate: string | null;
   city: string;
+  /** Yüklənmiş profil şəkli (data URL) */
+  avatarUrl?: string | null;
+  gender?: "MALE" | "FEMALE" | null;
+  preferredChannel?: "PHONE" | "SMS" | "WHATSAPP" | "EMAIL";
+  jobTitle?: string | null;
 }
 
 const u = (key: string, first: string, last: string, roles: Role[], extra: Partial<UserRec> = {}): UserRec => ({
@@ -436,6 +441,8 @@ export interface B2BAccountRec {
   contactEmail: string;
   createdAt: string;
   minOrderCents: number;
+  logoUrl?: string | null;
+  website?: string | null;
 }
 
 export const b2bAccounts: B2BAccountRec[] = [

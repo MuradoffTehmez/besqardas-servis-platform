@@ -9,8 +9,9 @@ import { L } from "../lib/i18n";
 import { money, qty } from "../lib/money";
 import { newId } from "../lib/rng";
 import { daysAgo, hoursFromNow, nowIso, periodLabel } from "../lib/time";
-import { attributeDisplay, branchName, documentDto, paymentDto, planDto, productCategoryDto, productDto, productSummaryDto, reservationDto, salesOrderDto, salesOrderSummaryDto, serviceDto, specName, stockLevelDto, subscriptionDto, transferDto, warehouseName } from "../dto";
+import { productGallery, attributeDisplay, branchName, documentDto, paymentDto, planDto, productCategoryDto, productDto, productSummaryDto, reservationDto, salesOrderDto, salesOrderSummaryDto, serviceDto, specName, stockLevelDto, subscriptionDto, transferDto, warehouseName } from "../dto";
 import { returnDto } from "./account";
+import { createProductMedia } from "./warehouse";
 import { quoteDto } from "./b2b";
 import { productVisible } from "../engine/pricing";
 
@@ -126,7 +127,7 @@ export const adminConfigHandlers = [
       returnRestrictionKey: p.returnRestriction,
       warrantyMonths: p.warrantyMonths,
       installServiceId: p.installServiceId,
-      gallery: [0, 1, 2, 3].map((i) => ({ id: `${p.id}-g${i}`, url: `illu:${p.imageKind}:${i}`, name: `${p.slug}-${i}.jpg`, primary: i === 0, alt: p.name, altI18n: p.name })),
+      gallery: productGallery(p),
     };
   }),
 
@@ -139,10 +140,29 @@ export const adminConfigHandlers = [
     if (db.products.some((p) => p.variants.some((v) => v.sku === b.sku))) throw validationError({ sku: ["validation.alreadyExists"] });
     const retail = Math.round(Number(b.retailPrice) * 100);
     if (!(retail > 0)) throw validationError({ retailPrice: ["validation.positive"] });
-    const p = { ...db.products[0]!, id: newId("product"), slug: String(b.slug), name: b.nameI18n as never, description: (b.descriptionI18n as never) ?? L(""), highlights: [], type: b.type as never, brandId: String(b.brandId), modelId: (b.modelId as string) ?? null, categoryId: String(b.categoryId), baseUnit: String(b.baseUnit), conversions: [], attributes: (b.attributes as Record<string, string>) ?? {}, variantAttrCodes: [], variants: [{ id: newId("variant"), sku: String(b.sku), barcode: String(b.barcode ?? ""), attributes: {}, prices: { RETAIL: retail, TECHNICIAN: Math.round(retail * 0.8), PARTNER: Math.round(retail * 0.75), WHOLESALE: Math.round(retail * 0.7) }, weightKg: "1", dimensionsCm: "—" }], rating: 0, reviewCount: 0, isNew: true, imageKind: "box", imageTone: "slate", warrantyMonths: Number(b.warrantyMonths ?? 12), installServiceId: null, compatibleModelIds: [], analogIds: [], oemCode: null, visibility: [], status: (b.status as never) ?? "DRAFT", createdAt: nowIso(), returnRestriction: null, videoUrl: null, bulky: false };
+    if (b.barcode && db.products.some((p) => p.variants.some((v) => v.barcode === b.barcode))) throw validationError({ barcode: ["validation.alreadyExists"] });
+    if (b.barcode && !/^\d{8,14}$/.test(String(b.barcode))) throw validationError({ barcode: ["validation.barcode"] });
+    const initial = b.initialStock as { warehouseId?: string; quantity?: string; unitCost?: string; purpose?: "SALES" | "SERVICE"; zone?: string } | undefined;
+    if (initial?.quantity && Number(initial.quantity) > 0) {
+      const e: Record<string, string[]> = {};
+      if (!initial.warehouseId) e["initialStock.warehouseId"] = ["validation.required"];
+      if (!(Number(initial.unitCost) >= 0) || !initial.unitCost) e["initialStock.unitCost"] = ["validation.required"];
+      if (Object.keys(e).length) throw validationError(e);
+    }
+    const prices = b.prices as Record<string, string> | undefined;
+    const p = { ...db.products[0]!, id: newId("product"), slug: String(b.slug), name: b.nameI18n as never, description: (b.descriptionI18n as never) ?? L(""), highlights: [], type: b.type as never, brandId: String(b.brandId), modelId: (b.modelId as string) ?? null, categoryId: String(b.categoryId), baseUnit: String(b.baseUnit), conversions: [], attributes: (b.attributes as Record<string, string>) ?? {}, variantAttrCodes: [], variants: [{ id: newId("variant"), sku: String(b.sku), barcode: String(b.barcode ?? ""), attributes: {}, prices: { RETAIL: retail, TECHNICIAN: prices?.TECHNICIAN ? Math.round(Number(prices.TECHNICIAN) * 100) : Math.round(retail * 0.8), PARTNER: prices?.PARTNER ? Math.round(Number(prices.PARTNER) * 100) : Math.round(retail * 0.75), WHOLESALE: prices?.WHOLESALE ? Math.round(Number(prices.WHOLESALE) * 100) : Math.round(retail * 0.7) }, weightKg: String(b.weightKg ?? "1"), dimensionsCm: String(b.dimensionsCm ?? "—") }], rating: 0, reviewCount: 0, isNew: true, imageKind: db.productCategories.find((c) => c.id === b.categoryId)?.slug.includes("kondisioner") ? "ac" : "box", imageTone: "slate", warrantyMonths: Number(b.warrantyMonths ?? 12), media: [] as never[], installServiceId: null, compatibleModelIds: [], analogIds: [], oemCode: null, visibility: [], status: (b.status as never) ?? "DRAFT", createdAt: nowIso(), returnRestriction: null, videoUrl: null, bulky: false };
     db.products.unshift(p);
+    const images = (b.images as { dataUrl: string; name?: string }[] | undefined) ?? [];
+    if (images.length) createProductMedia(ctx, p.id, images);
     audit(ctx, "create", "catalog", p.id, p.slug);
-    return { id: p.id };
+    // ilkin qalıq — mal qəbulu hərəkəti kimi qeydə alınır
+    let movementNumber: string | null = null;
+    if (initial?.quantity && Number(initial.quantity) > 0) {
+      const mv = move({ type: "RECEIPT", warehouseId: initial.warehouseId!, variantId: p.variants[0]!.id, baseQuantity: Number(initial.quantity), quantity: String(initial.quantity), unit: p.baseUnit, direction: "IN", purpose: initial.purpose ?? "SALES", actorName: fullName(ctx.user), unitCostCents: Math.round(Number(initial.unitCost) * 100), reason: "İlkin qalıq", relatedDocument: p.variants[0]!.sku });
+      if (initial.zone) stockRow(p.variants[0]!.id, initial.warehouseId!, initial.purpose ?? "SALES").zone = initial.zone;
+      movementNumber = mv.number;
+    }
+    return { id: p.id, variantId: p.variants[0]!.id, movementNumber };
   }),
 
   route.patch("/admin/products/:id", async ({ ctx, params, body }) => {
@@ -1088,7 +1108,7 @@ export const adminConfigHandlers = [
     requireAuth(ctx);
     return {
       branches: db.branches.map((b) => ({ id: b.id, name: b.name })),
-      warehouses: db.warehouses.map((w) => ({ id: w.id, name: w.name, type: w.type })),
+      warehouses: db.warehouses.map((w) => ({ id: w.id, name: w.name, type: w.type, blocked: db.stockCounts.some((sc) => sc.warehouseId === w.id && sc.blockMovements && sc.status === "IN_PROGRESS") })),
       categories: db.productCategories.map((c) => ({ id: c.id, name: c.name, parentId: c.parentId })),
       equipmentCategories: db.equipmentCategories.map((c) => ({ id: c.id, name: c.name })),
       brands: db.brands.map((b) => ({ id: b.id, name: b.name })),
@@ -1100,7 +1120,7 @@ export const adminConfigHandlers = [
       suppliers: db.suppliers.map((s) => ({ id: s.id, name: s.name })),
       plans: db.plans.map((p) => ({ id: p.id, code: p.code, name: p.name, group: p.group })),
       partnerTypes: db.partnerTypes.map((p) => ({ id: p.id, name: p.name })),
-      variants: db.products.flatMap((p) => p.variants.map((v) => ({ id: v.id, sku: v.sku, name: p.name, baseUnit: p.baseUnit, units: [p.baseUnit, ...p.conversions.map((c) => c.unit)] }))),
+      variants: db.products.flatMap((p) => p.variants.map((v) => ({ id: v.id, sku: v.sku, barcode: v.barcode, name: p.name, baseUnit: p.baseUnit, units: [p.baseUnit, ...p.conversions.map((c) => c.unit)] }))),
       services: db.services.map((s) => ({ id: s.id, name: s.name, executionForms: s.executionForms })),
       customers: db.users.filter((u) => u.roles.includes("CUSTOMER")).map((u) => ({ id: u.id, name: fullName(u), phone: u.phone })),
       reasonCodes: db.reasonCodes.filter((r) => r.active).map((r) => ({ code: r.code, category: r.category, label: r.label })),

@@ -333,7 +333,7 @@ export function BookingPage({ slug }: { slug: string }) {
                       <label key={x.id} className={cn("choice-card booking-tech", v.technicianId === x.id && "active")}>
                         <input type="radio" name="tech" checked={v.technicianId === x.id} onChange={() => form.set("technicianId", x.id)} className="sr-only" />
                         <span className="flex gap-2 items-center">
-                          <Avatar name={x.fullName} tone={x.avatarTone} />
+                          <Avatar name={x.fullName} tone={x.avatarTone} src={x.avatarUrl} />
                           <span className="flex-1"><strong>{x.fullName}</strong><small className="block text-muted">{x.specializations.slice(0, 2).join(" · ")}</small></span>
                           {x.promoted && <span className="badge badge-warning">{t("booking.ad")}</span>}
                         </span>
@@ -411,7 +411,7 @@ export function TechniciansPage() {
             <article key={x.id} className="kit-card tech-card">
               <div className="kit-card-body">
                 <div className="flex gap-3 items-center">
-                  <Avatar name={x.fullName} tone={x.avatarTone} size={52} />
+                  <Avatar name={x.fullName} tone={x.avatarTone} src={x.avatarUrl} size={52} />
                   <div className="flex-1">
                     <h3><Link to={`/technicians/${x.id}`}>{x.fullName}</Link></h3>
                     <span className="flex gap-2 flex-wrap"><Stars value={x.rating} count={x.reviewCount} />{x.verified && <span className="badge badge-success"><BadgeCheck size={12} /> {t("verified")}</span>}{x.promoted && <span className="badge badge-warning">{t("booking.ad")}</span>}</span>
@@ -447,7 +447,7 @@ export function TechnicianProfilePage({ id }: { id: string }) {
             <>
               <div className="kit-card tech-profile-head">
                 <div className="kit-card-body flex gap-4 items-center flex-wrap">
-                  <Avatar name={x.fullName} tone={x.avatarTone} size={84} />
+                  <Avatar name={x.fullName} tone={x.avatarTone} src={x.avatarUrl} size={84} />
                   <div className="flex-1">
                     <h1>{x.fullName}</h1>
                     <div className="flex gap-2 flex-wrap items-center">

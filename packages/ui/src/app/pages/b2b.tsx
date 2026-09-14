@@ -1,9 +1,9 @@
 "use client";
 import React, { useState } from "react";
-import { BarChart3, Building2, CalendarClock, ClipboardList, CreditCard, FileSignature, FileText, HardDrive, LayoutDashboard, Package, Percent, Plus, ShoppingBag, Trash2, Upload, Users, Wallet, Wrench, Zap } from "lucide-react";
+import { BarChart3, Building2, CalendarClock, ClipboardList, CreditCard, FileSignature, FileText, HardDrive, LayoutDashboard, Package, Percent, Plus, ShoppingBag, Trash2, Upload, UserRound, Users, Wallet, Wrench, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@sp/utils";
-import { patch, post, qs, useApi } from "@sp/api-client";
+import { patch, post, put, qs, useApi } from "@sp/api-client";
 import { useI18n } from "../core/i18n";
 import { Link, useRouter } from "../core/router";
 import { useSession } from "../core/session";
@@ -13,7 +13,8 @@ import { Card, EmptyState, EnumBadge, FormError, Grid, KeyValue, PageHeader, Que
 import { ConfirmDialog, Dialog, ResourceTable } from "../kit/actions";
 import { BarsChart, DonutChart, MapView } from "../kit/media";
 import { PhoneField } from "../kit/media";
-import { DocumentsPage, SalesOrderDetailPage, SalesOrdersPage, ServiceOrderDetailPage, ServiceOrdersPage } from "./account";
+import { AvatarUploader } from "../kit/upload";
+import { DocumentsPage, ProfilePage, SalesOrderDetailPage, SalesOrdersPage, ServiceOrderDetailPage, ServiceOrdersPage } from "./account";
 import { ShopPage } from "./shop";
 import { DocumentDialog, Progress, UsageBar, useRefresh } from "./common";
 
@@ -35,6 +36,8 @@ export function B2BShell({ children }: { children: React.ReactNode }) {
   const common = [
     { to: `${base}/documents`, label: t("b2b.nav.documents"), icon: FileText },
     { to: `${base}/users`, label: t("b2b.nav.users"), icon: Users },
+    { to: `${base}/company`, label: t("b2b.nav.companyProfile"), icon: Building2 },
+    { to: `${base}/profile`, label: t("acc.nav.profile"), icon: UserRound },
   ];
   const nav: Record<Segment, NavGroup[]> = {
     corporate: [
@@ -69,6 +72,8 @@ export const b2bRoutes: RouteDef[] = [
   route(CORP, "/corporate/documents", () => <B2BDocumentsPage />, "b2b.nav.documents"),
   route(CORP, "/corporate/reports", () => <ReportsPage />, "b2b.nav.reports"),
   route(CORP, "/corporate/users", () => <CompanyUsersPage />, "b2b.nav.users"),
+  route(CORP, "/corporate/company", () => <CompanyProfilePage />, "b2b.nav.companyProfile"),
+  route(CORP, "/corporate/profile", () => <ProfilePage />, "acc.nav.profile"),
 
   route(PART, "/partner", () => <B2BDashboardPage />, "b2b.nav.dashboard"),
   route(PART, "/partner/catalog", () => <ShopPage />, "b2b.nav.catalog"),
@@ -81,6 +86,8 @@ export const b2bRoutes: RouteDef[] = [
   route(PART, "/partner/documents", () => <B2BDocumentsPage />, "b2b.nav.documents"),
   route(PART, "/partner/balance", () => <BalancePage />, "b2b.nav.balance"),
   route(PART, "/partner/users", () => <CompanyUsersPage />, "b2b.nav.users"),
+  route(PART, "/partner/company", () => <CompanyProfilePage />, "b2b.nav.companyProfile"),
+  route(PART, "/partner/profile", () => <ProfilePage />, "acc.nav.profile"),
 
   route(WHOLE, "/wholesale", () => <B2BDashboardPage />, "b2b.nav.dashboard"),
   route(WHOLE, "/wholesale/catalog", () => <ShopPage />, "b2b.nav.catalog"),
@@ -92,6 +99,8 @@ export const b2bRoutes: RouteDef[] = [
   route(WHOLE, "/wholesale/documents", () => <B2BDocumentsPage />, "b2b.nav.documents"),
   route(WHOLE, "/wholesale/balance", () => <BalancePage />, "b2b.nav.balance"),
   route(WHOLE, "/wholesale/users", () => <CompanyUsersPage />, "b2b.nav.users"),
+  route(WHOLE, "/wholesale/company", () => <CompanyProfilePage />, "b2b.nav.companyProfile"),
+  route(WHOLE, "/wholesale/profile", () => <ProfilePage />, "acc.nav.profile"),
 ];
 
 /* ------------------------------------------------------------------ */
@@ -417,6 +426,98 @@ function BalancePage() {
         )}
       </QueryView>
     </>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Şirkət profili                                                       */
+/* ------------------------------------------------------------------ */
+
+function CompanyProfilePage() {
+  const { t, date, money, enumLabel } = useI18n();
+  const q = useApi<any>("/b2b/company");
+  const refresh = useRefresh();
+  const { refresh: refreshSession } = useSession();
+  const [v, setV] = useState<any | null>(null);
+  const [error, setError] = useState<any>(null);
+  const [busy, setBusy] = useState(false);
+  React.useEffect(() => {
+    if (q.data) setV({ actualAddress: q.data.actualAddress, contactName: q.data.contactName, contactPhone: q.data.contactPhone, contactEmail: q.data.contactEmail, website: q.data.website ?? "", bank: q.data.bankDetails.bank, iban: q.data.bankDetails.iban, swift: q.data.bankDetails.swift });
+  }, [q.data]);
+  const fe = error?.fieldErrors ?? {};
+  return (
+    <QueryView query={q} rows={8}>
+      {(c) => !v ? null : (
+        <>
+          <PageHeader title={t("b2b.company.title")} subtitle={t("b2b.company.subtitle")} />
+          <section className="profile-hero">
+            <AvatarUploader square src={c.logoUrl} name={c.legalName} size={104} disabled={!c.canEditLogo} title={t("b2b.company.logo")} onUpload={async (dataUrl) => { await put("/b2b/company/logo", { dataUrl }); await refresh(); await refreshSession(); toast.success(t("common.saved")); }} onRemove={async () => { await put("/b2b/company/logo", { dataUrl: null }); await refresh(); }} />
+            <div className="profile-hero-main">
+              <h2>{c.legalName}</h2>
+              <div className="profile-tags">
+                <span className="badge badge-info">{enumLabel("Segment", c.segment)}</span>
+                <EnumBadge group="B2BStatus" code={c.status} />
+                {c.planName && <span className="badge">{typeof c.planName === "string" ? c.planName : c.planName.az}</span>}
+              </div>
+              <p className="text-sm text-muted">VÖEN {c.voen} · {t("b2b.company.since", { date: date(c.createdAt) })} · {t("b2b.company.manager", { name: c.accountManager })}</p>
+            </div>
+            <div className="profile-links">
+              <Stat label={t("b2b.nav.users")} value={c.userLimit ? `${c.userCount} / ${c.userLimit}` : c.userCount} />
+              <Stat label={t("b2b.company.addresses")} value={c.addressLimit ? `${c.addressCount} / ${c.addressLimit}` : c.addressCount} />
+            </div>
+          </section>
+          {!c.canEdit && <div className="kit-note mb-4">{t("b2b.company.readOnly")}</div>}
+          <FormError error={error && !Object.keys(fe).length ? error : null} />
+          <div className="kit-split">
+            <div className="kit-stack">
+              <Card title={t("b2b.company.contacts")}>
+                <div className="kit-form-grid">
+                  <TextField label={t("b2b.company.contactName")} value={v.contactName} disabled={!c.canEdit} onValue={(x) => setV({ ...v, contactName: x })} />
+                  <PhoneField label={t("fields.phone")} value={v.contactPhone} disabled={!c.canEdit} onValue={(x) => setV({ ...v, contactPhone: x })} error={fe.contactPhone} />
+                  <TextField label={t("fields.email")} type="email" value={v.contactEmail} disabled={!c.canEdit} onValue={(x) => setV({ ...v, contactEmail: x })} error={fe.contactEmail} />
+                  <TextField label={t("b2b.company.website")} value={v.website} disabled={!c.canEdit} onValue={(x) => setV({ ...v, website: x })} error={fe.website} placeholder="https://" />
+                </div>
+                <TextArea label={t("b2b.company.actualAddress")} rows={2} value={v.actualAddress} disabled={!c.canEdit} onValue={(x) => setV({ ...v, actualAddress: x })} />
+              </Card>
+              <Card title={t("b2b.company.bank")}>
+                <div className="kit-form-grid">
+                  <TextField label={t("b2b.company.bankName")} value={v.bank} disabled={!c.canEdit} onValue={(x) => setV({ ...v, bank: x })} />
+                  <TextField label="SWIFT" value={v.swift} disabled={!c.canEdit} onValue={(x) => setV({ ...v, swift: x.toUpperCase() })} />
+                  <TextField className="span-2" label="IBAN" value={v.iban} disabled={!c.canEdit} onValue={(x) => setV({ ...v, iban: x.toUpperCase() })} error={fe["bankDetails.iban"]} hint="AZ21 NABZ 0000 0000 1370 1000 1944" />
+                </div>
+              </Card>
+              {c.canEdit && (
+                <div>
+                  <button type="button" className="btn primary" disabled={busy} onClick={async () => {
+                    setBusy(true);
+                    setError(null);
+                    try {
+                      await patch("/b2b/company", { actualAddress: v.actualAddress, contactName: v.contactName, contactPhone: v.contactPhone, contactEmail: v.contactEmail, website: v.website, bankDetails: { bank: v.bank, iban: v.iban, swift: v.swift } });
+                      await refresh();
+                      toast.success(t("common.saved"));
+                    } catch (e) { setError(e); } finally { setBusy(false); }
+                  }}>{t("common.save")}</button>
+                </div>
+              )}
+            </div>
+            <div className="kit-stack">
+              <Card title={t("b2b.company.legal")} subtitle={t("b2b.company.legalHint")}>
+                <KeyValue cols={1} items={[
+                  [t("b2b.company.legalName"), c.legalName],
+                  ["VÖEN", c.voen],
+                  [t("b2b.company.legalAddress"), c.legalAddress],
+                  [t("b2b.company.contract"), c.contract ? `${c.contract.number} · ${date(c.contract.startsAt)} – ${date(c.contract.endsAt)}` : "—"],
+                  [t("b2b.company.paymentTerms"), c.paymentTerms === "DEFERRED" ? t("b2b.company.deferred", { days: c.deferredDays }) : t("b2b.company.prepaid")],
+                  [t("b2b.company.creditLimit"), money(c.creditLimit)],
+                  [t("b2b.company.discount"), `${c.discountPercent}%`],
+                  [t("b2b.company.eInvoice"), c.eInvoiceRequired ? t("common.yes") : t("common.no")],
+                ]} />
+              </Card>
+            </div>
+          </div>
+        </>
+      )}
+    </QueryView>
   );
 }
 

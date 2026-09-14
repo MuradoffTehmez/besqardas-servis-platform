@@ -1,5 +1,11 @@
 {
   "enum": {
+    "GoodsReceiptStatus": {
+      "DRAFT": "Черновик",
+      "POSTED": "Проведён",
+      "CANCELLED": "Отменён",
+      "REVERSED": "Сторнирован"
+    },
     "OrderStatus": {
       "DRAFT": "Черновик",
       "NEW": "Новый",

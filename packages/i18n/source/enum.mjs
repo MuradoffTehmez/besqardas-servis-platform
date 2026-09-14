@@ -1,6 +1,12 @@
 // Enum etiketləri: enum.<Qrup>.<KOD> = [az, ru, en]
 export default {
   enum: {
+    GoodsReceiptStatus: {
+      DRAFT: ["Qaralama", "Черновик", "Draft"],
+      POSTED: ["Təsdiqlənib", "Проведён", "Posted"],
+      CANCELLED: ["Ləğv edilib", "Отменён", "Cancelled"],
+      REVERSED: ["Geri alınıb", "Сторнирован", "Reversed"],
+    },
     OrderStatus: {
       DRAFT: ["Qaralama", "Черновик", "Draft"],
       NEW: ["Yeni", "Новый", "New"],

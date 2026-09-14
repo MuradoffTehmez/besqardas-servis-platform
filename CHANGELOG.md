@@ -3,6 +3,12 @@
 ## [Unreleased]
 
 ### Əlavə edildi (Added)
+- **Mal qəbulu (anbara məhsul əlavə etmə)**: qaimə siyahısı, redaktor və detal səhifəsi — barkod/SKU skaneri (təkrar skan miqdarı artırır), alış sifarişindən avtomatik doldurma, siyahıdan (Excel) yapışdırma, qəbul zamanı yeni məhsul yaratma, zona, partiya (LOT), son istifadə tarixi, seriya nömrələri, qaimə şəkli/PDF, qaralama → təsdiq → əks hərəkət; sayım bloku olan anbarda təsdiq qadağandır.
+- **Yeni məhsul səhifəsi**: əsas məlumat, SKU təklifi və EAN-13 barkod generatoru, seqment qiymətləri, çoxlu şəkil yükləmə və ilkin anbar qalığı (marja göstəricisi ilə).
+- **Məhsul şəkilləri**: brauzerdə sıxma, sürükləyib sıralama, əsas şəkil, alternativ mətn (AZ/RU/EN), silmə; vitrin və sifarişlərdə yüklənmiş şəkil göstərilir.
+- **Profil**: şəkil yükləmə və kəsmə, doluluq göstəricisi, cins, şəhər, vəzifə, üstün tutulan əlaqə kanalı, marketinq razılığı, son fəaliyyət; usta, B2B və kuryer üçün də profil səhifəsi. Avatar panel başlığında, sayt menyusunda, ustalar siyahısında və CRM-də görünür.
+- **Şirkət profili (B2B)**: loqo, əlaqə şəxsi, veb sayt, bank rekvizitləri (IBAN yoxlaması), hüquqi məlumatlar; redaktə yalnız sahib/mühasib üçün.
+- Mock API: `/admin/goods-receipts`, `/admin/variants/search`, `/admin/products/:id/media`, `/account/avatar`, `/account/activity`, `/b2b/company` və 6 yeni inteqrasiya testi.
 - **CRM/ERP admin paneli (PRD §61)**: `apps/admin` üçün bütün route-lar — dashboard, servis sifarişləri və operator sifarişi, dispetçer lövhəsi, həftəlik cədvəl, logistika, zəmanət iddiaları.
 - **Workflow şablon redaktoru**: mərhələ əlavə/sıralama/kopyalama, başlama şərtləri, tamamlama tələbləri, SLA, yoxlama və versiyalı saxlama.
 - **İstifadəçilər**: müştəri 360° kartı, usta detalı, sənəd/ixtisas yoxlaması, ştat lisenziyaları, əməkdaşlıqlar, istifadəçi dəvəti və rol × əməliyyat × əhatə matrisi.

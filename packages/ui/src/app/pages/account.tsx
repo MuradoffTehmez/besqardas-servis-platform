@@ -1,13 +1,14 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { AlertCircle, CalendarClock, CreditCard, Crown, FileText, Heart, HardDrive, MapPin, Plus, QrCode, ShieldCheck, ShoppingBag, Star, Trash2, Wrench } from "lucide-react";
+import { AlertCircle, Bell, Building2, CalendarClock, CheckCircle2, CreditCard, Crown, FileText, Heart, HardDrive, Lock, MapPin, Plus, QrCode, ShieldCheck, ShoppingBag, Star, Trash2, Truck, Users, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@sp/utils";
 import { del, patch, post, put, qs, useApi } from "@sp/api-client";
 import { useI18n } from "../core/i18n";
 import { Link, useRouter } from "../core/router";
 import { useSession } from "../core/session";
-import { Card, Check, EmptyState, EnumBadge, FormError, Grid, KeyValue, Loading, PageHeader, QueryView, SelectField, Stars, Stat, Tabs, TextArea, TextField, Toggle, errorText, useFormState } from "../kit/base";
+import { Card, Check, EmptyState, EnumBadge, FormError, Grid, KeyValue, Loading, PageHeader, QueryView, Radios, SelectField, Stars, Stat, Tabs, TextArea, TextField, Toggle, errorText, useFormState } from "../kit/base";
+import { AvatarUploader } from "../kit/upload";
 import { ActionBar, ConfirmDialog, Dialog, ReasonDialog, ResourceTable } from "../kit/actions";
 import { EstimateView, PlanComparison, SlotPicker, StageTimeline } from "../kit/domain";
 import { FileDrop, MapView, OtpInput, PhoneField, ProductVisual, QuantityInput, type PickedFile } from "../kit/media";
@@ -108,31 +109,46 @@ export function AccountDashboardPage() {
 /* Profil                                                               */
 /* ------------------------------------------------------------------ */
 
+/** Profil (bütün rollar üçün): şəkil, şəxsi məlumatlar, əlaqə üstünlükləri, təsdiq statusu və son fəaliyyət. */
 export function ProfilePage() {
   const { t } = useI18n();
   const q = useApi<any>("/account/profile");
   return (
     <>
       <PageHeader title={t("acc.profile.title")} subtitle={t("acc.profile.subtitle")} />
-      <QueryView query={q}>{(p) => <ProfileForm profile={p} />}</QueryView>
+      <QueryView query={q} rows={8}>{(p) => <ProfileView profile={p} />}</QueryView>
     </>
   );
 }
 
-function ProfileForm({ profile }: { profile: any }) {
-  const { t, date } = useI18n();
+function profileLinks(role: string, t: (k: string) => string) {
+  const seg = role === "CORPORATE_CUSTOMER" ? "corporate" : role === "PARTNER" ? "partner" : role === "WHOLESALE_CUSTOMER" ? "wholesale" : null;
+  if (role === "CUSTOMER") return [{ to: "/account/security", label: t("acc.nav.security"), icon: Lock }, { to: "/account/notifications", label: t("acc.nav.notifications"), icon: Bell }, { to: "/account/addresses", label: t("acc.nav.addresses"), icon: MapPin }];
+  if (role === "TECHNICIAN") return [{ to: "/technician/settings", label: t("tech.nav.settings"), icon: Wrench }, { to: "/technician/documents", label: t("tech.nav.documents"), icon: FileText }];
+  if (seg) return [{ to: `/${seg}/company`, label: t("b2b.nav.companyProfile"), icon: Building2 }, { to: `/${seg}/users`, label: t("b2b.nav.users"), icon: Users }];
+  if (role === "COURIER") return [{ to: "/courier", label: t("courier.tasksTitle"), icon: Truck }];
+  return [{ to: "/notifications", label: t("adm.nav.notifications"), icon: Bell }];
+}
+
+function ProfileView({ profile }: { profile: any }) {
+  const { t, date, relative, enumLabel } = useI18n();
   const refresh = useRefresh();
-  const { setLocale } = useRouter();
-  const f = useFormState({ firstName: profile.firstName, lastName: profile.lastName, email: profile.email ?? "", phone: profile.phone ?? "", locale: profile.locale, birthDate: profile.birthDate?.slice(0, 10) ?? "" });
+  const { refresh: refreshSession } = useSession();
+  const { setLocale, query, setQuery } = useRouter();
+  const tab = query.get("tab") ?? "personal";
+  const internal = !["CUSTOMER", "TECHNICIAN", "COURIER", "CORPORATE_CUSTOMER", "PARTNER", "WHOLESALE_CUSTOMER"].includes(profile.activeRole);
+  const f = useFormState({ firstName: profile.firstName, lastName: profile.lastName, email: profile.email ?? "", phone: profile.phone ?? "", locale: profile.locale, birthDate: profile.birthDate?.slice(0, 10) ?? "", gender: profile.gender ?? "", city: profile.city ?? "", preferredChannel: profile.preferredChannel ?? "PHONE", jobTitle: profile.jobTitle ?? "", marketingConsent: !!profile.marketingConsent });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const dirty = JSON.stringify(f.values) !== JSON.stringify({ firstName: profile.firstName, lastName: profile.lastName, email: profile.email ?? "", phone: profile.phone ?? "", locale: profile.locale, birthDate: profile.birthDate?.slice(0, 10) ?? "", gender: profile.gender ?? "", city: profile.city ?? "", preferredChannel: profile.preferredChannel ?? "PHONE", jobTitle: profile.jobTitle ?? "", marketingConsent: !!profile.marketingConsent });
+  const submit = async (e?: React.FormEvent) => {
+    e?.preventDefault();
     setBusy(true);
     setError(null);
     try {
-      await patch("/account/profile", { ...f.values, email: f.values.email || null, birthDate: f.values.birthDate || undefined });
+      await patch("/account/profile", { ...f.values, email: f.values.email || null, birthDate: f.values.birthDate || undefined, gender: f.values.gender || null, jobTitle: internal ? f.values.jobTitle : undefined });
       await refresh();
+      await refreshSession();
       if (f.values.locale !== profile.locale) setLocale(f.values.locale);
       toast.success(t("common.saved"));
     } catch (err) {
@@ -142,30 +158,112 @@ function ProfileForm({ profile }: { profile: any }) {
       setBusy(false);
     }
   };
+  const uploadAvatar = async (dataUrl: string) => { await put("/account/avatar", { dataUrl }); await refresh(); await refreshSession(); toast.success(t("acc.profile.photoSaved")); };
+  const removeAvatar = async () => { await del("/account/avatar"); await refresh(); await refreshSession(); toast.success(t("acc.profile.photoRemoved")); };
+  const missing = [!profile.avatarUrl && t("acc.profile.missing.photo"), !profile.birthDate && t("fields.birthDate"), !profile.gender && t("acc.profile.gender"), !profile.email && t("fields.email"), !profile.phone && t("fields.phone")].filter(Boolean) as string[];
   return (
-    <div className="kit-split">
-      <Card title={t("acc.profile.personal")}>
-        <form onSubmit={submit} noValidate>
-          <FormError error={error} />
-          <div className="kit-form-grid">
-            <TextField label={t("fields.firstName")} required value={f.values.firstName} onValue={(v) => f.set("firstName", v)} error={f.errors.firstName} autoComplete="given-name" />
-            <TextField label={t("fields.lastName")} required value={f.values.lastName} onValue={(v) => f.set("lastName", v)} error={f.errors.lastName} autoComplete="family-name" />
-            <TextField label={t("fields.email")} type="email" value={f.values.email} onValue={(v) => f.set("email", v)} error={f.errors.email} hint={f.values.email !== (profile.email ?? "") ? t("acc.profile.reverify") : undefined} autoComplete="email" />
-            <PhoneField label={t("fields.phone")} value={f.values.phone} onValue={(v) => f.set("phone", v)} error={f.errors.phone} hint={f.values.phone !== (profile.phone ?? "") ? t("acc.profile.reverify") : undefined} />
-            <SelectField label={t("fields.language")} value={f.values.locale} onValue={(v) => f.set("locale", v)} options={[{ value: "az", label: "Azərbaycan" }, { value: "ru", label: "Русский" }, { value: "en", label: "English" }]} />
-            <TextField label={t("fields.birthDate")} type="date" value={f.values.birthDate} onValue={(v) => f.set("birthDate", v)} />
+    <>
+      <section className="profile-hero">
+        <AvatarUploader src={profile.avatarUrl} name={`${profile.firstName} ${profile.lastName}`} tone={profile.avatarTone} onUpload={uploadAvatar} onRemove={removeAvatar} />
+        <div className="profile-hero-main">
+          <h2>{profile.firstName} {profile.lastName}</h2>
+          <div className="profile-tags">
+            <span className="badge badge-info">{enumLabel("Role", profile.activeRole)}</span>
+            {profile.companyName && <span className="badge">{profile.companyName}</span>}
+            {profile.branchName && <span className="badge">{typeof profile.branchName === "string" ? profile.branchName : profile.branchName.az}</span>}
+            {profile.jobTitle && <span className="badge">{profile.jobTitle}</span>}
           </div>
-          <button type="submit" className="btn primary" disabled={busy}>{t("common.save")}</button>
-        </form>
-      </Card>
-      <Card title={t("acc.profile.verification")}>
-        <ul className="kit-list">
-          <li><span className="grow">{t("fields.phone")}<small className="block text-muted">{profile.phone ?? "—"}</small></span>{profile.phoneVerified ? <span className="badge badge-success">{t("acc.profile.verified")}</span> : <Link to="/verify?type=phone" className="btn outline btn-sm">{t("acc.profile.verify")}</Link>}</li>
-          <li><span className="grow">{t("fields.email")}<small className="block text-muted">{profile.email ?? "—"}</small></span>{profile.emailVerified ? <span className="badge badge-success">{t("acc.profile.verified")}</span> : profile.email ? <Link to="/verify?type=email" className="btn outline btn-sm">{t("acc.profile.verify")}</Link> : null}</li>
-        </ul>
-        <p className="text-sm text-muted mt-3">{t("acc.profile.memberSince", { date: date(profile.createdAt) })}</p>
-      </Card>
-    </div>
+          <p className="text-sm text-muted">{t("acc.profile.memberSince", { date: date(profile.createdAt) })}{profile.lastLoginAt ? ` · ${t("acc.profile.lastLogin", { when: relative(profile.lastLoginAt) })}` : ""}</p>
+          <div className="profile-complete">
+            <div className="flex justify-between text-sm"><span>{t("acc.profile.completeness")}</span><strong>{profile.completeness}%</strong></div>
+            <Progress value={profile.completeness} tone={profile.completeness < 60 ? "warning" : undefined} />
+            {missing.length > 0 && <small className="text-muted">{t("acc.profile.addMissing", { items: missing.join(", ") })}</small>}
+          </div>
+        </div>
+        <nav className="profile-links" aria-label={t("acc.profile.quickLinks")}>
+          {profileLinks(profile.activeRole, t).map((l) => { const Icon = l.icon; return <Link key={l.to} to={l.to} className="profile-link"><Icon size={16} /> {l.label}</Link>; })}
+        </nav>
+      </section>
+
+      <Tabs value={tab} onChange={(v) => setQuery({ tab: v })} tabs={[{ id: "personal", label: t("acc.profile.personal") }, { id: "contact", label: t("acc.profile.contactTab"), badge: !profile.phoneVerified || (profile.email && !profile.emailVerified) ? "!" : null }, { id: "activity", label: t("acc.profile.activity") }]} />
+      <div className="mt-4">
+        {tab === "personal" && (
+          <Card>
+            <form onSubmit={submit} noValidate>
+              <FormError error={error} />
+              <div className="kit-form-grid">
+                <TextField label={t("fields.firstName")} required value={f.values.firstName} onValue={(v) => f.set("firstName", v)} error={f.errors.firstName} autoComplete="given-name" />
+                <TextField label={t("fields.lastName")} required value={f.values.lastName} onValue={(v) => f.set("lastName", v)} error={f.errors.lastName} autoComplete="family-name" />
+                <TextField label={t("fields.birthDate")} type="date" value={f.values.birthDate} onValue={(v) => f.set("birthDate", v)} max={new Date().toISOString().slice(0, 10)} />
+                <SelectField label={t("acc.profile.gender")} value={f.values.gender} onValue={(v) => f.set("gender", v)} placeholder={t("acc.profile.genderNone")} options={[{ value: "FEMALE", label: t("acc.profile.female") }, { value: "MALE", label: t("acc.profile.male") }]} />
+                <TextField label={t("acc.profile.city")} value={f.values.city} onValue={(v) => f.set("city", v)} autoComplete="address-level2" />
+                <SelectField label={t("fields.language")} value={f.values.locale} onValue={(v) => f.set("locale", v)} options={[{ value: "az", label: "Azərbaycan" }, { value: "ru", label: "Русский" }, { value: "en", label: "English" }]} />
+                {internal && <TextField label={t("acc.profile.jobTitle")} value={f.values.jobTitle} onValue={(v) => f.set("jobTitle", v)} />}
+              </div>
+              <div className="flex gap-2 items-center">
+                <button type="submit" className="btn primary" disabled={busy || !dirty}>{t("common.save")}</button>
+                {dirty && <small className="text-muted">{t("acc.profile.unsaved")}</small>}
+              </div>
+            </form>
+          </Card>
+        )}
+        {tab === "contact" && (
+          <div className="kit-split">
+            <Card title={t("acc.profile.contacts")}>
+              <form onSubmit={submit} noValidate>
+                <FormError error={error} />
+                <div className="kit-form-grid">
+                  <TextField label={t("fields.email")} type="email" value={f.values.email} onValue={(v) => f.set("email", v)} error={f.errors.email} hint={f.values.email !== (profile.email ?? "") ? t("acc.profile.reverify") : undefined} autoComplete="email" />
+                  <PhoneField label={t("fields.phone")} value={f.values.phone} onValue={(v) => f.set("phone", v)} error={f.errors.phone} hint={f.values.phone !== (profile.phone ?? "") ? t("acc.profile.reverify") : undefined} />
+                </div>
+                <p className="kit-label">{t("acc.profile.preferredChannel")}</p>
+                <Radios name="channel" value={f.values.preferredChannel} onValue={(v) => f.set("preferredChannel", v)} columns={2} options={(["PHONE", "WHATSAPP", "SMS", "EMAIL"] as const).map((c) => ({ value: c, label: t(`acc.profile.channel.${c}`), disabled: c === "EMAIL" && !f.values.email }))} />
+                {f.errors.preferredChannel && <p className="kit-field-error">{t("validation.emailRequired")}</p>}
+                <div className="mt-3"><Toggle label={t("acc.profile.marketing")} checked={f.values.marketingConsent} onValue={(v) => f.set("marketingConsent", v)} /></div>
+                <button type="submit" className="btn primary mt-3" disabled={busy || !dirty}>{t("common.save")}</button>
+              </form>
+            </Card>
+            <Card title={t("acc.profile.verification")}>
+              <ul className="kit-list">
+                <li><span className="grow">{t("fields.phone")}<small className="block text-muted">{profile.phone ?? "—"}</small></span>{profile.phoneVerified ? <span className="badge badge-success"><CheckCircle2 size={12} /> {t("acc.profile.verified")}</span> : profile.phone ? <Link to="/verify?type=phone" className="btn outline btn-sm">{t("acc.profile.verify")}</Link> : null}</li>
+                <li><span className="grow">{t("fields.email")}<small className="block text-muted">{profile.email ?? "—"}</small></span>{profile.emailVerified && profile.email ? <span className="badge badge-success"><CheckCircle2 size={12} /> {t("acc.profile.verified")}</span> : profile.email ? <Link to="/verify?type=email" className="btn outline btn-sm">{t("acc.profile.verify")}</Link> : null}</li>
+                <li><span className="grow">{t("acc.security.twoFactor")}<small className="block text-muted">{profile.twoFactorEnabled ? t("acc.security.on") : t("acc.security.off")}</small></span>{profile.activeRole === "CUSTOMER" && <Link to="/account/security" className="btn ghost btn-sm">{t("common.manage")}</Link>}</li>
+              </ul>
+            </Card>
+          </div>
+        )}
+        {tab === "activity" && <ActivityList />}
+      </div>
+    </>
+  );
+}
+
+function ActivityList() {
+  const { t, has, dateTime, relative } = useI18n();
+  const [size, setSize] = useState(10);
+  const q = useApi<any>(`/account/activity?pageSize=${size}`);
+  return (
+    <Card title={t("acc.profile.activity")} subtitle={t("acc.profile.activityHint")}>
+      <QueryView query={q} rows={5} isEmpty={(d) => !d.items.length} empty={<EmptyState title={t("acc.profile.noActivity")} />}>
+        {(d) => (
+          <>
+            <ul className="activity-list">
+              {d.items.map((e: any) => (
+                <li key={e.id} className={cn(e.kind === "LOGIN" && "login")}>
+                  <span className="activity-dot" aria-hidden />
+                  <span className="grow">
+                    <strong>{has(`acc.profile.act.${e.action}`) ? t(`acc.profile.act.${e.action}`) : `${e.action} · ${e.resource}`}</strong>
+                    <small className="block text-muted">{e.label}{e.ip ? ` · IP ${e.ip}` : ""}</small>
+                  </span>
+                  <time dateTime={e.at} title={dateTime(e.at)} className="text-sm text-muted">{relative(e.at)}</time>
+                </li>
+              ))}
+            </ul>
+            {d.meta.total > d.items.length && <button type="button" className="btn ghost btn-sm mt-2" onClick={() => setSize(size + 10)}>{t("common.showMore")}</button>}
+          </>
+        )}
+      </QueryView>
+    </Card>
   );
 }
 
