@@ -1,10 +1,10 @@
 "use client";
-import React, { Component, useEffect, useState } from "react";
+import React, { Component, useEffect, useRef, useState } from "react";
 import { Toaster, toast } from "sonner";
 import { Construction, Lock, SearchX, ServerCrash, WifiOff } from "lucide-react";
-import { QueryClient, QueryClientProvider, isUnreachable, useApi, useQueryClient } from "@sp/api-client";
+import { HydrationBoundary, QueryClient, QueryClientProvider, isUnreachable, useApi, useQueryClient, type DehydratedState } from "@sp/api-client";
 import { I18nProvider, useI18n } from "./i18n";
-import { ParamsProvider, RouterProvider, matchRoute, useRouter, type RouteDef } from "./router";
+import { ParamsProvider, RouterProvider, matchRoute, useRouter, type InitialLocation, type RouteDef } from "./router";
 import { SessionProvider, useSession } from "./session";
 import { CourierShell, MockPanel, PublicShell, adminUrl, homeFor, webUrl } from "./shells";
 import { Loading } from "../kit/base";
@@ -21,20 +21,28 @@ function LocaleBridge({ children }: { children: React.ReactNode }) {
   return <I18nProvider locale={locale}>{children}</I18nProvider>;
 }
 
-export function AppProviders({ children }: { children: React.ReactNode }) {
+/** Serverdə hazırlanmış ilkin vəziyyət: ünvan və əvvəlcədən yüklənmiş API cache-i (SSR, PRD §72). */
+export interface InitialAppState {
+  initial?: InitialLocation;
+  state?: DehydratedState;
+}
+
+export function AppProviders({ children, initial, state }: { children: React.ReactNode } & InitialAppState) {
   const [client] = useState(() => new QueryClient({ defaultOptions: { queries: { refetchOnWindowFocus: false, staleTime: 15_000 } } }));
   return (
     <QueryClientProvider client={client}>
-      <RouterProvider>
-        <LocaleBridge>
-          <SessionProvider>
-            <ConnectionWatch />
-            {children}
-            <Toaster richColors closeButton position="top-right" />
-            <MockPanel />
-          </SessionProvider>
-        </LocaleBridge>
-      </RouterProvider>
+      <HydrationBoundary state={state}>
+        <RouterProvider initial={initial}>
+          <LocaleBridge>
+            <SessionProvider>
+              <ConnectionWatch />
+              {children}
+              <Toaster richColors closeButton position="top-right" />
+              <MockPanel />
+            </SessionProvider>
+          </LocaleBridge>
+        </RouterProvider>
+      </HydrationBoundary>
     </QueryClientProvider>
   );
 }
@@ -158,9 +166,13 @@ export function RoutedApp({ routes, shells, app }: { routes: RouteDef[]; shells:
   const { t } = useI18n();
   const brand = useApi<any>("/branding", { staleTime: 300_000 });
   const match = matchRoute(routes, path);
+  const firstPath = useRef(path);
   useEffect(() => {
+    // İndekslənən ilk səhifənin başlığı (məhsul, xidmət adı və s.) server metadata-sından gəlir — onu əvəz etmirik
+    if (path === firstPath.current && document.querySelector('meta[name="robots"][content^="index"]')) return;
+    firstPath.current = "";
     const name = brand.data?.companyName ?? "besqardasServis.az";
-    const title = match?.route.titleKey ? t(match.route.titleKey) : null;
+    const title = match?.route.titleKey ? t(match.route.titleKey) : match ? null : t("system.404.title");
     document.title = title ? `${title} — ${name}` : name;
   }, [path, locale, brand.data?.companyName]); // eslint-disable-line react-hooks/exhaustive-deps
   const shellName = match?.route.shell ?? (app === "admin" ? "admin" : "public");

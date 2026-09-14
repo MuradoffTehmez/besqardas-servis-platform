@@ -9,20 +9,36 @@ type MoneyLike = { amount: string; currency?: string } | null | undefined;
 type QuantityLike = { value: string; unit: string } | null | undefined;
 
 const intl = (locale: string) => localeLabels[(locale as AppLocale) in localeLabels ? (locale as AppLocale) : "az"].intl;
+const loc = (locale: string): AppLocale => ((locale as AppLocale) in localeLabels ? (locale as AppLocale) : "az");
+
+/**
+ * Ədəd ayırıcıları CLDR qaydalarına uyğun sabit cədvəldən götürülür. Brauzerlərin və Node.js-in ICU datası
+ * fərqlidir (məs. bəzi brauzerlərdə `az` lokalı yoxdur) — server render ilə brauzer eyni mətni almalıdır (§72).
+ */
+const separators: Record<AppLocale, { group: string; decimal: string }> = {
+  az: { group: ".", decimal: "," },
+  ru: { group: " ", decimal: "," },
+  en: { group: ",", decimal: "." },
+};
+
+function formatDecimal(n: number, locale: string, min: number | undefined, max: number): string {
+  const sep = separators[loc(locale)];
+  return new Intl.NumberFormat("en-US", { minimumFractionDigits: min, maximumFractionDigits: max })
+    .formatToParts(n)
+    .map((p) => (p.type === "group" ? sep.group : p.type === "decimal" ? sep.decimal : p.value))
+    .join("");
+}
 
 export function formatNumber(value: number | string, locale: string, fractionDigits?: number): string {
   const n = typeof value === "string" ? Number(value) : value;
   if (!Number.isFinite(n)) return String(value);
-  return new Intl.NumberFormat(intl(locale), {
-    minimumFractionDigits: fractionDigits,
-    maximumFractionDigits: fractionDigits ?? 3,
-  }).format(n);
+  return formatDecimal(n, locale, fractionDigits, fractionDigits ?? 3);
 }
 
 export function formatMoney(money: MoneyLike, locale: string, opts: { hideCurrency?: boolean } = {}): string {
   if (!money) return "—";
   const n = Number(money.amount);
-  const formatted = new Intl.NumberFormat(intl(locale), { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+  const formatted = formatDecimal(n, locale, 2, 2);
   if (opts.hideCurrency) return formatted;
   const cur = money.currency ?? "AZN";
   const symbol = cur === "AZN" ? "₼" : cur;
@@ -56,8 +72,9 @@ export function formatQuantity(q: QuantityLike, locale: string): string {
   return `${formatNumber(q.value, locale)} ${unitLabel(q.unit, locale)}`;
 }
 
-function parts(date: Date, locale: string, options: Intl.DateTimeFormatOptions) {
-  return new Intl.DateTimeFormat(intl(locale), { timeZone, ...options }).formatToParts(date);
+/** Tarix hissələri həmişə "en-US" ilə rəqəm kimi alınır, yığılması isə dilə görə bizim formatımızdadır. */
+function parts(date: Date, _locale: string, options: Intl.DateTimeFormatOptions) {
+  return new Intl.DateTimeFormat("en-US", { timeZone, numberingSystem: "latn", ...options }).formatToParts(date);
 }
 
 function pick(p: Intl.DateTimeFormatPart[], type: string) {
@@ -86,12 +103,28 @@ export function formatDateTime(iso: string | null | undefined, locale = "az"): s
   return `${formatDate(iso, locale)} ${formatTime(iso, locale)}`;
 }
 
+// Həftə günü və ay adları da sabit cədvəldəndir (ICU datasından asılı olmasın)
+const weekdayNames: Record<AppLocale, { short: string[]; long: string[] }> = {
+  az: { short: ["B.", "B.e.", "Ç.a.", "Ç.", "C.a.", "C.", "Ş."], long: ["bazar", "bazar ertəsi", "çərşənbə axşamı", "çərşənbə", "cümə axşamı", "cümə", "şənbə"] },
+  ru: { short: ["вс", "пн", "вт", "ср", "чт", "пт", "сб"], long: ["воскресенье", "понедельник", "вторник", "среда", "четверг", "пятница", "суббота"] },
+  en: { short: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"], long: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] },
+};
+const monthNames: Record<AppLocale, string[]> = {
+  az: ["yanvar", "fevral", "mart", "aprel", "may", "iyun", "iyul", "avqust", "sentyabr", "oktyabr", "noyabr", "dekabr"],
+  ru: ["январь", "февраль", "март", "апрель", "май", "июнь", "июль", "август", "сентябрь", "октябрь", "ноябрь", "декабрь"],
+  en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+};
+const weekdayIndex: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+
 export function formatWeekday(iso: string, locale = "az", style: "short" | "long" = "short"): string {
-  return new Intl.DateTimeFormat(intl(locale), { timeZone, weekday: style }).format(new Date(iso));
+  const day = pick(parts(new Date(iso), "en", { weekday: "short" }), "weekday");
+  return weekdayNames[loc(locale)][style][weekdayIndex[day] ?? 0]!;
 }
 
 export function formatMonth(iso: string, locale = "az"): string {
-  return new Intl.DateTimeFormat(intl(locale), { timeZone, month: "long", year: "numeric" }).format(new Date(iso));
+  const p = parts(new Date(iso), "en", { month: "numeric", year: "numeric" });
+  const name = monthNames[loc(locale)][Number(pick(p, "month")) - 1] ?? "";
+  return `${name} ${pick(p, "year")}`;
 }
 
 export function formatRelative(iso: string | null | undefined, locale = "az", now: Date = new Date()): string {

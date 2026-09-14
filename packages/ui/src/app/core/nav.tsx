@@ -1,5 +1,5 @@
 "use client";
-import React, { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
+import React, { createContext, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { ChevronRight, CornerDownLeft, LogOut, Search, Repeat } from "lucide-react";
 import { cn } from "@sp/utils";
 import { post, useApiMutation } from "@sp/api-client";
@@ -18,16 +18,17 @@ export function useCurrentRoute() {
   return useContext(RouteCtx);
 }
 
+/** Media sorğusu. Serverdə və hidratasiya zamanı `false` qaytarır, sonra brauzerin dəyərinə keçir (SSR ilə uyğunsuzluq olmur). */
 export function useMedia(query: string) {
-  const [match, setMatch] = useState(() => (typeof window === "undefined" ? false : window.matchMedia(query).matches));
-  useEffect(() => {
-    const m = window.matchMedia(query);
-    const on = () => setMatch(m.matches);
-    on();
-    m.addEventListener("change", on);
-    return () => m.removeEventListener("change", on);
-  }, [query]);
-  return match;
+  return useSyncExternalStore(
+    (onChange) => {
+      const m = window.matchMedia(query);
+      m.addEventListener("change", onChange);
+      return () => m.removeEventListener("change", onChange);
+    },
+    () => window.matchMedia(query).matches,
+    () => false,
+  );
 }
 
 /** Kənara klik və Escape ilə bağlanma. */

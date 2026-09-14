@@ -897,5 +897,25 @@
         "text": "Dispetçer, workflow, kataloq/PIM, anbar, satış, maliyyə, ayarlar və hesabatlar (Super Admin)."
       }
     }
+  },
+  "seo": {
+    "siteName": "besqardasServis.az",
+    "homeTitle": "besqardasServis.az — kondisioner, kombi və avadanlıq servisi",
+    "homeDescription": "Quraşdırma, diaqnostika, təmir və periodik servis: yoxlanılmış ustalar, şəffaf smeta, rəsmi zəmanət. Ehtiyat hissələri və avadanlıq onlayn mağazada.",
+    "servicesDescription": "Kondisioner, kombi, istilik sistemi, hovuz, nasos və elektrik avadanlıqları üçün servis xidmətləri — onlayn sifariş və vaxt seçimi.",
+    "shopDescription": "Kondisionerlər, kombilər, ehtiyat hissələri və sərf materialları: uyğunluq yoxlaması, quraşdırma ilə sifariş və çatdırılma.",
+    "techniciansDescription": "Yoxlanılmış ustalar: ixtisaslar, reytinq, rəylər və ən yaxın boş vaxt.",
+    "pricingDescription": "Basic, Pro və Premium abunə planları: pulsuz diaqnostika, prioritet servis və endirimlər.",
+    "branchesDescription": "Filiallarımızın ünvanları, iş saatları və əlaqə məlumatları.",
+    "faqDescription": "Servis sifarişi, ödəniş, zəmanət və çatdırılma haqqında tez-tez verilən suallar.",
+    "contactDescription": "Bizimlə əlaqə: qaynar xətt, WhatsApp, e-poçt və müraciət forması.",
+    "becomeTechnicianDescription": "Usta kimi platformaya qoşulun: sifarişlər, cədvəl, qazanc və sənədlər bir paneldə.",
+    "businessDescription": "Korporativ, partner və topdan müştərilər üçün xüsusi qiymətlər, müqavilələr və kredit limiti.",
+    "warrantyDescription": "Zəmanət sənədinin QR kod və ya nömrə ilə yoxlanması.",
+    "serviceTitle": "{name} — onlayn sifariş",
+    "productTitle": "{name} — qiymət və xüsusiyyətlər",
+    "categoryTitle": "{name} — kataloq",
+    "technicianTitle": "{name} — usta profili",
+    "technicianDescription": "{name}: {specs}. Reytinq {rating}, {jobs} tamamlanmış iş."
   }
 }

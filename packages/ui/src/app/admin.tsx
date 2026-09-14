@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import { useI18n } from "./core/i18n";
 import { useSession, INTERNAL_ROLES } from "./core/session";
-import { AppProviders, RoutedApp, SystemPage, defaultShells, type ShellRender } from "./core/app";
+import { AppProviders, RoutedApp, SystemPage, defaultShells, type InitialAppState, type ShellRender } from "./core/app";
 import { PanelShell, type NavGroup } from "./core/shells";
 import { useRouter, type RouteDef } from "./core/router";
 import type { Command } from "./core/nav";
@@ -254,9 +254,9 @@ const adminShells: Record<string, ShellRender> = {
   public: (c) => <AdminShell>{c}</AdminShell>,
 };
 
-export function AdminApp() {
+export function AdminApp(ssr: InitialAppState) {
   return (
-    <AppProviders>
+    <AppProviders {...ssr}>
       <RoutedApp routes={adminRoutes} shells={adminShells} app="admin" />
     </AppProviders>
   );
