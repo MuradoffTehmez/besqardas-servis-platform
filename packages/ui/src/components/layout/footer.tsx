@@ -38,6 +38,9 @@ export function Footer({
       warrantyVerify: "Zəmanət yoxlanışı",
       becomeTech: "Usta kimi qoşul",
       corporate: "Korporativ müştərilər",
+      platformMap: "Platforma xəritəsi (demo)",
+      terms: "İstifadə qaydaları",
+      privacy: "Məxfilik siyasəti",
       rights: "Bütün hüquqlar qorunur.",
       guarantee: "Rəsmi zəmanət və peşəkar servis təminatı",
     },
@@ -56,6 +59,9 @@ export function Footer({
       warrantyVerify: "Проверка гарантии",
       becomeTech: "Стать мастером",
       corporate: "Корпоративным клиентам",
+      platformMap: "Карта платформы (демо)",
+      terms: "Условия использования",
+      privacy: "Политика конфиденциальности",
       rights: "Все права защищены.",
       guarantee: "Официальная гарантия и профессиональный сервис",
     },
@@ -74,6 +80,9 @@ export function Footer({
       warrantyVerify: "Warranty verification",
       becomeTech: "Become a technician",
       corporate: "Corporate clients",
+      platformMap: "Platform map (demo)",
+      terms: "Terms of use",
+      privacy: "Privacy policy",
       rights: "All rights reserved.",
       guarantee: "Official warranty & professional service delivery",
     },
@@ -152,6 +161,12 @@ export function Footer({
             <li>
               <button onClick={() => onNavigate("/become-technician")}>{t.becomeTech}</button>
             </li>
+            <li>
+              <button onClick={() => onNavigate("/business")}>{t.corporate}</button>
+            </li>
+            <li>
+              <button onClick={() => onNavigate("/demo")}>{t.platformMap}</button>
+            </li>
           </ul>
 
           <div className="footer-contacts">
@@ -172,9 +187,9 @@ export function Footer({
           © {new Date().getFullYear()} {companyName}. {t.rights}
         </p>
         <div className="footer-bottom-links">
-          <button onClick={() => onNavigate("/terms")}>İstifadə qaydaları</button>
+          <button onClick={() => onNavigate("/terms")}>{t.terms}</button>
           <span>·</span>
-          <button onClick={() => onNavigate("/privacy")}>Məxfilik siyasəti</button>
+          <button onClick={() => onNavigate("/privacy")}>{t.privacy}</button>
         </div>
       </div>
     </footer>

@@ -1,8 +1,8 @@
 "use client";
 import React, { useEffect, useId, useState } from "react";
-import { AlertTriangle, ArrowLeft, ChevronLeft, ChevronRight, Inbox, Loader2, RefreshCw, Search, Star, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ChevronLeft, ChevronRight, Inbox, Loader2, RefreshCw, Search, Star, WifiOff, X } from "lucide-react";
 import { cn } from "@sp/utils";
-import { ApiError } from "@sp/api-client";
+import { ApiError, isUnreachable } from "@sp/api-client";
 import { useI18n } from "../core/i18n";
 import { Link, useRouter } from "../core/router";
 
@@ -180,6 +180,7 @@ export function Spinner({ size = 16 }: { size?: number }) {
 }
 
 export function errorText(e: unknown, fallback: string) {
+  if (isUnreachable(e)) return fallback;
   if (e instanceof ApiError) return e.message || fallback;
   if (e instanceof Error) return e.message || fallback;
   return fallback;
@@ -188,16 +189,26 @@ export function errorText(e: unknown, fallback: string) {
 export function ErrorState({ error, onRetry, title }: { error: unknown; onRetry?: () => void; title?: string }) {
   const { t } = useI18n();
   const status = error instanceof ApiError ? error.status : 0;
+  const goBack = useGoBack("/");
+  const missing = status === 403 || status === 404;
+  const offline = isUnreachable(error);
   return (
     <div className="kit-state error" role="alert">
-      <AlertTriangle size={28} />
-      <h3>{title ?? (status === 403 ? t("errors.forbiddenTitle") : status === 404 ? t("errors.notFoundTitle") : t("errors.loadFailed"))}</h3>
-      <p>{errorText(error, t("errors.generic"))}</p>
-      {onRetry && (
-        <button className="btn outline btn-sm" onClick={onRetry} type="button">
-          <RefreshCw size={14} /> {t("common.retry")}
-        </button>
-      )}
+      {offline ? <WifiOff size={28} /> : <AlertTriangle size={28} />}
+      <h3>{offline ? t("errors.offlineTitle") : title ?? (status === 403 ? t("errors.forbiddenTitle") : status === 404 ? t("errors.notFoundTitle") : t("errors.loadFailed"))}</h3>
+      <p>{offline ? t("errors.offlineText") : errorText(error, t("errors.generic"))}</p>
+      <div className="flex gap-2 justify-center flex-wrap">
+        {missing && (
+          <button className="btn primary btn-sm" onClick={goBack} type="button">
+            <ArrowLeft size={14} /> {t("common.back")}
+          </button>
+        )}
+        {onRetry && !missing && (
+          <button className="btn outline btn-sm" onClick={onRetry} type="button">
+            <RefreshCw size={14} /> {t("common.retry")}
+          </button>
+        )}
+      </div>
     </div>
   );
 }

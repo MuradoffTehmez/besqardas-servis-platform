@@ -1,13 +1,14 @@
 "use client";
 import React, { Component, useEffect, useState } from "react";
-import { Toaster } from "sonner";
-import { Construction, Lock, SearchX, ServerCrash } from "lucide-react";
-import { QueryClient, QueryClientProvider, useApi } from "@sp/api-client";
+import { Toaster, toast } from "sonner";
+import { Construction, Lock, SearchX, ServerCrash, WifiOff } from "lucide-react";
+import { QueryClient, QueryClientProvider, isUnreachable, useApi, useQueryClient } from "@sp/api-client";
 import { I18nProvider, useI18n } from "./i18n";
 import { ParamsProvider, RouterProvider, matchRoute, useRouter, type RouteDef } from "./router";
 import { SessionProvider, useSession } from "./session";
 import { CourierShell, MockPanel, PublicShell, adminUrl, homeFor, webUrl } from "./shells";
 import { Loading } from "../kit/base";
+import { CurrentRouteProvider } from "./nav";
 
 /**
  * Tətbiq kökü: provayderlər, route uyğunlaşdırma, rol əsaslı guard-lar (PRD §9.3, §70), sistem səhifələri (§60.7).
@@ -27,6 +28,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       <RouterProvider>
         <LocaleBridge>
           <SessionProvider>
+            <ConnectionWatch />
             {children}
             <Toaster richColors closeButton position="top-right" />
             <MockPanel />
@@ -34,6 +36,44 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
         </LocaleBridge>
       </RouterProvider>
     </QueryClientProvider>
+  );
+}
+
+/**
+ * API serveri əlçatan olmayanda üst zolaq göstərir, /health ilə yoxlayır və əlaqə bərpa olunan kimi
+ * uğursuz sorğuları yenidən yükləyir — istifadəçi səhifəni yeniləmək məcburiyyətində qalmır.
+ */
+function ConnectionWatch() {
+  const { t } = useI18n();
+  const qc = useQueryClient();
+  const [offline, setOffline] = useState(false);
+  useEffect(
+    () =>
+      qc.getQueryCache().subscribe((event) => {
+        if (event.type === "updated" && event.action.type === "error" && isUnreachable(event.action.error)) setOffline(true);
+      }),
+    [qc],
+  );
+  useEffect(() => {
+    if (!offline) return;
+    const id = setInterval(async () => {
+      try {
+        const r = await fetch("/api/health", { cache: "no-store" });
+        if (!r.ok) return;
+        setOffline(false);
+        toast.success(t("errors.backOnline"));
+        await qc.invalidateQueries();
+      } catch {
+        /* hələ də əlçatan deyil */
+      }
+    }, 3000);
+    return () => clearInterval(id);
+  }, [offline]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (!offline) return null;
+  return (
+    <div className="conn-banner" role="status" aria-live="polite">
+      <WifiOff size={16} aria-hidden /> {t("errors.offlineBanner")}
+    </div>
   );
 }
 
@@ -135,7 +175,7 @@ export function RoutedApp({ routes, shells, app }: { routes: RouteDef[]; shells:
   const fakeRoute = match?.route ?? { pattern: "*", render: () => null };
   return (
     <ErrorBoundary resetKey={path} fallback={() => (shells.public ?? ((c: React.ReactNode) => c))(<SystemPage code="500" />, fakeRoute)}>
-      {shell(content, fakeRoute)}
+      <CurrentRouteProvider value={match?.route ?? null}>{shell(content, fakeRoute)}</CurrentRouteProvider>
     </ErrorBoundary>
   );
 }

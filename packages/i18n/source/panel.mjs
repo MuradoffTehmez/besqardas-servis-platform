@@ -211,6 +211,14 @@ export default {
       serviceOrder: ["Quraşdırma sifarişi", "Заказ на установку", "Installation order"],
       cancelOrder: ["Sifarişi ləğv et", "Отменить заказ", "Cancel order"],
       cancelled: ["Sifariş ləğv edildi", "Заказ отменён", "Order cancelled"],
+      scheduled: ["Vaxt", "Время", "Scheduled"],
+      notScheduled: ["Razılaşdırılır", "Согласуется", "To be agreed"],
+      nextEstimate: ["Smeta təsdiqinizi gözləyir", "Смета ждёт вашего решения", "An estimate needs your decision"],
+      nextEstimateText: ["Usta smeta göndərib. Baxın, istəmədiyiniz bəndləri çıxarın və qərar verin.", "Мастер отправил смету. Просмотрите, исключите лишние позиции и примите решение.", "The technician sent an estimate. Review it, remove optional lines and decide."],
+      openEstimate: ["Smetaya bax", "Открыть смету", "Review estimate"],
+      nextPay: ["Ödəniş gözlənilir: {amount}", "Ожидается оплата: {amount}", "Payment due: {amount}"],
+      nextPayText: ["Kartla onlayn ödəyə və ya ustaya nağd verə bilərsiniz.", "Можно оплатить картой онлайн или наличными мастеру.", "Pay online by card or in cash to the technician."],
+      nextReview: ["İş tamamlandı — təcrübənizi qiymətləndirin", "Работа завершена — оцените мастера", "Job done — rate your experience"],
     },
     estimate: {
       title: ["Smeta", "Смета", "Estimate"],
@@ -564,6 +572,7 @@ export default {
   },
 
   courier: {
+    tasksTitle: ["Tapşırıqlarım", "Мои задачи", "My tasks"],
     title: ["Kuryer", "Курьер", "Courier"],
     open: ["Açıq: {count}", "Открыто: {count}", "Open: {count}"],
     delivered: ["Təhvil: {count}", "Доставлено: {count}", "Delivered: {count}"],

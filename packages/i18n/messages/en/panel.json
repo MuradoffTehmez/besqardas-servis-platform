@@ -208,7 +208,15 @@
       "returned": "returned: {qty}",
       "serviceOrder": "Installation order",
       "cancelOrder": "Cancel order",
-      "cancelled": "Order cancelled"
+      "cancelled": "Order cancelled",
+      "scheduled": "Scheduled",
+      "notScheduled": "To be agreed",
+      "nextEstimate": "An estimate needs your decision",
+      "nextEstimateText": "The technician sent an estimate. Review it, remove optional lines and decide.",
+      "openEstimate": "Review estimate",
+      "nextPay": "Payment due: {amount}",
+      "nextPayText": "Pay online by card or in cash to the technician.",
+      "nextReview": "Job done — rate your experience"
     },
     "estimate": {
       "title": "Estimate",
@@ -560,6 +568,7 @@
     }
   },
   "courier": {
+    "tasksTitle": "My tasks",
     "title": "Courier",
     "open": "Open: {count}",
     "delivered": "Delivered: {count}",

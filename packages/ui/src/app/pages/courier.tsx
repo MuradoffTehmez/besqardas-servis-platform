@@ -32,6 +32,7 @@ function CourierTasksPage() {
   const summary = useApi<any>("/courier/summary");
   return (
     <>
+      <h1 className="courier-title">{t("courier.tasksTitle")}</h1>
       {summary.data && (
         <div className="courier-task">
           <div className="flex justify-between gap-2 flex-wrap text-sm">

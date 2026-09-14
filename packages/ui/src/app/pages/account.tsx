@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { AlertCircle, CalendarClock, Crown, FileText, Heart, HardDrive, MapPin, Plus, QrCode, ShieldCheck, ShoppingBag, Star, Trash2, Wrench } from "lucide-react";
+import { AlertCircle, CalendarClock, CreditCard, Crown, FileText, Heart, HardDrive, MapPin, Plus, QrCode, ShieldCheck, ShoppingBag, Star, Trash2, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@sp/utils";
 import { del, patch, post, put, qs, useApi } from "@sp/api-client";
@@ -525,6 +525,9 @@ export function ServiceOrderDetailPage({ id, back = "/account/services" }: { id:
   const [busy, setBusy] = useState(false);
   const [reschedule, setReschedule] = useState<any | null>(null);
   const [review, setReview] = useState(false);
+  const { query, setQuery } = useRouter();
+  const tabParam = query.get("tab");
+  const setTab = (id: string) => setQuery({ tab: id });
   const refresh = useRefresh();
   const decide = async (d: "APPROVE" | "PARTIAL" | "REJECT" | "QUESTION", extra: { reasonCode?: string; comment?: string } = {}) => {
     setBusy(true);
@@ -547,6 +550,15 @@ export function ServiceOrderDetailPage({ id, back = "/account/services" }: { id:
         const canDecide = est?.status === "SENT" && est.availableActions?.some((a: any) => a.code === "approve_estimate");
         const actions = (o.availableActions ?? []).filter((a: any) => !["approve_estimate", "partial_approve", "reject_estimate", "ask_question"].includes(a.code));
         const done = ["COMPLETED", "CLOSED"].includes(o.status);
+        const canPay = actions.some((a: any) => a.code === "pay_online");
+        const tabs = [
+          { id: "progress", label: t("acc.orders.progress") },
+          ...(est ? [{ id: "estimate", label: t("acc.estimate.title"), badge: canDecide ? "!" : null }] : []),
+          { id: "payment", label: t("acc.orders.payment") },
+          { id: "details", label: t("acc.orders.details") },
+          { id: "documents", label: t("acc.orders.documents"), badge: o.documents?.length || null },
+        ];
+        const tab = tabs.some((x) => x.id === tabParam) ? tabParam! : canDecide ? "estimate" : "progress";
         return (
           <>
             <PageHeader
@@ -557,49 +569,68 @@ export function ServiceOrderDetailPage({ id, back = "/account/services" }: { id:
               actions={
                 <>
                   <ActionBar
-                    actions={actions}
+                    actions={canPay ? actions.filter((a: any) => a.code !== "pay_online") : actions}
+                    maxInline={2}
                     run={(a, extra) => run(a, extra)}
                     custom={{
                       reschedule: (a) => setReschedule(a),
-                      pay_online: () => payOnline("SERVICE", o.id),
                     }}
                   />
-                  {done && o.technicianId && <button type="button" className="btn outline" onClick={() => setReview(true)}><Star size={15} /> {t("acc.orders.rate")}</button>}
                 </>
               }
             />
             {o.needsReschedule && <div className="kit-note warning mb-4">{t("acc.orders.needsReschedule")}</div>}
-            <div className="kit-split">
-              <div className="kit-stack">
-                <Card title={t("acc.orders.progress")} subtitle={t("acc.orders.progressHint", { pct: o.progress })}>
-                  <Progress value={o.progress} />
-                  <div className="mt-4"><StageTimeline stages={o.stages} mode="customer" /></div>
-                </Card>
-                {est && (
-                  <Card id="estimate" title={t("acc.estimate.title")} subtitle={canDecide ? t("acc.estimate.decideHint") : undefined}>
-                    <EstimateView estimate={est} declined={canDecide ? declined : undefined} onToggleDecline={canDecide && est.lines.some((l: any) => l.optional) ? (lineId) => setDeclined((d) => (d.includes(lineId) ? d.filter((x) => x !== lineId) : [...d, lineId])) : undefined} />
-                    {canDecide && (
-                      <div className="kit-actionbar mt-4">
-                        <button type="button" className="btn primary" disabled={busy} onClick={() => decide(declined.length ? "PARTIAL" : "APPROVE")}>{declined.length ? t("actions.partial_approve") : t("actions.approve_estimate")}</button>
-                        <button type="button" className="btn outline" disabled={busy} onClick={() => setDecision("QUESTION")}>{t("actions.ask_question")}</button>
-                        <button type="button" className="btn outline danger-outline" disabled={busy} onClick={() => setDecision("REJECT")}>{t("actions.reject_estimate")}</button>
-                      </div>
-                    )}
-                    {est.decidedAt && <p className="text-sm text-muted mt-3">{t("acc.estimate.decided", { at: dateTime(est.decidedAt), channel: enumLabel("DecisionChannel", est.decisionChannel) })}{est.rejectReason ? ` — ${est.rejectReason}` : ""}</p>}
-                  </Card>
-                )}
-                {o.materials?.length > 0 && (
-                  <Card title={t("acc.orders.materials")}>
-                    <ul className="kit-list">
-                      {o.materials.map((m: any) => <li key={m.id}><span className="grow">{text(m.name)} <small className="text-muted">{m.sku}</small></span><span>{m.quantity} {m.unit}</span>{m.ownMaterial && <span className="badge badge-info">{t("estimate.ownMaterial")}</span>}</li>)}
-                    </ul>
-                  </Card>
-                )}
-                <Card title={t("acc.orders.history")}><HistoryList items={o.history} /></Card>
+            {canDecide ? (
+              <div className="next-step">
+                <FileText size={22} aria-hidden />
+                <div><strong>{t("acc.orders.nextEstimate")}</strong><p>{t("acc.orders.nextEstimateText")}</p></div>
+                {tab !== "estimate" && <button type="button" className="btn primary" onClick={() => setTab("estimate")}>{t("acc.orders.openEstimate")}</button>}
               </div>
-              <div className="kit-stack">
+            ) : canPay ? (
+              <div className="next-step">
+                <CreditCard size={22} aria-hidden />
+                <div><strong>{t("acc.orders.nextPay", { amount: money(o.dueAmount) })}</strong><p>{t("acc.orders.nextPayText")}</p></div>
+                <button type="button" className="btn primary" onClick={() => payOnline("SERVICE", o.id)}>{t("actions.pay_online")}</button>
+              </div>
+            ) : done && o.technicianId ? (
+              <div className="next-step calm">
+                <Star size={22} aria-hidden />
+                <div><strong>{t("acc.orders.nextReview")}</strong></div>
+                <button type="button" className="btn outline" onClick={() => setReview(true)}>{t("acc.orders.rate")}</button>
+              </div>
+            ) : null}
+            <div className="order-summary">
+              <div><small>{t("acc.orders.progress")}</small><strong>{t("acc.orders.progressHint", { pct: o.progress })}</strong><Progress value={o.progress} /></div>
+              <div><small>{t("acc.orders.scheduled")}</small><strong>{o.scheduledAt ? dateTime(o.scheduledAt) : t("acc.orders.notScheduled")}</strong></div>
+              <div><small>{t("acc.orders.technician")}</small><strong>{o.technicianName ?? t("acc.orders.notAssigned")}</strong>{o.technicianPhoneVisible && o.technicianPhone && <a href={`tel:${o.technicianPhone}`} className="text-brand text-sm">{o.technicianPhone}</a>}</div>
+              <div><small>{t("acc.orders.due")}</small><strong>{money(o.dueAmount)}</strong><EnumBadge group="PaymentStatus" code={o.paymentStatus} /></div>
+            </div>
+            <Tabs value={tab} onChange={setTab} tabs={tabs} />
+            <div className="mt-4">
+              {tab === "progress" && (
+                <div className="kit-split">
+                  <Card title={t("acc.orders.progress")} subtitle={t("acc.orders.progressHint", { pct: o.progress })}>
+                    <StageTimeline stages={o.stages} mode="customer" />
+                  </Card>
+                  <Card title={t("acc.orders.history")}><HistoryList items={o.history} /></Card>
+                </div>
+              )}
+              {tab === "estimate" && est && (
+                <Card id="estimate" title={t("acc.estimate.title")} subtitle={canDecide ? t("acc.estimate.decideHint") : undefined}>
+                  <EstimateView estimate={est} declined={canDecide ? declined : undefined} onToggleDecline={canDecide && est.lines.some((l: any) => l.optional) ? (lineId) => setDeclined((d) => (d.includes(lineId) ? d.filter((x) => x !== lineId) : [...d, lineId])) : undefined} />
+                  {canDecide && (
+                    <div className="kit-actionbar mt-4">
+                      <button type="button" className="btn primary" disabled={busy} onClick={() => decide(declined.length ? "PARTIAL" : "APPROVE")}>{declined.length ? t("actions.partial_approve") : t("actions.approve_estimate")}</button>
+                      <button type="button" className="btn outline" disabled={busy} onClick={() => setDecision("QUESTION")}>{t("actions.ask_question")}</button>
+                      <button type="button" className="btn outline danger-outline" disabled={busy} onClick={() => setDecision("REJECT")}>{t("actions.reject_estimate")}</button>
+                    </div>
+                  )}
+                  {est.decidedAt && <p className="text-sm text-muted mt-3">{t("acc.estimate.decided", { at: dateTime(est.decidedAt), channel: enumLabel("DecisionChannel", est.decisionChannel) })}{est.rejectReason ? ` — ${est.rejectReason}` : ""}</p>}
+                </Card>
+              )}
+              {tab === "payment" && (
                 <Card title={t("acc.orders.payment")}>
-                  <KeyValue cols={1} items={[[t("acc.orders.paymentStatus"), <EnumBadge key="ps" group="PaymentStatus" code={o.paymentStatus} />], [t("acc.orders.paid"), money(o.paidAmount)], [t("acc.orders.due"), <strong key="due">{money(o.dueAmount)}</strong>]]} />
+                  <KeyValue cols={3} items={[[t("acc.orders.paymentStatus"), <EnumBadge key="ps" group="PaymentStatus" code={o.paymentStatus} />], [t("acc.orders.paid"), money(o.paidAmount)], [t("acc.orders.due"), <strong key="due">{money(o.dueAmount)}</strong>]]} />
                   {o.fees?.length > 0 && (
                     <ul className="kit-list mt-2">
                       {o.fees.map((f: any, i: number) => <li key={i}><span className="grow">{text(f.label)}</span><span className={cn(f.waived && "text-muted")}>{f.waived ? t("acc.orders.waived") : money(f.amount)}</span></li>)}
@@ -611,32 +642,45 @@ export function ServiceOrderDetailPage({ id, back = "/account/services" }: { id:
                     </ul>
                   )}
                 </Card>
-                <Card title={t("acc.orders.details")}>
-                  <KeyValue
-                    cols={1}
-                    items={[
-                      [t("acc.orders.device"), o.device ? <Link key="d" to={o.device.deviceId ? `/account/devices/${o.device.deviceId}` : "#"} className="text-brand">{o.device.modelName}</Link> : null],
-                      [t("acc.orders.problem"), o.problem ? `${text(o.problem.label) || ""} ${o.problem.description ? `— ${o.problem.description}` : ""}` : null],
-                      [t("acc.orders.address"), o.address ? [o.address.city, o.address.street, o.address.apartment].filter(Boolean).join(", ") : enumLabel("ExecutionForm", o.executionForm)],
-                      [t("acc.orders.technician"), o.technicianName ? <span key="t">{o.technicianName}{o.technicianPhoneVisible && o.technicianPhone ? <small className="block"><a href={`tel:${o.technicianPhone}`} className="text-brand">{o.technicianPhone}</a></small> : null}</span> : o.preferredTechnicianName ? t("acc.orders.preferred", { name: o.preferredTechnicianName }) : t("acc.orders.notAssigned")],
-                      [t("acc.orders.contact"), enumLabel("ContactChannel", o.contactChannel)],
-                      [t("acc.orders.createdAt"), dateTime(o.createdAt)],
-                      [t("acc.orders.warranty"), o.warrantyNumber],
-                    ]}
-                  />
-                  {o.attachments?.length > 0 && <div className="photo-grid mt-3">{o.attachments.map((a: any) => <div key={a.id}>{a.name}</div>)}</div>}
-                  {o.cancellationTerms && <p className="kit-note text-sm mt-3">{o.cancellationTerms}</p>}
-                  {o.cancelReason && <p className="kit-note danger text-sm mt-3">{t("acc.orders.cancelReason")}: {o.cancelReason}</p>}
-                </Card>
-                {(logistics.data?.length ?? 0) > 0 && (
-                  <Card title={t("acc.orders.logistics")}>
-                    <ul className="kit-list">
-                      {logistics.data!.map((l) => <li key={l.id}><span className="grow">{enumLabel("LogisticsType", l.type)}<small className="block text-muted">{l.windowStart ? `${dateTime(l.windowStart)}` : ""}{l.assigneeName ? ` · ${l.assigneeName}` : ""}</small></span><EnumBadge group="LogisticsStatus" code={l.status} /></li>)}
-                    </ul>
+              )}
+              {tab === "details" && (
+                <div className="kit-split">
+                  <Card title={t("acc.orders.details")}>
+                    <KeyValue
+                      cols={1}
+                      items={[
+                        [t("acc.orders.device"), o.device ? <Link key="d" to={o.device.deviceId ? `/account/devices/${o.device.deviceId}` : "#"} className="text-brand">{o.device.modelName}</Link> : null],
+                        [t("acc.orders.problem"), o.problem ? `${text(o.problem.label) || ""} ${o.problem.description ? `— ${o.problem.description}` : ""}` : null],
+                        [t("acc.orders.address"), o.address ? [o.address.city, o.address.street, o.address.apartment].filter(Boolean).join(", ") : enumLabel("ExecutionForm", o.executionForm)],
+                        [t("acc.orders.technician"), o.technicianName ? o.technicianName : o.preferredTechnicianName ? t("acc.orders.preferred", { name: o.preferredTechnicianName }) : t("acc.orders.notAssigned")],
+                        [t("acc.orders.contact"), enumLabel("ContactChannel", o.contactChannel)],
+                        [t("acc.orders.createdAt"), dateTime(o.createdAt)],
+                        [t("acc.orders.warranty"), o.warrantyNumber],
+                      ]}
+                    />
+                    {o.attachments?.length > 0 && <div className="photo-grid mt-3">{o.attachments.map((a: any) => <div key={a.id}>{a.name}</div>)}</div>}
+                    {o.cancellationTerms && <p className="kit-note text-sm mt-3">{o.cancellationTerms}</p>}
+                    {o.cancelReason && <p className="kit-note danger text-sm mt-3">{t("acc.orders.cancelReason")}: {o.cancelReason}</p>}
                   </Card>
-                )}
-                <Card title={t("acc.orders.documents")}><DocumentsList docs={o.documents} /></Card>
-              </div>
+                  <div className="kit-stack">
+                    {o.materials?.length > 0 && (
+                      <Card title={t("acc.orders.materials")}>
+                        <ul className="kit-list">
+                          {o.materials.map((m: any) => <li key={m.id}><span className="grow">{text(m.name)} <small className="text-muted">{m.sku}</small></span><span>{m.quantity} {m.unit}</span>{m.ownMaterial && <span className="badge badge-info">{t("estimate.ownMaterial")}</span>}</li>)}
+                        </ul>
+                      </Card>
+                    )}
+                    {(logistics.data?.length ?? 0) > 0 && (
+                      <Card title={t("acc.orders.logistics")}>
+                        <ul className="kit-list">
+                          {logistics.data!.map((l) => <li key={l.id}><span className="grow">{enumLabel("LogisticsType", l.type)}<small className="block text-muted">{l.windowStart ? `${dateTime(l.windowStart)}` : ""}{l.assigneeName ? ` · ${l.assigneeName}` : ""}</small></span><EnumBadge group="LogisticsStatus" code={l.status} /></li>)}
+                        </ul>
+                      </Card>
+                    )}
+                  </div>
+                </div>
+              )}
+              {tab === "documents" && <Card title={t("acc.orders.documents")}><DocumentsList docs={o.documents} /></Card>}
             </div>
             {decision === "REJECT" && <ReasonDialog open category="ESTIMATE_REJECT" title={t("actions.reject_estimate")} busy={busy} onClose={() => setDecision(null)} onSubmit={(reasonCode, note) => decide("REJECT", { reasonCode, comment: note })} extra={est?.applicableFees?.length ? <div className="kit-note warning text-sm mb-3">{est.applicableFees.map((f: any) => f.label).join("; ")}</div> : null} />}
             {decision === "QUESTION" && <QuestionDialog busy={busy} onClose={() => setDecision(null)} onSubmit={(comment) => decide("QUESTION", { comment })} />}
