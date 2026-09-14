@@ -599,6 +599,7 @@ export function CheckoutPage() {
     if (pm && !pm.available) form.set("paymentMethod", opts.data.paymentMethods.find((m: any) => m.available)?.method ?? "CARD_ONLINE");
   }, [opts.data]); // eslint-disable-line react-hooks/exhaustive-deps
   if (opts.isLoading) return <div className="container py-8"><Loading rows={8} /></div>;
+  if (opts.error instanceof ApiError && opts.error.code === "CART_EMPTY") return <div className="container py-8"><EmptyState icon={ShoppingCart} title={t("cart.empty")} action={<Link to="/shop" className="btn primary">{t("cart.goShopping")}</Link>} /></div>;
   if (opts.error) return <div className="container py-8"><ErrorState error={opts.error} onRetry={() => opts.refetch()} /></div>;
   const o = opts.data;
   const s = o.summary;
