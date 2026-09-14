@@ -80,7 +80,11 @@
     "generic": "Something went wrong. Please try again.",
     "loadFailed": "Couldn't load data",
     "forbiddenTitle": "Access denied",
-    "notFoundTitle": "Not found"
+    "notFoundTitle": "Not found",
+    "offlineTitle": "Can't reach the server",
+    "offlineText": "The API server isn't responding. We'll retry automatically in a few seconds.",
+    "offlineBanner": "Connection lost — reconnecting…",
+    "backOnline": "Connection restored"
   },
   "validation": {
     "invalid": "Invalid value",
@@ -189,6 +193,7 @@
     "noResultsFor": "No results for “{q}”"
   },
   "actions": {
+    "more": "More",
     "done": "Done: {action}",
     "confirmText": "Do you confirm this action?",
     "onBehalfHint": "Simulated on behalf of the executor",
@@ -791,9 +796,79 @@
     "notifications": "Notifications: {count} unread",
     "notificationsTitle": "Notifications",
     "markAllRead": "Mark all read",
-    "noNotifications": "No notifications"
+    "noNotifications": "No notifications",
+    "search": "Search pages or actions…",
+    "searchShort": "Jump to…",
+    "noResults": "Nothing found",
+    "quick": "Quick links",
+    "toAdmin": "Open CRM panel",
+    "platformMap": "Platform map",
+    "collapse": "Collapse menu",
+    "expand": "Expand menu",
+    "filterMenu": "Filter menu",
+    "detail": "Details",
+    "userMenu": "User menu",
+    "kbdMove": "move",
+    "kbdOpen": "open"
   },
   "courier": {
     "title": "Courier"
+  },
+  "demo": {
+    "eyebrow": "Demo environment",
+    "title": "Platform map",
+    "subtitle": "Every module and page in one place. Click any link — we'll sign in with the right demo account and open that page.",
+    "credTitle": "Demo credentials",
+    "current": "Signed in: {name} · {role}",
+    "enter": "Sign in",
+    "signingIn": "Signing in…",
+    "signedIn": "Signed in as {login}",
+    "noLogin": "No sign-in required",
+    "more": "{count} more pages",
+    "less": "Show less",
+    "staffTitle": "CRM roles",
+    "staffText": "Each staff role sees only the menu and actions its permissions allow.",
+    "m": {
+      "public": {
+        "title": "Public website",
+        "text": "Service and product catalog, technicians, plans, warranty check and applications."
+      },
+      "auth": {
+        "title": "Sign-in and registration",
+        "text": "Phone + OTP, email + password, 2FA, password recovery and mode selection."
+      },
+      "customer": {
+        "title": "Customer account",
+        "text": "Service orders, estimate approval, devices, subscription, payments, warranty and returns."
+      },
+      "technician": {
+        "title": "Technician — independent",
+        "text": "Job offers, stage execution, estimates, schedule, materials, earnings and statistics."
+      },
+      "staffTechnician": {
+        "title": "Technician — staff",
+        "text": "Company technician: mobile stock, reservations and licence."
+      },
+      "courier": {
+        "title": "Courier",
+        "text": "Delivery and device pickup tasks, handover (OTP sign-in)."
+      },
+      "corporate": {
+        "title": "Corporate account",
+        "text": "Sites, device fleet, planned service, contracts and reports."
+      },
+      "partner": {
+        "title": "Partner account",
+        "text": "Catalog with partner prices, orders, commissions and balance."
+      },
+      "wholesale": {
+        "title": "Wholesale account",
+        "text": "Quick order, quotes, wholesale prices and credit limit."
+      },
+      "admin": {
+        "title": "CRM / ERP admin",
+        "text": "Dispatch, workflow, catalog/PIM, warehouse, sales, finance, settings and reports (Super Admin)."
+      }
+    }
   }
 }

@@ -208,7 +208,15 @@
       "returned": "qaytarılıb: {qty}",
       "serviceOrder": "Quraşdırma sifarişi",
       "cancelOrder": "Sifarişi ləğv et",
-      "cancelled": "Sifariş ləğv edildi"
+      "cancelled": "Sifariş ləğv edildi",
+      "scheduled": "Vaxt",
+      "notScheduled": "Razılaşdırılır",
+      "nextEstimate": "Smeta təsdiqinizi gözləyir",
+      "nextEstimateText": "Usta smeta göndərib. Baxın, istəmədiyiniz bəndləri çıxarın və qərar verin.",
+      "openEstimate": "Smetaya bax",
+      "nextPay": "Ödəniş gözlənilir: {amount}",
+      "nextPayText": "Kartla onlayn ödəyə və ya ustaya nağd verə bilərsiniz.",
+      "nextReview": "İş tamamlandı — təcrübənizi qiymətləndirin"
     },
     "estimate": {
       "title": "Smeta",
@@ -560,6 +568,7 @@
     }
   },
   "courier": {
+    "tasksTitle": "Tapşırıqlarım",
     "title": "Kuryer",
     "open": "Açıq: {count}",
     "delivered": "Təhvil: {count}",

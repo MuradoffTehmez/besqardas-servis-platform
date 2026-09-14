@@ -1,7 +1,7 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { ArrowDownUp, ChevronDown } from "lucide-react";
+import { ArrowDownUp, ChevronDown, MoreHorizontal } from "lucide-react";
 import { cn } from "@sp/utils";
 import { qs, useApi } from "@sp/api-client";
 import { Modal } from "../../components/ui/modal";
@@ -99,7 +99,30 @@ export interface ApiAction {
  * Backend-in qaytardığı əməliyyatları göstərir. Frontend status keçidini özü müəyyən etmir (PRD §18.4).
  * `custom` — xüsusi dialoq tələb edən kodlar (smeta, təhvil və s.) üçün çağırılır.
  */
-export function ActionBar({ actions, run, custom, exclude = [], size = "md", labelPrefix = "actions" }: { actions: ApiAction[]; run: (action: ApiAction, extra: { reasonCode?: string; note?: string }) => Promise<unknown>; custom?: Record<string, (a: ApiAction) => void>; exclude?: string[]; size?: "sm" | "md"; labelPrefix?: string }) {
+/** "Daha çox" açılan menyusu — ikinci dərəcəli əməliyyatlar üçün. */
+export function MoreMenu({ children, size = "md", disabled, label }: { children: (close: () => void) => React.ReactNode; size?: "sm" | "md"; disabled?: boolean; label?: string }) {
+  const { t } = useI18n();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey); };
+  }, [open]);
+  return (
+    <div className="kit-dropdown" ref={ref}>
+      <button type="button" className={cn("btn outline", size === "sm" && "btn-sm")} disabled={disabled} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+        <MoreHorizontal size={16} /> {label ?? t("actions.more")}
+      </button>
+      {open && <div className="kit-dropdown-menu kit-more-menu" role="menu">{children(() => setOpen(false))}</div>}
+    </div>
+  );
+}
+
+export function ActionBar({ actions, run, custom, exclude = [], size = "md", labelPrefix = "actions", maxInline = 3 }: { actions: ApiAction[]; run: (action: ApiAction, extra: { reasonCode?: string; note?: string }) => Promise<unknown>; custom?: Record<string, (a: ApiAction) => void>; exclude?: string[]; size?: "sm" | "md"; labelPrefix?: string; maxInline?: number }) {
   const { t } = useI18n();
   const [reasonFor, setReasonFor] = useState<ApiAction | null>(null);
   const [confirmFor, setConfirmFor] = useState<ApiAction | null>(null);
@@ -128,15 +151,33 @@ export function ActionBar({ actions, run, custom, exclude = [], size = "md", lab
     if (a.variant === "destructive") return setConfirmFor(a);
     void exec(a);
   };
+  // Əsas əməliyyatlar görünür, qalanları "Daha çox" menyusundadır — ekran sadə qalır
+  const ordered = [...visible.filter((a) => a.variant === "primary"), ...visible.filter((a) => a.variant !== "primary" && a.variant !== "destructive"), ...visible.filter((a) => a.variant === "destructive")];
+  const inline = ordered.length <= maxInline + 1 ? ordered : ordered.slice(0, maxInline);
+  const overflow = ordered.slice(inline.length);
+  const label = (a: ApiAction) => (
+    <>
+      {t(`${labelPrefix}.${a.code}`)}
+      {(a.payload as { onBehalf?: boolean } | undefined)?.onBehalf && <span className="kit-behalf" title={t("actions.onBehalfHint")}>*</span>}
+    </>
+  );
   return (
     <>
       <div className="kit-actionbar">
-        {visible.map((a, i) => (
+        {inline.map((a, i) => (
           <button key={`${a.code}-${a.stageId ?? i}`} type="button" disabled={busy} className={cn("btn", size === "sm" && "btn-sm", a.variant === "primary" ? "primary" : a.variant === "destructive" ? "outline danger-outline" : "outline")} onClick={() => click(a)}>
-            {t(`${labelPrefix}.${a.code}`)}
-            {(a.payload as { onBehalf?: boolean } | undefined)?.onBehalf && <span className="kit-behalf" title={t("actions.onBehalfHint")}>*</span>}
+            {label(a)}
           </button>
         ))}
+        {overflow.length > 0 && (
+          <MoreMenu size={size} disabled={busy}>
+            {(close) => overflow.map((a, i) => (
+              <button key={`${a.code}-${a.stageId ?? i}`} type="button" role="menuitem" className={cn("dropdown-item", a.variant === "destructive" && "danger")} onClick={() => { close(); click(a); }}>
+                {label(a)}
+              </button>
+            ))}
+          </MoreMenu>
+        )}
       </div>
       {reasonFor && (
         <ReasonDialog open onClose={() => setReasonFor(null)} category={reasonFor.reasonCategory ?? "CANCELLED"} title={t(`${labelPrefix}.${reasonFor.code}`)} busy={busy} error={error} onSubmit={(reasonCode, note) => exec(reasonFor, { reasonCode, note })} />

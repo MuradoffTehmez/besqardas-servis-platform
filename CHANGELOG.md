@@ -9,6 +9,19 @@
 - **Kataloq, satış, anbar**: məhsul redaktoru (atribut, variant qiymətləri, vahid çevirmələri, uyğunluq), CSV uyğunluq importu, satış sifarişi, kommersiya təklifinə qiymət, qalıqlar, stok hərəkətləri, transfer və mal qəbulu, inventarizasiya, alışlar, maya dəyəri metodu.
 - **Maliyyə və təşkilat**: abunə planı və entitlement redaktoru, maliyyə icmalı, kassa təhvili, usta hesablaşmaları, ayarlar, brend önizləməsi, inteqrasiyalar, hesabatlar və KPI.
 - Admin mətnləri üçün AZ / RU / EN tərcümələr; i18n yoxlama skripti qısa köməkçi funksiyaları da tanıyır.
+- **Naviqasiya**: panel başlığında breadcrumb, `Ctrl+K` sürətli keçid palitrası, istifadəçi menyusu (profil, rejim dəyişmə, sayt/CRM keçidi, çıxış); planşetdə ikon zolağı, yığıla bilən menyu, uzun admin menyusunda akkordeon və menyu axtarışı.
+- **Platforma xəritəsi** (`/demo`): bütün modullar, səhifələr və bir kliklə uyğun demo hesabı ilə giriş; footer və giriş səhifəsindən keçid.
+- Sayt başlığında rola uyğun istifadəçi menyusu; admin menyusuna yoxlama, lisenziya, əməkdaşlıq və vahid çevirmələri əlavə olundu.
+- Kataloq: 127 məhsul, 63 kateqoriya, 40 brend və 213 SKU variantı.
+
+### Dəyişdirildi (Changed)
+- Müştəri servis sifarişi detalı: növbəti addım bloku, qısa xülasə və bölmələr (gedişat, smeta, ödəniş, məlumatlar, sənədlər).
+- Əməliyyat düymələri: əsas 2–3 əməliyyat görünür, qalanları “Daha çox” menyusundadır.
+- 4 sütunlu şəbəkələr 3+1 kimi qırılmır; mock paneli sağ-aşağıya keçdi.
+
+### Düzəlişlər (Fixed)
+- Mock API dayananda səhifələrdə “Məlumat yüklənmədi” xətası: dev rejimində mock server avtomatik qaldırılır və izlənilir; əlaqə kəsiləndə üst zolaq göstərilir, bərpa olunanda məlumatlar özü yenilənir.
+- 404/403 xətalarında “Geri” düyməsi; kuryer siyahısına səhifə başlığı; boş səbətlə checkout.
 
 ## [v0.2.0] - 2026-09-14
 

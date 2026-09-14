@@ -13,6 +13,7 @@ import { AccountDashboardPage, AddressesPage, DeviceDetailPage, DevicesPage, Doc
 import { technicianRoutes, TechnicianShell } from "./pages/technician";
 import { courierRoutes } from "./pages/courier";
 import { b2bRoutes, B2BShell } from "./pages/b2b";
+import { DemoMapPage } from "./pages/demo";
 
 /**
  * Müştəri saytı (apps/web): public sayt, auth, kabinet, usta paneli, B2B kabinetləri və kuryer interfeysi (PRD §60).
@@ -86,6 +87,7 @@ export const webRoutes: RouteDef[] = [
   { pattern: "/contact", render: () => <ContactPage />, titleKey: "contact" },
   { pattern: "/become-technician", render: () => <BecomeTechnicianPage />, shell: "bare", titleKey: "techApply.title" },
   { pattern: "/business", render: () => <BusinessPage />, shell: "bare", titleKey: "b2bApply.title" },
+  { pattern: "/demo", render: () => <DemoMapPage />, titleKey: "demo.title" },
 
   // Auth (§60.2)
   { pattern: "/login", render: () => <LoginPage />, shell: "bare", titleKey: "auth.loginTitle" },

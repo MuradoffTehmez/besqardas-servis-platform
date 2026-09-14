@@ -9,6 +9,7 @@ import {
   Search,
   ChevronDown,
   Globe,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@sp/utils";
 
@@ -25,6 +26,11 @@ export interface HeaderProps {
   locale: "az" | "ru" | "en";
   cartCount?: number;
   user?: { fullName?: string; email?: string; role?: string } | null;
+  /** Daxil olmuş istifadəçi üçün menyu bəndləri (kabinet bölmələri, panellər) */
+  userMenu?: { label: string; href: string; icon?: React.ComponentType<{ size?: number }> }[];
+  userMenuTitle?: string;
+  logoutLabel?: string;
+  onLogout?: () => void;
   onNavigate: (href: string) => void;
   onLocaleChange: (locale: "az" | "ru" | "en") => void;
   onOpenCart?: () => void;
@@ -43,8 +49,23 @@ export function Header({
   onLocaleChange,
   onOpenCart,
   onOpenSearch,
+  userMenu,
+  userMenuTitle,
+  logoutLabel,
+  onLogout,
   className,
 }: HeaderProps) {
+  const [userOpen, setUserOpen] = useState(false);
+  const userRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!userOpen) return;
+    const onDown = (e: MouseEvent) => { if (userRef.current && !userRef.current.contains(e.target as Node)) setUserOpen(false); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setUserOpen(false); };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey); };
+  }, [userOpen]);
+  const hasMenu = !!user && !!userMenu?.length;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
@@ -180,16 +201,39 @@ export function Header({
             </button>
           )}
 
-          {/* User Account / Login button */}
-          <button
-            className="user-btn btn btn-sm outline"
-            onClick={() => handleNavClick(user ? "/account" : "/login")}
-          >
-            <UserRound size={16} />
-            <span className="user-btn-label">
-              {user ? user.fullName || "Hesabım" : locale === "az" ? "Daxil ol" : locale === "ru" ? "Войти" : "Login"}
-            </span>
-          </button>
+          {/* İstifadəçi menyusu və ya giriş düyməsi */}
+          <div className="lang-switcher" ref={userRef}>
+            <button
+              className="user-btn btn btn-sm outline"
+              aria-haspopup={hasMenu ? "menu" : undefined}
+              aria-expanded={hasMenu ? userOpen : undefined}
+              onClick={() => (hasMenu ? setUserOpen((o) => !o) : handleNavClick(user ? "/account" : "/login"))}
+            >
+              <UserRound size={16} />
+              <span className="user-btn-label">
+                {user ? user.fullName || "Hesabım" : locale === "az" ? "Daxil ol" : locale === "ru" ? "Войти" : "Login"}
+              </span>
+              {hasMenu && <ChevronDown size={14} />}
+            </button>
+            {hasMenu && userOpen && (
+              <div className="dropdown-menu lang-menu header-user-menu" role="menu">
+                {userMenuTitle && <div className="header-user-title">{userMenuTitle}</div>}
+                {userMenu!.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <button key={item.href + item.label} role="menuitem" className="dropdown-item" onClick={() => { setUserOpen(false); handleNavClick(item.href); }}>
+                      {Icon && <Icon size={15} />} {item.label}
+                    </button>
+                  );
+                })}
+                {onLogout && (
+                  <button role="menuitem" className="dropdown-item danger" onClick={() => { setUserOpen(false); onLogout(); }}>
+                    <LogOut size={15} /> {logoutLabel}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Mobile Menu Toggle */}
           <button
@@ -219,13 +263,33 @@ export function Header({
               </button>
             ))}
             <div className="mobile-nav-divider" />
-            <button
-              className="mobile-nav-link"
-              onClick={() => handleNavClick(user ? "/account" : "/login")}
-            >
-              <UserRound size={18} />
-              <span>{user ? user.fullName || "Hesabım" : "Daxil ol"}</span>
-            </button>
+            {hasMenu ? (
+              <>
+                {userMenu!.map((item) => {
+                  const Icon = item.icon ?? UserRound;
+                  return (
+                    <button key={item.href + item.label} className="mobile-nav-link" onClick={() => handleNavClick(item.href)}>
+                      <Icon size={18} />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+                {onLogout && (
+                  <button className="mobile-nav-link" onClick={() => { setMobileMenuOpen(false); onLogout(); }}>
+                    <LogOut size={18} />
+                    <span>{logoutLabel}</span>
+                  </button>
+                )}
+              </>
+            ) : (
+              <button
+                className="mobile-nav-link"
+                onClick={() => handleNavClick(user ? "/account" : "/login")}
+              >
+                <UserRound size={18} />
+                <span>{user ? user.fullName || "Hesabım" : "Daxil ol"}</span>
+              </button>
+            )}
           </nav>
         </div>
       )}

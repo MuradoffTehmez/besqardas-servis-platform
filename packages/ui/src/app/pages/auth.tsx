@@ -186,6 +186,7 @@ export function LoginPage({ app = "web" }: { app?: "web" | "admin" }) {
             ))}
           </ul>
           <p className="text-sm text-muted">{t("auth.demoHint")}</p>
+          {app === "admin" ? <a className="text-brand text-sm font-semibold" href={webUrl("/demo")}>{t("panel.platformMap")} →</a> : <Link to="/demo" className="text-brand text-sm font-semibold">{t("panel.platformMap")} →</Link>}
         </details>
       )}
     </AuthLayout>

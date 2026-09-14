@@ -3,13 +3,14 @@ import React from "react";
 import {
   Award, BadgePercent, BarChart3, Bell, Boxes, Building2, CalendarDays, ClipboardCheck, ClipboardList, Coins, CreditCard, FileSpreadsheet, FileText, FolderTree, Gauge, GitBranch, Globe, HandCoins, KeyRound,
   LayoutDashboard, ListChecks, Map, MessageSquare, Package, PackageSearch, Palette, Plug, Receipt, RotateCcw, ScrollText, Settings, ShieldAlert, ShieldCheck, ShoppingCart, Star, Tag, Tags, Truck, Undo2, User,
-  UserCog, Users, Wallet, Warehouse, Wrench, Workflow, Ruler, Link2, Layers, Percent, Image, HelpCircle, Timer,
+  UserCog, Users, Wallet, Warehouse, Wrench, Workflow, Ruler, Link2, Layers, Percent, Image, HelpCircle, Timer, Plus, FileBadge, Handshake, ArrowLeftRight,
 } from "lucide-react";
 import { useI18n } from "./core/i18n";
 import { useSession, INTERNAL_ROLES } from "./core/session";
 import { AppProviders, RoutedApp, SystemPage, defaultShells, type ShellRender } from "./core/app";
 import { PanelShell, type NavGroup } from "./core/shells";
-import type { RouteDef } from "./core/router";
+import { useRouter, type RouteDef } from "./core/router";
+import type { Command } from "./core/nav";
 import { ForgotPasswordPage, LoginPage, ResetPasswordPage, SelectModePage, TwoFactorPage } from "./pages/auth";
 import { NotificationsPage } from "./pages/account";
 import { Resource } from "./admin/resources";
@@ -24,7 +25,8 @@ import { AdminProfilePage, BrandingPage, CashDesksPage, FinancePage, Integration
 
 function AdminShell({ children }: { children: React.ReactNode }) {
   const { t } = useI18n();
-  const { session } = useSession();
+  const { session, can } = useSession();
+  const { navigate } = useRouter();
   const n = (k: string) => t(`adm.nav.${k}`);
   const nav: NavGroup[] = [
     { items: [{ to: "/", label: n("dashboard"), icon: LayoutDashboard, exact: true }, { to: "/notifications", label: n("notifications"), icon: Bell, badge: session?.unreadNotifications || null }] },
@@ -45,6 +47,9 @@ function AdminShell({ children }: { children: React.ReactNode }) {
     { label: n("gUsers"), items: [
       { to: "/customers", label: n("customers"), icon: Users, permission: "customers:view" },
       { to: "/technicians", label: n("technicians"), icon: UserCog, permission: "technicians:view" },
+      { to: "/technicians/verification", label: n("verification"), icon: ShieldCheck, permission: "technicians:view" },
+      { to: "/technicians/licenses", label: n("licenses"), icon: FileBadge, permission: "technicians:view" },
+      { to: "/technicians/partnerships", label: n("partnerships"), icon: Handshake, permission: "technicians:view" },
       { to: "/couriers", label: n("couriers"), icon: Truck, permission: "logistics_tasks:view" },
       { to: "/employees", label: n("employees"), icon: Award, permission: "users:view" },
       { to: "/b2b-accounts", label: n("b2bAccounts"), icon: Building2, permission: "b2b_accounts:view" },
@@ -61,6 +66,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
       { to: "/attributes", label: n("attributes"), icon: ListChecks, permission: "catalog:view" },
       { to: "/compatibility", label: n("compatibility"), icon: Link2, permission: "catalog:view" },
       { to: "/units", label: n("units"), icon: Ruler, permission: "catalog:view" },
+      { to: "/unit-conversions", label: t("adm.pages.unitConversions"), icon: ArrowLeftRight, permission: "catalog:view" },
     ] },
     { label: n("gSales"), items: [
       { to: "/sales-orders", label: n("salesOrders"), icon: ShoppingCart, permission: "sales_orders:view" },
@@ -107,7 +113,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
       { to: "/branches", label: n("branches"), icon: Building2, permission: "branches:view" },
       { to: "/warehouse-groups", label: n("warehouseGroups"), icon: Warehouse, permission: "inventory:view" },
       { to: "/service-zones", label: n("serviceZones"), icon: Globe, permission: "branches:view" },
-      { to: "/settings", label: n("settings"), icon: Settings, permission: "settings:view", exact: true },
+      { to: "/settings", label: n("settings"), icon: Settings, permission: "settings:view" },
       { to: "/settings/branding", label: n("branding"), icon: Palette, permission: "settings:view" },
       { to: "/integrations", label: n("integrations"), icon: Plug, permission: "integrations:view" },
       { to: "/audit-logs", label: n("auditLogs"), icon: ShieldCheck, permission: "audit_logs:view" },
@@ -118,7 +124,12 @@ function AdminShell({ children }: { children: React.ReactNode }) {
     ] },
     { items: [{ to: "/profile", label: n("profile"), icon: User }] },
   ];
-  return <PanelShell nav={nav} title="CRM" homeLink={false}>{children}</PanelShell>;
+  const quick = t("panel.quick");
+  const commands: Command[] = [
+    ...(can("service_orders:create") ? [{ id: "a:new-order", label: t("adm.orders.create"), group: quick, icon: Plus, run: () => navigate("/service-orders/new") }] : []),
+    ...(can("technicians:view") ? [{ id: "a:verification", label: n("verification"), group: quick, icon: ShieldCheck, run: () => navigate("/technicians/verification") }] : []),
+  ];
+  return <PanelShell nav={nav} title="CRM" app="admin" homeLink={false} commands={commands}>{children}</PanelShell>;
 }
 
 const R = (pattern: string, render: RouteDef["render"], titleKey: string): RouteDef => ({ pattern, render, shell: "admin", roles: INTERNAL_ROLES, titleKey });

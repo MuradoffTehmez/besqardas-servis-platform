@@ -80,7 +80,11 @@
     "generic": "Xəta baş verdi. Yenidən cəhd edin.",
     "loadFailed": "Məlumat yüklənmədi",
     "forbiddenTitle": "Çıxış icazəniz yoxdur",
-    "notFoundTitle": "Tapılmadı"
+    "notFoundTitle": "Tapılmadı",
+    "offlineTitle": "Serverə qoşulmaq mümkün olmadı",
+    "offlineText": "API serveri cavab vermir. Bir neçə saniyəyə avtomatik yenidən yoxlayacağıq.",
+    "offlineBanner": "Serverlə əlaqə kəsildi — yenidən qoşulur…",
+    "backOnline": "Serverlə əlaqə bərpa olundu"
   },
   "validation": {
     "invalid": "Dəyər yanlışdır",
@@ -189,6 +193,7 @@
     "noResultsFor": "\"{q}\" üzrə nəticə yoxdur"
   },
   "actions": {
+    "more": "Daha çox",
     "done": "Əməliyyat icra olundu: {action}",
     "confirmText": "Bu əməliyyatı təsdiqləyirsiniz?",
     "onBehalfHint": "İcraçı adına simulyasiya",
@@ -791,9 +796,79 @@
     "notifications": "Bildirişlər: {count} oxunmamış",
     "notificationsTitle": "Bildirişlər",
     "markAllRead": "Hamısını oxunmuş et",
-    "noNotifications": "Bildiriş yoxdur"
+    "noNotifications": "Bildiriş yoxdur",
+    "search": "Səhifə və ya əməliyyat axtarın…",
+    "searchShort": "Tez keçid…",
+    "noResults": "Heç nə tapılmadı",
+    "quick": "Tez keçidlər",
+    "toAdmin": "CRM panelinə keç",
+    "platformMap": "Platforma xəritəsi",
+    "collapse": "Menyunu yığ",
+    "expand": "Menyunu aç",
+    "filterMenu": "Menyuda axtar",
+    "detail": "Ətraflı",
+    "userMenu": "İstifadəçi menyusu",
+    "kbdMove": "seçmək",
+    "kbdOpen": "açmaq"
   },
   "courier": {
     "title": "Kuryer"
+  },
+  "demo": {
+    "eyebrow": "Demo mühiti",
+    "title": "Platforma xəritəsi",
+    "subtitle": "Bütün modullar və səhifələr bir yerdə. İstənilən keçidə klikləyin — lazımi demo hesabı ilə avtomatik daxil olub həmin səhifəni açacağıq.",
+    "credTitle": "Demo giriş məlumatları",
+    "current": "Hazırda: {name} · {role}",
+    "enter": "Daxil ol",
+    "signingIn": "Daxil olunur…",
+    "signedIn": "{login} ilə daxil oldunuz",
+    "noLogin": "Giriş tələb olunmur",
+    "more": "Daha {count} səhifə",
+    "less": "Yığ",
+    "staffTitle": "CRM rolları",
+    "staffText": "Hər əməkdaş rolu yalnız öz icazələrinə uyğun menyu və əməliyyatları görür.",
+    "m": {
+      "public": {
+        "title": "Public sayt",
+        "text": "Xidmət və məhsul kataloqu, ustalar, planlar, zəmanət yoxlaması və müraciət formaları."
+      },
+      "auth": {
+        "title": "Giriş və qeydiyyat",
+        "text": "Telefon + OTP, e-poçt + şifrə, 2FA, şifrə bərpası və rejim seçimi."
+      },
+      "customer": {
+        "title": "Müştəri kabineti",
+        "text": "Servis sifarişləri, smeta təsdiqi, cihazlar, abunəlik, ödənişlər, zəmanət və qaytarmalar."
+      },
+      "technician": {
+        "title": "Usta paneli — müstəqil",
+        "text": "İş təklifləri, mərhələlərin icrası, smeta, cədvəl, materiallar, qazanc və statistika."
+      },
+      "staffTechnician": {
+        "title": "Usta paneli — ştatlı",
+        "text": "Şirkət ustası: mobil anbar, rezervlər və lisenziya."
+      },
+      "courier": {
+        "title": "Kuryer",
+        "text": "Çatdırılma və cihaz daşıma tapşırıqları, təhvil-təslim (OTP ilə giriş)."
+      },
+      "corporate": {
+        "title": "Korporativ kabinet",
+        "text": "Obyektlər, cihaz parkı, planlı servis, müqavilələr və hesabatlar."
+      },
+      "partner": {
+        "title": "Partner kabineti",
+        "text": "Partner qiymətləri ilə kataloq, sifarişlər, komissiyalar və balans."
+      },
+      "wholesale": {
+        "title": "Topdan kabinet",
+        "text": "Sürətli sifariş, kommersiya təklifləri, topdan qiymətlər və kredit limiti."
+      },
+      "admin": {
+        "title": "CRM / ERP admin",
+        "text": "Dispetçer, workflow, kataloq/PIM, anbar, satış, maliyyə, ayarlar və hesabatlar (Super Admin)."
+      }
+    }
   }
 }

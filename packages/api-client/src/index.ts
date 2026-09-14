@@ -16,6 +16,13 @@ export class ApiError extends Error {
   }
 }
 
+/** API serverinə qoşulmaq mümkün olmayanda istifadə olunan xəta kodu. */
+export const API_UNREACHABLE = "API_UNREACHABLE";
+
+export function isUnreachable(e: unknown) {
+  return e instanceof ApiError && e.code === API_UNREACHABLE;
+}
+
 let currentLocale = "az";
 export function setApiLocale(locale: string) {
   currentLocale = locale;
@@ -29,12 +36,18 @@ function detectLocale() {
 
 export async function apiFetch<T = any>(path: string, init: RequestInit & { json?: unknown } = {}): Promise<T> {
   const { json, headers, ...rest } = init;
-  const res = await fetch(`/api${path}`, {
-    credentials: "include",
-    ...rest,
-    headers: { "Content-Type": "application/json", "Accept-Language": detectLocale(), ...(headers as Record<string, string>) },
-    ...(json !== undefined ? { body: JSON.stringify(json) } : {}),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`/api${path}`, {
+      credentials: "include",
+      ...rest,
+      headers: { "Content-Type": "application/json", "Accept-Language": detectLocale(), ...(headers as Record<string, string>) },
+      ...(json !== undefined ? { body: JSON.stringify(json) } : {}),
+    });
+  } catch {
+    // Şəbəkə kəsilib və ya dev server cavab vermir
+    throw new ApiError(0, API_UNREACHABLE, "Network error");
+  }
   if (res.status === 204) return undefined as T;
   let data: any = null;
   try {
@@ -42,6 +55,8 @@ export async function apiFetch<T = any>(path: string, init: RequestInit & { json
   } catch {
     data = null;
   }
+  // Proxy JSON əvəzinə 5xx qaytarırsa, API serveri (mock) əlçatan deyil
+  if (!res.ok && res.status >= 500 && data === null) throw new ApiError(res.status, API_UNREACHABLE, res.statusText);
   if (!res.ok) throw new ApiError(res.status, data?.code ?? "HTTP_" + res.status, data?.message ?? res.statusText, data?.fieldErrors ?? {});
   return data as T;
 }
@@ -76,7 +91,8 @@ export function useApi<T = any>(path: string | null, options: Omit<UseQueryOptio
     queryKey: ["api", path] as QueryKey,
     queryFn: () => apiFetch<T>(path!),
     enabled: !!path && (options.enabled ?? true),
-    retry: (count, err) => err.status >= 500 && count < 1,
+    retry: (count, err) => (err.code === API_UNREACHABLE ? count < 3 : err.status >= 500 && count < 1),
+    retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 6000),
     ...options,
   });
 }

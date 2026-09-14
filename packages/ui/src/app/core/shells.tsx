@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Bell, ChevronDown, Globe, Home, LogOut, Menu, Repeat, Settings2, X } from "lucide-react";
+import { Bell, CalendarDays, ChevronDown, ChevronRight, Compass, Globe, HardDrive, Home, LayoutDashboard, LayoutGrid, Package, Truck, Wallet, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Search, Settings2, ShoppingBag, UserRound, Wrench, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@sp/utils";
 import { post, put, useApi, useApiMutation, useQueryClient } from "@sp/api-client";
@@ -9,16 +9,17 @@ import { Footer } from "../../components/layout/footer";
 import { useI18n } from "./i18n";
 import { Link, useRouter } from "./router";
 import { INTERNAL_ROLES, useSession } from "./session";
-import { Avatar, EmptyState, Loading } from "../kit/base";
+import { EmptyState, Loading } from "../kit/base";
+import { CommandPalette, UserMenu, fold, useCurrentRoute, useMedia, usePaletteHotkey, type Command, type MenuLink } from "./nav";
 
 /* ------------------------------------------------------------------ */
 /* Public shell                                                        */
 /* ------------------------------------------------------------------ */
 
 export function PublicShell({ children }: { children: React.ReactNode }) {
-  const { t } = useI18n();
+  const { t, enumLabel } = useI18n();
   const { path, locale, navigate, setLocale } = useRouter();
-  const { session, user } = useSession();
+  const { session, user, logout } = useSession();
   const brand = useApi<any>("/branding", { staleTime: 300_000 });
   const nav = [
     { label: t("home"), href: "/" },
@@ -30,6 +31,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
     { label: t("contact"), href: "/contact" },
   ];
   const accountHref = user ? homeFor(user.activeRole) : "/login";
+  const userMenu = user ? [...roleMenu(user.activeRole, t), ...(user.roles.some((r) => INTERNAL_ROLES.includes(r)) ? [{ label: t("panel.toAdmin"), href: adminUrl(), icon: LayoutGrid }] : []), { label: t("panel.platformMap"), href: "/demo", icon: Compass }] : undefined;
   return (
     <div className="site-wrapper">
       <a className="skip-link" href="#main-content">{t("common.skipToContent")}</a>
@@ -44,6 +46,10 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
         onLocaleChange={setLocale}
         onOpenCart={() => navigate("/cart")}
         onOpenSearch={() => navigate("/search")}
+        userMenu={userMenu}
+        userMenuTitle={user ? user.companyName ?? enumLabel("Role", user.activeRole) : undefined}
+        logoutLabel={t("logout")}
+        onLogout={async () => { await logout(); navigate("/"); }}
       />
       <main id="main-content" tabIndex={-1} className="pub-main">
         {children}
@@ -52,6 +58,53 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
       <CookieNotice />
     </div>
   );
+}
+
+type MenuItem = { label: string; href: string; icon: React.ComponentType<{ size?: number }> };
+
+/** Sayt başlığındakı istifadəçi menyusu: aktiv rolun əsas bölmələrinə birbaşa keçid. */
+function roleMenu(role: string, t: (k: string) => string): MenuItem[] {
+  switch (role) {
+    case "CUSTOMER":
+      return [
+        { label: t("acc.nav.dashboard"), href: "/account", icon: LayoutDashboard },
+        { label: t("acc.nav.services"), href: "/account/services", icon: Wrench },
+        { label: t("acc.nav.orders"), href: "/account/orders", icon: Package },
+        { label: t("acc.nav.devices"), href: "/account/devices", icon: HardDrive },
+        { label: t("acc.nav.notifications"), href: "/account/notifications", icon: Bell },
+        { label: t("acc.nav.profile"), href: "/account/profile", icon: UserRound },
+      ];
+    case "TECHNICIAN":
+      return [
+        { label: t("tech.nav.dashboard"), href: "/technician/dashboard", icon: LayoutDashboard },
+        { label: t("tech.nav.jobs"), href: "/technician/jobs", icon: Wrench },
+        { label: t("tech.nav.schedule"), href: "/technician/schedule", icon: CalendarDays },
+        { label: t("tech.nav.earnings"), href: "/technician/earnings", icon: Wallet },
+        { label: t("tech.nav.settings"), href: "/technician/settings", icon: UserRound },
+      ];
+    case "CORPORATE_CUSTOMER":
+      return [
+        { label: t("b2b.nav.dashboard"), href: "/corporate", icon: LayoutDashboard },
+        { label: t("b2b.nav.services"), href: "/corporate/services", icon: Wrench },
+        { label: t("b2b.nav.devices"), href: "/corporate/devices", icon: HardDrive },
+      ];
+    case "PARTNER":
+      return [
+        { label: t("b2b.nav.dashboard"), href: "/partner", icon: LayoutDashboard },
+        { label: t("b2b.nav.catalog"), href: "/partner/catalog", icon: ShoppingBag },
+        { label: t("b2b.nav.orders"), href: "/partner/orders", icon: Package },
+      ];
+    case "WHOLESALE_CUSTOMER":
+      return [
+        { label: t("b2b.nav.dashboard"), href: "/wholesale", icon: LayoutDashboard },
+        { label: t("b2b.nav.quickOrder"), href: "/wholesale/quick-order", icon: ShoppingBag },
+        { label: t("b2b.nav.orders"), href: "/wholesale/orders", icon: Package },
+      ];
+    case "COURIER":
+      return [{ label: t("courier.title"), href: "/courier", icon: Truck }];
+    default:
+      return [];
+  }
 }
 
 export function homeFor(role: string) {
@@ -94,27 +147,104 @@ export interface NavGroup {
   items: { to: string; label: string; icon: React.ComponentType<{ size?: number }>; badge?: number | string | null; permission?: string | string[]; exact?: boolean; hidden?: boolean }[];
 }
 
-export function PanelShell({ nav, title, children, homeLink = true }: { nav: NavGroup[]; title: string; children: React.ReactNode; homeLink?: boolean }) {
-  const { t, enumLabel, locale } = useI18n();
+type NavItem = NavGroup["items"][number];
+
+/** Bu saydan çox bənd olduqda qruplar akkordeon kimi yığılır və menyu axtarışı göstərilir. */
+const ACCORDION_FROM = 14;
+
+export function PanelShell({ nav, title, children, homeLink = true, app = homeLink ? "web" : "admin", commands: extraCommands = [] }: { nav: NavGroup[]; title: string; children: React.ReactNode; homeLink?: boolean; app?: "web" | "admin"; commands?: Command[] }) {
+  const { t, locale } = useI18n();
   const { path, navigate, setLocale } = useRouter();
-  const { user, session, can, logout } = useSession();
+  const { user, session, can } = useSession();
+  const route = useCurrentRoute();
+  const mobile = useMedia("(max-width: 640px)");
+  const tablet = useMedia("(min-width: 641px) and (max-width: 1024px)");
   const [open, setOpen] = useState(false);
-  const [collapsed, setCollapsed] = useState<string[]>([]);
-  useEffect(() => setOpen(false), [path]);
-  const doLogout = async () => {
-    await logout();
-    navigate("/login");
-  };
+  const [palette, setPalette] = useState(false);
+  const [filter, setFilter] = useState("");
+  const [collapsedPref, setCollapsedPref] = useState(false);
+  // İstifadəçinin açıb-bağladığı qruplar; seçilməyənlər yalnız aktiv səhifəni ehtiva edəndə açıqdır
+  const [toggled, setToggled] = useState<Record<string, boolean>>({});
+  useEffect(() => { try { setCollapsedPref(localStorage.getItem("panel-collapsed") === "1"); } catch { /* yox */ } }, []);
+  useEffect(() => { setOpen(false); setFilter(""); }, [path]);
+  usePaletteHotkey(setPalette);
+
   const groups = nav
-    .map((g) => ({ ...g, items: g.items.filter((i) => !i.hidden && (!i.permission || (Array.isArray(i.permission) ? i.permission.some(can) : can(i.permission)))) }))
+    .map((g, gi) => ({ ...g, key: g.label ?? `g${gi}`, items: g.items.filter((i) => !i.hidden && (!i.permission || (Array.isArray(i.permission) ? i.permission.some(can) : can(i.permission)))) }))
     .filter((g) => g.items.length);
-  const isActive = (to: string, exact?: boolean) => (exact ? path === to : path === to || path.startsWith(`${to}/`));
+  const total = groups.reduce((n, g) => n + g.items.length, 0);
+  const accordion = total > ACCORDION_FROM;
+  const matches = (to: string, exact?: boolean) => path === to || (!exact && to !== "/" && path.startsWith(`${to}/`));
+  // Ən uzun uyğun gələn menyu bəndi aktiv sayılır (məs. /settings/branding → Brend, /settings deyil)
+  let active: { item: NavItem; group: (typeof groups)[number] } | null = null;
+  for (const g of groups) for (const item of g.items) if (matches(item.to, item.exact) && (!active || item.to.length > active.item.to.length)) active = { item, group: g };
+
+  const rail = !open && !mobile && (tablet || collapsedPref);
+  const toggleRail = () => {
+    const v = !collapsedPref;
+    setCollapsedPref(v);
+    try { localStorage.setItem("panel-collapsed", v ? "1" : "0"); } catch { /* yox */ }
+  };
+  const toAdmin = () => { window.location.href = adminUrl(); };
+  const goSite = () => { if (app === "admin") window.location.href = webUrl(); else navigate("/"); };
+  const goMap = () => { if (app === "admin") window.location.href = webUrl("/demo"); else navigate("/demo"); };
+  const internal = !!user?.roles.some((r) => INTERNAL_ROLES.includes(r));
+
+  const quick = t("panel.quick");
+  const commands: Command[] = [
+    ...groups.flatMap((g) => g.items.map((i) => ({ id: `nav:${i.to}`, label: i.label, group: g.label ?? title, icon: i.icon, run: () => navigate(i.to) }))),
+    ...extraCommands,
+    ...(app === "web"
+      ? [
+          { id: "q:home", label: t("home"), group: quick, icon: Home, run: goSite },
+          { id: "q:services", label: t("services"), group: quick, icon: Wrench, run: () => navigate("/services") },
+          { id: "q:shop", label: t("nav.shop"), group: quick, icon: ShoppingBag, run: () => navigate("/shop") },
+        ]
+      : [{ id: "q:site", label: t("panel.toSite"), group: quick, icon: Home, run: goSite }]),
+    ...(app === "web" && internal ? [{ id: "q:admin", label: t("panel.toAdmin"), group: quick, icon: LayoutGrid, run: toAdmin }] : []),
+    { id: "q:map", label: t("panel.platformMap"), group: quick, icon: Compass, run: goMap },
+  ];
+
+  const profile = groups.flatMap((g) => g.items).find((i) => /\/(profile|settings)$/.test(i.to));
+  const menuLinks: MenuLink[] = [
+    ...(profile ? [{ label: profile.label, icon: UserRound, to: profile.to }] : []),
+    ...(app === "web" && internal ? [{ label: t("panel.toAdmin"), icon: LayoutGrid, onClick: toAdmin }] : []),
+    { label: t("panel.toSite"), icon: Home, onClick: goSite },
+    { label: t("panel.platformMap"), icon: Compass, onClick: goMap },
+  ];
+
+  // Breadcrumb: panel › bölmə › səhifə › detal
+  const home = groups[0]?.items[0];
+  const crumbs: { label: string; to?: string }[] = [{ label: title, to: home && home.to !== path ? home.to : undefined }];
+  if (active && active.item !== home) {
+    if (active.group.label) crumbs.push({ label: active.group.label });
+    crumbs.push({ label: active.item.label, to: active.item.to !== path ? active.item.to : undefined });
+  }
+  if (active && active.item.to !== path) {
+    const routeTitle = route?.titleKey ? t(route.titleKey) : "";
+    crumbs.push({ label: routeTitle && routeTitle !== active.item.label ? routeTitle : t("panel.detail") });
+  }
+
+  const q = fold(filter.trim());
+  const renderItem = (item: NavItem) => {
+    const Icon = item.icon;
+    const isActive = active?.item === item;
+    return (
+      <Link key={item.to} to={item.to} className={cn("sidebar-link", isActive && "active")} aria-current={isActive ? "page" : undefined} title={rail ? item.label : undefined}>
+        <span className="sidebar-icon"><Icon size={17} /></span>
+        <span className="sidebar-label">{item.label}</span>
+        {item.badge ? <span className="sidebar-badge">{item.badge}</span> : null}
+      </Link>
+    );
+  };
+  const found = q ? groups.flatMap((g) => g.items.filter((i) => fold(`${i.label} ${g.label ?? ""}`).includes(q))) : [];
+
   return (
     <div className="workspace-layout panel-layout">
       <a className="skip-link" href="#panel-content">{t("common.skipToContent")}</a>
-      <aside className={cn("app-sidebar panel-sidebar", open && "open")} aria-label={title}>
+      <aside className={cn("app-sidebar panel-sidebar", open && "open", rail && "rail")} aria-label={title}>
         <div className="panel-brand">
-          <Link to="/" className="brand-logo">
+          <Link to={home?.to ?? "/"} className="brand-logo" title={rail ? title : undefined}>
             <span className="logo-icon">bq</span>
             <span className="logo-text">{title}</span>
           </Link>
@@ -122,62 +252,60 @@ export function PanelShell({ nav, title, children, homeLink = true }: { nav: Nav
             <X size={18} />
           </button>
         </div>
-        {user && (
-          <div className="sidebar-user-card">
-            <Avatar name={user.fullName} tone={user.avatarTone} size={40} />
-            <div className="user-details">
-              <strong className="user-name">{user.fullName}</strong>
-              <small className="user-role">{user.companyName ?? enumLabel("Role", user.activeRole)}</small>
-            </div>
-          </div>
+        {accordion && !rail && (
+          <label className="panel-filter">
+            <Search size={14} aria-hidden />
+            <input value={filter} onChange={(e) => setFilter(e.target.value)} placeholder={t("panel.filterMenu")} aria-label={t("panel.filterMenu")} />
+            {filter && <button type="button" onClick={() => setFilter("")} aria-label={t("common.close")}><X size={13} /></button>}
+          </label>
         )}
         <nav className="sidebar-nav panel-nav">
-          {groups.map((g, gi) => {
-            const key = g.label ?? String(gi);
-            const hiddenGroup = collapsed.includes(key);
-            return (
-              <div key={key} className="panel-nav-group">
-                {g.label && (
-                  <button type="button" className="panel-nav-label" onClick={() => setCollapsed((c) => (c.includes(key) ? c.filter((x) => x !== key) : [...c, key]))} aria-expanded={!hiddenGroup}>
-                    {g.label} <ChevronDown size={12} className={cn(hiddenGroup && "rot")} />
-                  </button>
-                )}
-                {!hiddenGroup &&
-                  g.items.map((item) => {
-                    const Icon = item.icon;
-                    const active = isActive(item.to, item.exact);
-                    return (
-                      <Link key={item.to} to={item.to} className={cn("sidebar-link", active && "active")} aria-current={active ? "page" : undefined}>
-                        <span className="sidebar-icon"><Icon size={17} /></span>
-                        <span className="sidebar-label">{item.label}</span>
-                        {item.badge ? <span className="sidebar-badge">{item.badge}</span> : null}
-                      </Link>
-                    );
-                  })}
-              </div>
-            );
-          })}
+          {q
+            ? found.length ? found.map(renderItem) : <p className="panel-filter-empty">{t("panel.noResults")}</p>
+            : groups.map((g) => {
+                const isOpen = rail || !accordion || !g.label || (toggled[g.key] ?? active?.group === g);
+                return (
+                  <div key={g.key} className="panel-nav-group">
+                    {g.label &&
+                      (accordion ? (
+                        <button type="button" className={cn("panel-nav-label", active?.group === g && "has-active")} onClick={() => setToggled((s) => ({ ...s, [g.key]: !isOpen }))} aria-expanded={isOpen}>
+                          {g.label} <ChevronDown size={13} className={cn(!isOpen && "rot")} />
+                        </button>
+                      ) : (
+                        <span className="panel-nav-label">{g.label}</span>
+                      ))}
+                    {isOpen && g.items.map(renderItem)}
+                  </div>
+                );
+              })}
         </nav>
-        <div className="sidebar-footer">
-          {homeLink && (
-            <Link to="/" className="sidebar-link">
-              <span className="sidebar-icon"><Home size={17} /></span>
-              <span className="sidebar-label">{t("panel.toSite")}</span>
-            </Link>
-          )}
-          <button className="sidebar-link logout-link" type="button" onClick={doLogout}>
-            <span className="sidebar-icon"><LogOut size={17} /></span>
-            <span className="sidebar-label">{t("logout")}</span>
-          </button>
-        </div>
+        {!mobile && !tablet && (
+          <div className="sidebar-footer">
+            <button className="sidebar-link" type="button" onClick={toggleRail} title={rail ? t("panel.expand") : undefined}>
+              <span className="sidebar-icon">{rail ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}</span>
+              <span className="sidebar-label">{t("panel.collapse")}</span>
+            </button>
+          </div>
+        )}
       </aside>
       <div className="panel-main">
         <div className="panel-topbar">
           <button type="button" className="icon-button panel-menu" onClick={() => setOpen(true)} aria-label={t("common.menu")}>
             <Menu size={18} />
           </button>
-          <div className="flex-1" />
-          <ModeSwitcher />
+          <nav className="panel-crumbs" aria-label={t("common.breadcrumbs")}>
+            {crumbs.map((c, i) => (
+              <span key={i} className={cn(i < crumbs.length - 1 && "mid")}>
+                {c.to ? <Link to={c.to}>{c.label}</Link> : <span aria-current={i === crumbs.length - 1 ? "page" : undefined}>{c.label}</span>}
+                {i < crumbs.length - 1 && <ChevronRight size={13} aria-hidden />}
+              </span>
+            ))}
+          </nav>
+          <button type="button" className="panel-search" onClick={() => setPalette(true)} aria-label={t("panel.search")}>
+            <Search size={15} aria-hidden />
+            <span>{t("panel.searchShort")}</span>
+            <kbd>Ctrl K</kbd>
+          </button>
           <label className="panel-locale">
             <Globe size={15} aria-hidden />
             <select value={locale} onChange={(e) => setLocale(e.target.value as "az")} aria-label={t("common.language")}>
@@ -187,37 +315,15 @@ export function PanelShell({ nav, title, children, homeLink = true }: { nav: Nav
             </select>
           </label>
           <NotificationBell count={session?.unreadNotifications ?? 0} />
+          <UserMenu links={menuLinks} onAdmin={toAdmin} />
         </div>
         <div id="panel-content" className="workspace-content panel-content" tabIndex={-1}>
           {children}
         </div>
       </div>
       {open && <button type="button" className="panel-scrim" aria-label={t("common.close")} onClick={() => setOpen(false)} />}
+      <CommandPalette open={palette} onClose={() => setPalette(false)} commands={commands} />
     </div>
-  );
-}
-
-/** Bir neçə rolu olan istifadəçi üçün rejim dəyişmə (PRD §6, §7.3). */
-export function ModeSwitcher() {
-  const { t, enumLabel } = useI18n();
-  const { user, refresh } = useSession();
-  const { navigate } = useRouter();
-  const mutation = useApiMutation((role: string) => post("/auth/select-mode", { role }), {
-    onSuccess: async (r: any) => {
-      await refresh();
-      const to = r.redirectTo;
-      if (to === "ADMIN_APP") window.location.href = adminUrl();
-      else navigate(to);
-    },
-  });
-  if (!user || user.roles.length < 2) return null;
-  return (
-    <label className="panel-locale">
-      <Repeat size={15} aria-hidden />
-      <select value={user.activeRole} onChange={(e) => mutation.mutate(e.target.value)} aria-label={t("auth.switchMode")}>
-        {user.roles.map((r) => <option key={r} value={r}>{enumLabel("Role", r)}</option>)}
-      </select>
-    </label>
   );
 }
 

@@ -32,6 +32,7 @@ npx pnpm@10 dev
 ```
 
 `dev` üç prosesi paralel qaldırır: mock API (`:4000`), web (`:3000`), admin (`:3001`).
+Yalnız web və ya admin işə salınsa belə (`pnpm --filter @sp/web dev`), development rejimində Mock API avtomatik qaldırılır və dayanarsa 5 saniyə ərzində yenidən başladılır (`MOCK_AUTOSTART=0` ilə söndürülür). Bütün modullara keçid: http://localhost:3000/az/demo.
 Hər iki tətbiq `/api/*` sorğularını mock serverə yönləndirir; mock server eyni MSW handler-lərini `getResponse` ilə icra edir (PRD §65.4 — SSR üçün ayrıca mock server).
 
 ## Demo hesablar
