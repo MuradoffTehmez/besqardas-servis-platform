@@ -226,6 +226,20 @@ export interface ProductRec {
   returnRestriction: "return.cutToLength" | "return.installed" | null;
   videoUrl: string | null;
   bulky: boolean;
+  /** Admin tərəfindən yüklənmiş şəkillər; boşdursa illüstrasiya göstərilir */
+  media?: ProductMediaRec[];
+}
+
+export interface ProductMediaRec {
+  id: string;
+  url: string;
+  name: string;
+  mimeType: string;
+  size: number;
+  alt: LocalizedText;
+  primary: boolean;
+  uploadedAt: string;
+  uploadedBy: string;
 }
 
 let barcodeSeq = 4760000000000;

@@ -115,7 +115,8 @@ export function KeyValue({ items, cols = 2 }: { items: [React.ReactNode, React.R
   );
 }
 
-export function Avatar({ name, tone = "sky", size = 36 }: { name: string; tone?: string; size?: number }) {
+export function Avatar({ name, tone = "sky", size = 36, src }: { name: string; tone?: string; size?: number; src?: string | null }) {
+  if (src) return <img className="kit-avatar is-photo" src={src} alt="" width={size} height={size} style={{ width: size, height: size }} aria-hidden />;
   const initials = name
     .split(/\s+/)
     .filter(Boolean)

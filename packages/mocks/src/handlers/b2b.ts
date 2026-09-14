@@ -12,6 +12,7 @@ import { L } from "../lib/i18n";
 import { money } from "../lib/money";
 import { newId } from "../lib/rng";
 import { daysAgo, daysFromNow, nowIso, periodLabel } from "../lib/time";
+import { checkDataUrl } from "../lib/upload";
 import * as S from "@sp/schemas";
 import { deviceDto, serviceOrderSummaryDto } from "../dto";
 import { getCart } from "./cartShared";
@@ -151,6 +152,49 @@ export const b2bHandlers = [
     const byCategory = db.equipmentCategories.map((cat) => ({ category: cat.name, orders: orders.filter((o) => o.device.categoryId === cat.id).length, spend: orders.filter((o) => o.device.categoryId === cat.id).reduce((s, o) => s + orderAmounts(o).total / 100, 0) })).filter((x) => x.orders);
     const topDevices = db.devices.filter((d) => d.ownerId === c.id).map((d) => ({ device: d.nickname ?? d.modelName, orders: orders.filter((o) => o.deviceId === d.id).length, spend: orders.filter((o) => o.deviceId === d.id).reduce((s, o) => s + orderAmounts(o).total / 100, 0) })).sort((a, b) => b.spend - a.spend).slice(0, 10);
     return { bySite, byCategory, topDevices, sla: { compliance: 94.5, reactionAvgMinutes: 48, urgentArrivalAvgMinutes: 190, breaches: 2 }, totals: { orders: orders.length, spend: money(orders.reduce((s, o) => s + orderAmounts(o).total, 0)) } };
+  }),
+
+  /* ---------------- Şirkət profili ---------------- */
+  route.get("/b2b/company", ({ ctx }) => {
+    const { u, c } = company(ctx);
+    const plan = db.plans.find((p) => p.id === c.planId);
+    return {
+      id: c.id, legalName: c.legalName, voen: c.voen, segment: c.segment, status: c.status, legalAddress: c.legalAddress, actualAddress: c.actualAddress,
+      bankDetails: c.bankDetails, contactName: c.contactName, contactPhone: c.contactPhone, contactEmail: c.contactEmail, website: c.website ?? null, logoUrl: c.logoUrl ?? null,
+      accountManager: c.accountManager, contract: c.contract, paymentTerms: c.paymentTerms, deferredDays: c.deferredDays, discountPercent: c.discountPercent,
+      creditLimit: money(c.creditLimitCents), planName: plan?.name ?? null, eInvoiceRequired: c.eInvoiceRequired, createdAt: c.createdAt,
+      userCount: db.users.filter((x) => x.companyId === c.id).length, userLimit: c.userLimit, addressCount: db.addresses.filter((a) => a.ownerId === c.id).length, addressLimit: c.addressLimit,
+      canEdit: u.companyRole === "OWNER" || u.companyRole === "ACCOUNTANT", canEditLogo: u.companyRole === "OWNER", myRole: u.companyRole,
+    };
+  }),
+
+  route.patch("/b2b/company", async ({ ctx, body }) => {
+    const { c } = company(ctx);
+    requireCompanyRole(ctx, "OWNER", "ACCOUNTANT");
+    const b = await body<{ actualAddress?: string; contactName?: string; contactPhone?: string; contactEmail?: string; website?: string; bankDetails?: { bank: string; iban: string; swift: string } }>();
+    const errors: Record<string, string[]> = {};
+    if (b.contactEmail !== undefined && !/^\S+@\S+\.\S+$/.test(b.contactEmail)) errors.contactEmail = ["validation.email"];
+    if (b.contactPhone !== undefined && !/^\+994\d{9}$/.test(normalizeAzPhone(b.contactPhone))) errors.contactPhone = ["validation.phone"];
+    if (b.bankDetails?.iban && !/^AZ\d{2}[A-Z]{4}[A-Z0-9]{20}$/.test(b.bankDetails.iban.replace(/\s/g, "").toUpperCase())) errors["bankDetails.iban"] = ["validation.iban"];
+    if (b.website && !/^https?:\/\/\S+\.\S+/.test(b.website)) errors.website = ["validation.url"];
+    if (Object.keys(errors).length) throw validationError(errors);
+    if (b.actualAddress !== undefined) c.actualAddress = b.actualAddress;
+    if (b.contactName !== undefined) c.contactName = b.contactName;
+    if (b.contactPhone !== undefined) c.contactPhone = normalizeAzPhone(b.contactPhone);
+    if (b.contactEmail !== undefined) c.contactEmail = b.contactEmail;
+    if (b.website !== undefined) c.website = b.website || null;
+    if (b.bankDetails) c.bankDetails = { bank: b.bankDetails.bank, iban: b.bankDetails.iban.replace(/\s/g, "").toUpperCase(), swift: b.bankDetails.swift.toUpperCase() };
+    audit(ctx, "edit_company", "b2b_accounts", c.id, c.legalName);
+    return { ok: true };
+  }),
+
+  route.put("/b2b/company/logo", async ({ ctx, body }) => {
+    const { c } = company(ctx);
+    requireCompanyRole(ctx, "OWNER");
+    const { dataUrl } = await body<{ dataUrl: string | null }>();
+    if (dataUrl) checkDataUrl(dataUrl, "logo", { maxMb: 2 });
+    c.logoUrl = dataUrl || null;
+    return { logoUrl: c.logoUrl };
   }),
 
   route.get("/b2b/users", ({ ctx }) => {

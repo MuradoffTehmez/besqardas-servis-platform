@@ -7,6 +7,8 @@
 - Müştəri kabineti (§60.3): icmal, cihazlar, ünvanlar, servis sifarişləri (smeta qərarı, vaxt dəyişmə, onlayn ödəniş), məhsul sifarişləri və qaytarma, abunəlik, ödənişlər, zəmanət iddiaları, sənədlər, bildiriş ayarları, rəylər, ailə üzvləri, təhlükəsizlik.
 - Usta paneli (§60.4): təkliflər, iş detalı, smeta qurucusu, mərhələ tamamlama (foto, imza, checklist, ödəniş), cədvəl, ixtisaslar, mobil anbar və rezervlər, qazanc və nağd təhvil, statistika, ayarlar.
 - Kuryer (§60.6) və B2B kabinetləri (§60.5): korporativ, partner, topdan (sürətli sifariş, kommersiya təklifləri, balans, komissiyalar).
+- Anbar: mal qəbulu (barkod skaneri, alış sifarişindən qəbul, seriya/partiya, qaimə sənədləri), məhsul şəkilləri, yeni məhsul səhifəsi və ilkin qalıq.
+- Profil: bütün rollar üçün şəkil, əlavə məlumatlar, son fəaliyyət; B2B şirkət profili.
 - CRM/ERP admin (§61): dashboard, servis sifarişləri və yaratma, dispetçer lövhəsi, həftəlik cədvəl, logistika, zəmanət iddiaları, workflow şablon redaktoru, ustalar (yoxlama, lisenziya, əməkdaşlıq), istifadəçilər və rol matrisi, kataloq/PIM, satış, anbar (qalıq, hərəkət, transfer, inventarizasiya, alış), abunə planları, maliyyə, kassalar, usta hesablaşmaları, məzmun, təşkilat ayarları, brend, inteqrasiyalar, audit log, hesabatlar və KPI.
 - Bütün mətnlər AZ / RU / EN; `node scripts/check-i18n.mjs` koddakı tərcümə açarlarını yoxlayır.
 
@@ -19,7 +21,10 @@
 5. Dispetçer lövhəsindən təyin olunmamış sifarişi ustaya təyin edin, sifariş detalında icraçı adına simulyasiya edin.
 6. Workflow şablonunda mərhələ əlavə edib yoxlayın və yeni versiya kimi saxlayın.
 7. `+994553334455` (OTP `123456`) ilə kuryer interfeysini, `corporate@demo.az`, `partner@demo.az`, `wholesale@demo.az` ilə B2B kabinetlərini göstərin.
-8. Sol-aşağıdakı “Mock” paneli ilə gecikmə, xəta və boş siyahı hallarını nümayiş etdirin.
+8. `warehouse@demo.az` ilə **Anbar → Mal qəbulu → Yeni mal qəbulu**: barkodu skan edin (məs. `4760000000391`), eyni barkodu təkrar oxudanda miqdar artır; alış sifarişini seçib qalan miqdarları doldurun, qaimənin şəklini əlavə edib təsdiqləyin — qalıq və hərəkətlər yenilənir.
+9. **Kataloq → Məhsullar → Yeni məhsul**: şəkilləri yükləyin, barkod yaradın və ilkin qalıq daxil edin; məhsul redaktorunun “Media” bölməsində şəkilləri sıralayın və əsas şəkli dəyişin.
+10. İstənilən kabinetdə **Profil** səhifəsində şəkil yükləyin (kəsmə dialoqu ilə); B2B kabinetdə **Şirkət profili**ndə loqo və bank rekvizitlərini yeniləyin.
+11. Sağ-aşağıdakı “Mock” paneli ilə gecikmə, xəta və boş siyahı hallarını nümayiş etdirin.
 
 ## Qeydlər
 

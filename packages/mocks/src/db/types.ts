@@ -523,3 +523,36 @@ export interface AuditRec {
   changes: { field: string; from: string | null; to: string | null }[];
   reason?: string;
 }
+
+/** Mal qəbulu qaiməsi (PRD §37–38): təsdiqlənənə qədər qaralama, təsdiqdə RECEIPT hərəkətləri yaradılır. */
+export interface GoodsReceiptRec {
+  id: string;
+  number: string;
+  status: "DRAFT" | "POSTED" | "CANCELLED" | "REVERSED";
+  warehouseId: string;
+  supplierId: string | null;
+  supplierName: string | null;
+  purchaseId: string | null;
+  invoiceNumber: string | null;
+  invoiceDate: string | null;
+  note: string | null;
+  lines: {
+    id: string;
+    variantId: string;
+    quantity: number;
+    unit: string;
+    unitCostCents: number;
+    purpose: "SALES" | "SERVICE";
+    zone: string | null;
+    lot: string | null;
+    expiryDate: string | null;
+    serials: string[];
+    movementId: string | null;
+  }[];
+  attachments: { id: string; name: string; mimeType: string; size: number; url: string }[];
+  createdAt: string;
+  createdBy: string;
+  postedAt: string | null;
+  postedBy: string | null;
+  cancelReason: string | null;
+}

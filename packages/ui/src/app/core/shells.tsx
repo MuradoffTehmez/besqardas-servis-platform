@@ -9,7 +9,7 @@ import { Footer } from "../../components/layout/footer";
 import { useI18n } from "./i18n";
 import { Link, useRouter } from "./router";
 import { INTERNAL_ROLES, useSession } from "./session";
-import { EmptyState, Loading } from "../kit/base";
+import { Avatar, EmptyState, Loading } from "../kit/base";
 import { CommandPalette, UserMenu, fold, useCurrentRoute, useMedia, usePaletteHotkey, type Command, type MenuLink } from "./nav";
 
 /* ------------------------------------------------------------------ */
@@ -41,7 +41,7 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
         currentPath={path}
         locale={locale}
         cartCount={session?.cartCount ?? 0}
-        user={user ? { fullName: user.fullName, email: user.email ?? undefined, role: user.activeRole } : null}
+        user={user ? { fullName: user.fullName, email: user.email ?? undefined, role: user.activeRole, avatarUrl: user.avatarUrl } : null}
         onNavigate={(href) => navigate(href === "/account" || href === "/login" ? accountHref : href)}
         onLocaleChange={setLocale}
         onOpenCart={() => navigate("/cart")}
@@ -402,6 +402,7 @@ export function CourierShell({ children }: { children: React.ReactNode }) {
           <select className="form-input courier-lang" value={locale} onChange={(e) => setLocale(e.target.value as "az")} aria-label={t("common.language")}>
             <option value="az">AZ</option><option value="ru">RU</option><option value="en">EN</option>
           </select>
+          {user && <Link to="/courier/profile" className="courier-avatar" aria-label={t("acc.nav.profile")}><Avatar name={user.fullName} tone={user.avatarTone} src={user.avatarUrl} size={34} /></Link>}
           <button type="button" className="icon-button" aria-label={t("logout")} onClick={async () => { await logout(); navigate("/login"); }}><LogOut size={18} /></button>
         </div>
       </header>

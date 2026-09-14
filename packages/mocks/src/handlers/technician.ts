@@ -366,7 +366,12 @@ export const technicianHandlers = [
 
   route.patch("/technician/settings", async ({ ctx, body }) => {
     const t = requireTechnician(ctx);
-    const data = await body<{ bio?: string; workingHours?: typeof t.workingHours; zoneIds?: string[]; languages?: string[]; promoted?: boolean }>();
+    const data = await body<{ bio?: string; workingHours?: typeof t.workingHours; zoneIds?: string[]; languages?: string[]; promoted?: boolean; experienceYears?: number }>();
+    if (data.bio !== undefined && data.bio.length > 600) throw validationError({ bio: ["validation.tooLong"] });
+    if (data.experienceYears !== undefined) {
+      if (!(Number(data.experienceYears) >= 0 && Number(data.experienceYears) <= 60)) throw validationError({ experienceYears: ["validation.amountRange"] });
+      t.experienceYears = Number(data.experienceYears);
+    }
     if (data.zoneIds) {
       if (t.employmentType === "STAFF") throw apiError(403, "STAFF_ZONES", "error.forbidden");
       const max = lim(ctx, "max_zones");

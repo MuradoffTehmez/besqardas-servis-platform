@@ -1,5 +1,11 @@
 {
   "enum": {
+    "GoodsReceiptStatus": {
+      "DRAFT": "Qaralama",
+      "POSTED": "Təsdiqlənib",
+      "CANCELLED": "Ləğv edilib",
+      "REVERSED": "Geri alınıb"
+    },
     "OrderStatus": {
       "DRAFT": "Qaralama",
       "NEW": "Yeni",

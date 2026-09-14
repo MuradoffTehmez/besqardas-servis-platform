@@ -51,7 +51,7 @@ export function sessionDto(ctx: Ctx) {
           phone: user.phone,
           emailVerified: user.emailVerified,
           phoneVerified: user.phoneVerified,
-          avatarUrl: null,
+          avatarUrl: user.avatarUrl ?? null,
           avatarTone: user.avatarTone,
           locale: user.locale,
           roles: user.roles,

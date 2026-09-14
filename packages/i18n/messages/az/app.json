@@ -1,5 +1,7 @@
 {
   "common": {
+    "manage": "İdarə et",
+    "showMore": "Daha çox göstər",
     "save": "Yadda saxla",
     "saved": "Yadda saxlanıldı",
     "cancel": "Ləğv et",
@@ -87,6 +89,19 @@
     "backOnline": "Serverlə əlaqə bərpa olundu"
   },
   "validation": {
+    "emailRequired": "Bu seçim üçün e-poçt ünvanı lazımdır",
+    "linesRequired": "Ən azı bir məhsul əlavə edin",
+    "fileInvalid": "Fayl oxunmadı",
+    "tooManyFiles": "Çox sayda fayl",
+    "serialsCount": "Seriya nömrələrinin sayı miqdara bərabər olmalıdır",
+    "serialsDuplicate": "Seriya nömrələri təkrarlanır",
+    "warehouseBlocked": "Bu anbarda inventarizasiya gedir — hərəkətlər bloklanıb",
+    "reverseStock": "Malın bir hissəsi artıq istifadə olunub — əks hərəkət mümkün deyil",
+    "barcode": "Barkod 8–14 rəqəm olmalıdır",
+    "iban": "IBAN AZ formatında olmalıdır (28 simvol)",
+    "url": "Ünvan https:// ilə başlamalıdır",
+    "tooLong": "Mətn çox uzundur",
+    "date": "Tarix yanlışdır",
     "invalid": "Dəyər yanlışdır",
     "required": "Bu sahə məcburidir",
     "email": "E-poçt ünvanı yanlışdır",
@@ -264,6 +279,18 @@
     "open_shift": "Növbəni aç"
   },
   "media": {
+    "addImages": "Şəkil əlavə et",
+    "limitsImages": "JPG, PNG, WebP · daha {max} şəkil",
+    "makePrimary": "Əsas şəkil et",
+    "moveLeft": "Sola",
+    "moveRight": "Sağa",
+    "syntheticHint": "Bu məhsulun yüklənmiş şəkli yoxdur — mağazada illüstrasiya göstərilir. İlk şəkli yükləyəndə o əsas şəkil olacaq.",
+    "uploadPhoto": "Şəkil yüklə",
+    "changePhoto": "Şəkli dəyiş",
+    "photoHint": "JPG, PNG və ya WebP, 10 MB-a qədər",
+    "cropTitle": "Şəkli tənzimləyin",
+    "cropHint": "Sürükləyərək yerini, sürgü ilə ölçüsünü dəyişin",
+    "zoom": "Böyütmə",
     "dropHere": "Faylları bura sürükləyin",
     "choose": "Fayl seç",
     "camera": "Kamera",

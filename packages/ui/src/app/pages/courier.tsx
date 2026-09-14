@@ -11,6 +11,7 @@ import { EmptyState, EnumBadge, FormError, KeyValue, QueryView, SelectField, Tab
 import { Dialog } from "../kit/actions";
 import { FileDrop, MapView, SignaturePad, type PickedFile } from "../kit/media";
 import { useRefresh } from "./common";
+import { ProfilePage } from "./account";
 
 /**
  * Kuryer interfeysi (PRD §21.6): mobil, böyük düymələr, yalnız öz tapşırıqları. Müştəri əlaqəsi tapşırıq aktiv olanda görünür.
@@ -21,6 +22,7 @@ const COURIER = ["COURIER", "TECHNICIAN"];
 export const courierRoutes: RouteDef[] = [
   { pattern: "/courier", render: () => <CourierTasksPage />, shell: "courier", roles: COURIER, titleKey: "courier.title" },
   { pattern: "/courier/tasks", render: () => <CourierTasksPage />, shell: "courier", roles: COURIER, titleKey: "courier.title" },
+  { pattern: "/courier/profile", render: () => <ProfilePage />, shell: "courier", roles: COURIER, titleKey: "acc.nav.profile" },
   { pattern: "/courier/tasks/:id", render: (p) => <CourierTaskPage id={p.id!} />, shell: "courier", roles: COURIER, titleKey: "courier.title" },
 ];
 

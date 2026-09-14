@@ -184,12 +184,12 @@ export function UserMenu({ links, onAdmin }: { links: MenuLink[]; onAdmin: () =>
   return (
     <div className="kit-dropdown" ref={ref}>
       <button type="button" className="panel-user-btn" onClick={() => setOpen((o) => !o)} aria-expanded={open} aria-haspopup="menu" aria-label={t("panel.userMenu")}>
-        <Avatar name={user.fullName} tone={user.avatarTone} size={32} />
+        <Avatar name={user.fullName} tone={user.avatarTone} src={user.avatarUrl} size={32} />
       </button>
       {open && (
         <div className="kit-dropdown-menu user-menu" role="menu">
           <div className="user-menu-head">
-            <Avatar name={user.fullName} tone={user.avatarTone} size={40} />
+            <Avatar name={user.fullName} tone={user.avatarTone} src={user.avatarUrl} size={40} />
             <div>
               <strong>{user.fullName}</strong>
               <small>{user.companyName ?? enumLabel("Role", user.activeRole)}</small>

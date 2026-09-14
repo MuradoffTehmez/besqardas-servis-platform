@@ -19,6 +19,7 @@ export interface SessionData {
     emailVerified: boolean;
     phoneVerified: boolean;
     avatarTone?: string;
+    avatarUrl?: string | null;
     locale: string;
     roles: string[];
     activeRole: string;

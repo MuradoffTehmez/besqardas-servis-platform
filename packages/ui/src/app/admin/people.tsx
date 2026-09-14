@@ -28,7 +28,7 @@ export function CustomerDetailPage({ id }: { id: string }) {
     <QueryView query={q} rows={8}>
       {(c) => (
         <>
-          <PageHeader back="/customers" title={<span className="flex items-center gap-3"><Avatar name={c.fullName} tone={c.avatarTone} size={44} />{c.fullName}</span>} badge={<EnumBadge group="UserStatus" code={c.status} />} subtitle={`${c.phone ?? ""} · ${c.email ?? ""}`} actions={<Link to="/service-orders/new" className="btn primary"><Plus size={16} /> {t("adm.orders.create")}</Link>} />
+          <PageHeader back="/customers" title={<span className="flex items-center gap-3"><Avatar name={c.fullName} tone={c.avatarTone} src={c.avatarUrl} size={44} />{c.fullName}</span>} badge={<EnumBadge group="UserStatus" code={c.status} />} subtitle={`${c.phone ?? ""} · ${c.email ?? ""}`} actions={<Link to="/service-orders/new" className="btn primary"><Plus size={16} /> {t("adm.orders.create")}</Link>} />
           <Grid cols={4}>
             <Stat label={t("adm.f.plan")} value={c.plan ? text(c.plan.name) : "Basic"} />
             <Stat label={t("adm.nav.serviceOrders")} value={c.serviceOrders.length} tone="info" />
@@ -77,7 +77,7 @@ export function TechniciansAdminPage() {
         defaultSort="-rating"
         filters={[{ key: "employmentType", label: t("adm.f.employmentType"), options: enumKeys("EmploymentType").map((s) => ({ value: s, label: enumLabel("EmploymentType", s) })) }, { key: "status", label: t("common.status"), options: enumKeys("TechnicianStatus").map((s) => ({ value: s, label: enumLabel("TechnicianStatus", s) })) }]}
         columns={[
-          { key: "fullName", header: t("adm.f.fullName"), render: (r: any) => <span className="entity-row"><Avatar name={r.fullName} tone={r.avatarTone} size={32} /><span><strong>{r.fullName}</strong><small>{r.phone}</small></span></span> },
+          { key: "fullName", header: t("adm.f.fullName"), render: (r: any) => <span className="entity-row"><Avatar name={r.fullName} tone={r.avatarTone} src={r.avatarUrl} size={32} /><span><strong>{r.fullName}</strong><small>{r.phone}</small></span></span> },
           { key: "employmentType", header: t("adm.f.employmentType"), render: (r: any) => <span>{enumLabel("EmploymentType", r.employmentType)}<small className="block">{r.branchName ?? r.planCode ?? ""}</small></span> },
           { key: "specializations", header: t("adm.f.specializations"), hideOnMobile: true, render: (r: any) => <small>{r.specializations.join(", ")}</small> },
           { key: "rating", header: t("adm.f.rating"), sortKey: "rating", render: (r: any) => <Stars value={r.rating} count={r.reviewCount} /> },
@@ -103,7 +103,7 @@ export function TechnicianAdminDetailPage({ id }: { id: string }) {
     <QueryView query={q} rows={10}>
       {(x) => (
         <>
-          <PageHeader back="/technicians" title={<span className="flex items-center gap-3"><Avatar name={x.fullName} tone={x.avatarTone} size={44} />{x.fullName}</span>} badge={<EnumBadge group="TechnicianStatus" code={x.status} />} subtitle={`${enumLabel("EmploymentType", x.employmentType)} · ${x.city} · ${t("adm.people.experience", { years: x.experienceYears })}`} actions={<>{x.status === "PENDING_VERIFICATION" && <><button type="button" className="btn primary" onClick={() => verify("ACCOUNT", undefined, true)}>{t("adm.people.activate")}</button><button type="button" className="btn outline danger-outline" onClick={() => setReject({ target: "ACCOUNT" })}>{t("adm.claims.reject")}</button></>}</>} />
+          <PageHeader back="/technicians" title={<span className="flex items-center gap-3"><Avatar name={x.fullName} tone={x.avatarTone} src={x.avatarUrl} size={44} />{x.fullName}</span>} badge={<EnumBadge group="TechnicianStatus" code={x.status} />} subtitle={`${enumLabel("EmploymentType", x.employmentType)} · ${x.city} · ${t("adm.people.experience", { years: x.experienceYears })}`} actions={<>{x.status === "PENDING_VERIFICATION" && <><button type="button" className="btn primary" onClick={() => verify("ACCOUNT", undefined, true)}>{t("adm.people.activate")}</button><button type="button" className="btn outline danger-outline" onClick={() => setReject({ target: "ACCOUNT" })}>{t("adm.claims.reject")}</button></>}</>} />
           <Grid cols={4}>
             <Stat label={t("adm.f.rating")} value={<Stars value={x.rating} count={x.reviewCount} />} />
             <Stat label={t("adm.f.completed")} value={x.completedJobs} tone="success" />
@@ -181,7 +181,7 @@ export function VerificationPage() {
               return (
                 <Link key={x.id} to={`/technicians/${x.id}`} className="kit-card clickable">
                   <div className="kit-card-body">
-                    <div className="flex justify-between gap-2"><span className="entity-row"><Avatar name={x.fullName} tone={x.avatarTone} /><span><strong>{x.fullName}</strong><small>{enumLabel("EmploymentType", x.employmentType)} · {date(x.appliedAt)}</small></span></span><EnumBadge group="TechnicianStatus" code={x.status} /></div>
+                    <div className="flex justify-between gap-2"><span className="entity-row"><Avatar name={x.fullName} tone={x.avatarTone} src={x.avatarUrl} /><span><strong>{x.fullName}</strong><small>{enumLabel("EmploymentType", x.employmentType)} · {date(x.appliedAt)}</small></span></span><EnumBadge group="TechnicianStatus" code={x.status} /></div>
                     {docs.length > 0 && <p className="text-sm mt-3">{t("tech.nav.documents")}: {docs.map((d: any) => `${enumLabel("DocKind", d.kind)} (${enumLabel("VerificationStatus", d.status)})`).join(", ")}</p>}
                     {specs.length > 0 && <p className="text-sm mt-1">{t("tech.nav.specializations")}: {specs.map((s: any) => s.name).join(", ")}</p>}
                   </div>
@@ -278,7 +278,7 @@ export function UsersPage() {
         path="/admin/users"
         filters={[{ key: "roles", label: t("adm.f.role"), options: ALL_ROLES().map((r) => ({ value: r, label: enumLabel("Role", r) })) }, { key: "status", label: t("common.status"), options: enumKeys("UserStatus").map((s) => ({ value: s, label: enumLabel("UserStatus", s) })) }]}
         columns={[
-          { key: "fullName", header: t("adm.f.fullName"), sortKey: "fullName", render: (u: any) => <span className="entity-row"><Avatar name={u.fullName} tone={u.avatarTone} size={32} /><span><strong>{u.fullName}</strong><small>{u.email ?? u.phone}</small></span></span> },
+          { key: "fullName", header: t("adm.f.fullName"), sortKey: "fullName", render: (u: any) => <span className="entity-row"><Avatar name={u.fullName} tone={u.avatarTone} src={u.avatarUrl} size={32} /><span><strong>{u.fullName}</strong><small>{u.email ?? u.phone}</small></span></span> },
           { key: "roles", header: t("adm.f.roles"), render: (u: any) => <span className="flex gap-1 flex-wrap">{u.roles.map((r: string) => <span key={r} className="badge">{enumLabel("Role", r)}</span>)}</span> },
           { key: "branchName", header: t("adm.f.branch"), hideOnMobile: true, render: (u: any) => text(u.branchName) || u.companyName || "—" },
           { key: "twoFactorEnabled", header: "2FA", hideOnMobile: true, render: (u: any) => (u.twoFactorEnabled ? <span className="badge badge-success">✓</span> : "—") },

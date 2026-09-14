@@ -33,14 +33,23 @@ export function ensureMockServer(appDir: string) {
     return;
   }
   let checking = false;
+  let misses = 0;
   const check = async () => {
-    if (checking || (child && child.exitCode === null)) return;
+    if (checking) return;
     checking = true;
     try {
-      if (await alive()) return;
-      child = spawn(process.execPath, [cli, "src/server.ts"], { cwd: mocksDir, stdio: ["ignore", "inherit", "inherit"] });
+      if (await alive()) { misses = 0; return; }
+      // watch rejimində proses yaşayır, amma server düşübsə (məs. port məşğul idi) — yenidən başladılır
+      if (child && child.exitCode === null) {
+        misses += 1;
+        if (misses < 3) return;
+        child.kill();
+        child = null;
+      }
+      misses = 0;
+      child = spawn(process.execPath, [cli, "watch", "--clear-screen=false", "src/server.ts"], { cwd: mocksDir, stdio: ["ignore", "inherit", "inherit"] });
       child.once("exit", () => { child = null; });
-      console.log(`[mock] Mock API işə salındı: http://localhost:${PORT}`);
+      console.log(`[mock] Mock API işə salındı (kod dəyişiklikləri izlənilir): http://localhost:${PORT}`);
     } finally {
       checking = false;
     }
