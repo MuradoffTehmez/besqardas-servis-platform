@@ -19,7 +19,7 @@ import { useCartActions } from "./shop";
 /* ------------------------------------------------------------------ */
 
 export function HomePage() {
-  const { locale, t } = useI18n();
+  const { locale, t, num } = useI18n();
   const { navigate } = useRouter();
   const home = useApi<any>("/home");
   const cats = useApi<any[]>("/equipment-categories", { staleTime: 300_000 });
@@ -41,7 +41,7 @@ export function HomePage() {
       <HomeView services={d.popularServices} products={d.featuredProducts} technicians={d.topTechnicians} categories={cats.data ?? []} locale={locale} onNavigate={navigate} onBookService={(s) => navigate(s?.slug ? `/services/${s.slug}/book` : "/services")} onAddToCart={(p: any) => add(p.defaultVariantId, "1", p.baseUnit)} />
       <section className="container section">
         <div className="kit-grid cols-4">
-          <div className="kit-stat"><span className="kit-stat-label">{t("homeExtra.completed")}</span><strong className="kit-stat-value">{d.stats.completedServices.toLocaleString()}</strong></div>
+          <div className="kit-stat"><span className="kit-stat-label">{t("homeExtra.completed")}</span><strong className="kit-stat-value">{num(d.stats.completedServices)}</strong></div>
           <div className="kit-stat"><span className="kit-stat-label">{t("homeExtra.technicians")}</span><strong className="kit-stat-value">{d.stats.technicians}</strong></div>
           <div className="kit-stat"><span className="kit-stat-label">{t("homeExtra.branches")}</span><strong className="kit-stat-value">{d.stats.branches}</strong></div>
           <div className="kit-stat"><span className="kit-stat-label">{t("homeExtra.rating")}</span><strong className="kit-stat-value">{d.stats.rating} / 5</strong></div>

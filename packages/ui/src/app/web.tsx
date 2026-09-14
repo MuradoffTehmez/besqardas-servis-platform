@@ -3,7 +3,7 @@ import React from "react";
 import { Bell, CreditCard, FileText, Heart, HardDrive, LayoutDashboard, Lock, MapPin, Package, RotateCcw, ShieldCheck, Star, User, Users, Wrench, Crown } from "lucide-react";
 import { useI18n } from "./core/i18n";
 import { useSession } from "./core/session";
-import { AppProviders, RoutedApp, SystemPage, defaultShells, type ShellRender } from "./core/app";
+import { AppProviders, RoutedApp, SystemPage, defaultShells, type InitialAppState, type ShellRender } from "./core/app";
 import { PanelShell, type NavGroup } from "./core/shells";
 import type { RouteDef } from "./core/router";
 import { BecomeTechnicianPage, BusinessPage, ForgotPasswordPage, LoginPage, RegisterPage, ResetPasswordPage, SelectModePage, TwoFactorPage, VerifyPage } from "./pages/auth";
@@ -136,9 +136,9 @@ const webShells: Record<string, ShellRender> = {
   b2b: (c) => <B2BShell>{c}</B2BShell>,
 };
 
-export function WebApp() {
+export function WebApp(ssr: InitialAppState) {
   return (
-    <AppProviders>
+    <AppProviders {...ssr}>
       <RoutedApp routes={webRoutes} shells={webShells} app="web" />
     </AppProviders>
   );

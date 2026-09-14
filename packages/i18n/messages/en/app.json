@@ -897,5 +897,25 @@
         "text": "Dispatch, workflow, catalog/PIM, warehouse, sales, finance, settings and reports (Super Admin)."
       }
     }
+  },
+  "seo": {
+    "siteName": "besqardasServis.az",
+    "homeTitle": "besqardasServis.az — air conditioner, boiler and equipment service",
+    "homeDescription": "Installation, diagnostics, repair and maintenance: verified technicians, transparent estimates, official warranty. Parts and equipment in the online store.",
+    "servicesDescription": "Service for air conditioners, boilers, heating, pools, pumps and electrical equipment — online booking with time slots.",
+    "shopDescription": "Air conditioners, boilers, spare parts and consumables: compatibility check, order with installation and delivery.",
+    "techniciansDescription": "Verified technicians: specializations, rating, reviews and next available time.",
+    "pricingDescription": "Basic, Pro and Premium subscription plans: free diagnostics, priority service and discounts.",
+    "branchesDescription": "Addresses, working hours and contacts of our branches.",
+    "faqDescription": "Frequently asked questions about service orders, payment, warranty and delivery.",
+    "contactDescription": "Contact us: hotline, WhatsApp, email and contact form.",
+    "becomeTechnicianDescription": "Join the platform as a technician: jobs, schedule, earnings and documents in one panel.",
+    "businessDescription": "Special prices, contracts and credit limits for corporate, partner and wholesale customers.",
+    "warrantyDescription": "Verify a warranty document by QR code or number.",
+    "serviceTitle": "{name} — book online",
+    "productTitle": "{name} — price and specifications",
+    "categoryTitle": "{name} — catalog",
+    "technicianTitle": "{name} — technician profile",
+    "technicianDescription": "{name}: {specs}. Rating {rating}, {jobs} completed jobs."
   }
 }

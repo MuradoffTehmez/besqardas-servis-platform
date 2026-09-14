@@ -39,12 +39,36 @@ function parseLocation(): { locale: AppLocale; path: string; search: string } {
   return { locale, path, search: window.location.search };
 }
 
-export function RouterProvider({ children }: { children: React.ReactNode }) {
-  const [loc, setLoc] = useState(() => ({ locale: "az" as AppLocale, path: "/", search: "" }));
-  const [ready, setReady] = useState(false);
+export interface InitialLocation {
+  locale: AppLocale;
+  path: string;
+  search: string;
+}
+
+function rememberLocale(l: AppLocale) {
+  try {
+    localStorage.setItem("locale", l);
+  } catch {
+    /* əlçatan deyil */
+  }
+  // Server (proxy) prefikssiz ünvanları bu seçimə görə yönləndirir
+  document.cookie = `locale=${l}; path=/; max-age=31536000; samesite=lax`;
+}
+
+/**
+ * `initial` serverdə render olunan səhifələr üçündür (SSR, §72): ilk render server HTML-i ilə eyni ünvanla
+ * aparılır. Verilmədikdə ünvan yalnız brauzerdə oxunur.
+ */
+export function RouterProvider({ children, initial }: { children: React.ReactNode; initial?: InitialLocation }) {
+  const [loc, setLoc] = useState(() => initial ?? { locale: "az" as AppLocale, path: "/", search: "" });
+  const [ready, setReady] = useState(!!initial);
 
   useEffect(() => {
-    const sync = () => setLoc(parseLocation());
+    const sync = () =>
+      setLoc((cur) => {
+        const next = parseLocation();
+        return cur.locale === next.locale && cur.path === next.path && cur.search === next.search ? cur : next;
+      });
     sync();
     setReady(true);
     const first = window.location.pathname.split("/")[1];
@@ -104,11 +128,7 @@ export function RouterProvider({ children }: { children: React.ReactNode }) {
   );
 
   const setLocale = useCallback((l: AppLocale) => {
-    try {
-      localStorage.setItem("locale", l);
-    } catch {
-      /* əlçatan deyil */
-    }
+    rememberLocale(l);
     const { path, search } = parseLocation();
     window.history.pushState({}, "", `/${l}${path === "/" ? "" : path}${search}`);
     setLoc(parseLocation());

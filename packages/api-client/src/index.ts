@@ -74,16 +74,7 @@ export function idempotencyKey() {
   return typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
-export function qs(params: Record<string, unknown> | undefined) {
-  if (!params) return "";
-  const sp = new URLSearchParams();
-  for (const [k, v] of Object.entries(params)) {
-    if (v === undefined || v === null || v === "" || (Array.isArray(v) && !v.length)) continue;
-    sp.set(k, Array.isArray(v) ? v.join(",") : String(v));
-  }
-  const s = sp.toString();
-  return s ? `?${s}` : "";
-}
+export { qs } from "./qs";
 
 /** GET sorğusu — açar path-in özüdür, beləliklə invalidasiya sadədir. */
 export function useApi<T = any>(path: string | null, options: Omit<UseQueryOptions<T, ApiError>, "queryKey" | "queryFn"> = {}) {
@@ -111,4 +102,4 @@ export function useApiMutation<TBody = any, TResult = any>(fn: (body: TBody) => 
   });
 }
 
-export { useQueryClient, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+export { useQueryClient, QueryClient, QueryClientProvider, HydrationBoundary, type DehydratedState } from "@tanstack/react-query";
