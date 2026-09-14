@@ -71,15 +71,16 @@ export function ServicesPage() {
   const { navigate, query } = useRouter();
   const services = useApi<any>("/services?pageSize=100");
   const cats = useApi<any[]>("/equipment-categories");
+  const brand = useApi<any>("/branding", { staleTime: 300_000 });
   return (
     <QueryView query={services} rows={6}>
-      {(d) => <ServicesView services={d.items} categories={cats.data ?? []} initialCategory={query.get("category") ?? ""} locale={locale} onNavigate={navigate} onBookService={(s) => navigate(`/services/${s.slug}/book`)} />}
+      {(d) => <ServicesView services={d.items} categories={cats.data ?? []} initialCategory={query.get("category") ?? ""} locale={locale} supportPhone={brand.data?.contacts?.phone} onNavigate={navigate} onBookService={(s) => navigate(`/services/${s.slug}/book`)} />}
     </QueryView>
   );
 }
 
 export function ServiceDetailPage({ slug }: { slug: string }) {
-  const { locale, t, money, enumLabel, minutes } = useI18n();
+  const { locale, enumLabel } = useI18n();
   const { navigate } = useRouter();
   const q = useApi<any>(`/services/${slug}`);
   const fees = useApi<any>(q.data ? `/services/${q.data.id}/fees` : null);
@@ -90,38 +91,7 @@ export function ServiceDetailPage({ slug }: { slug: string }) {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "Service", name: s.name, serviceType: enumLabel("ServiceType", s.serviceType), provider: { "@type": "LocalBusiness", name: "besqardasServis.az" }, areaServed: "Azerbaijan", aggregateRating: { "@type": "AggregateRating", ratingValue: s.rating, reviewCount: s.completedCount } }) }} />
-      <ServiceDetailView service={s} locale={locale} supportPhone={brand.data?.contacts?.phone} onBack={() => navigate("/services")} onBook={() => navigate(`/services/${slug}/book`)} />
-      <div className="container pb-8">
-        <div className="kit-grid cols-2">
-          <Card title={t("serviceInfo.howItWorks")}>
-            <KeyValue items={[
-              [t("serviceInfo.priceModel"), `${enumLabel("PriceModel", s.priceModel)}${s.price ? ` · ${s.priceModel === "STARTING_FROM" ? t("serviceInfo.from", { price: money(s.price) }) : money(s.price)}` : ""}`],
-              [t("serviceInfo.duration"), minutes(s.estimatedDurationMinutes)],
-              [t("serviceInfo.forms"), s.executionForms.map((f: string) => enumLabel("ExecutionForm", f)).join(", ")],
-              [t("serviceInfo.warranty"), s.workWarrantyMonths ? t("shop.warrantyMonths", { months: s.workWarrantyMonths }) : "—"],
-            ]} />
-          </Card>
-          <Card title={t("serviceInfo.feesTitle")}>
-            {fees.data ? (
-              <>
-                <ul className="kit-list">{fees.data.fees.map((f: any, i: number) => <li key={i}>{f.label}</li>)}</ul>
-                <p className="text-sm text-muted mt-2">{fees.data.cancellationTerms}</p>
-              </>
-            ) : <Loading rows={2} />}
-          </Card>
-        </div>
-        {s.faq?.length > 0 && (
-          <Card title={t("serviceInfo.faq")} className="mt-4">
-            {s.faq.map((f: any, i: number) => <details key={i} className="kit-faq"><summary>{f.q}</summary><p>{f.a}</p></details>)}
-          </Card>
-        )}
-        {s.related?.length > 0 && (
-          <Card title={t("serviceInfo.related")} className="mt-4">
-            <div className="kit-chip-grid">{s.related.map((r: any) => <Link key={r.id} to={`/services/${r.slug}`} className="chip">{r.name}</Link>)}</div>
-          </Card>
-        )}
-        <div className="text-center mt-6"><Link to={`/services/${slug}/book`} className="btn primary btn-lg">{t("book")}</Link></div>
-      </div>
+      <ServiceDetailView service={s} fees={fees.data} locale={locale} supportPhone={brand.data?.contacts?.phone} onNavigate={navigate} onBook={(problem) => navigate(`/services/${slug}/book${problem ? `?problem=${encodeURIComponent(problem)}` : ""}`)} />
     </>
   );
 }
@@ -153,7 +123,7 @@ export function BookingPage({ slug }: { slug: string }) {
     modelId: "",
     modelName: "",
     serialNumber: "",
-    problemCode: "",
+    problemCode: query.get("problem") ?? "",
     description: "",
     addressMode: "saved" as "saved" | "oneTime",
     addressId: "",
