@@ -1,7 +1,7 @@
 {
   "name": "service-platform",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "besqardasServis.az — Servis İdarəetmə Platforması (Phase 1 — Frontend)",
   "packageManager": "pnpm@10.34.5",
   "engines": {
