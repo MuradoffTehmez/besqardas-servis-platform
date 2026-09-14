@@ -3,6 +3,7 @@ import { L } from "../lib/i18n";
 import { idFor } from "../lib/rng";
 import { daysAgo } from "../lib/time";
 import { EQ, SVC } from "./services";
+import { extraAttributes, extraBrands, extraCategories, extraModels, extraProducts } from "./catalogExtra";
 
 /** Məhsul kataloqu, PIM atributları, marka → seriya → model, SKU variantları (PRD §24–27) */
 
@@ -51,6 +52,8 @@ export const productCategories: ProductCategoryRec[] = [
   cat("consumables", null, "serfiyyat-materiallari", L("Sərfiyyat materialları", "Расходные материалы", "Consumables"), [], 11, "stone"),
 ];
 
+productCategories.push(...extraCategories.map(([key, parent, slug, [az, ru, en], attrs, order, tone]) => cat(key, parent, slug, L(az, ru, en), attrs, order, tone, key === "insulation" || key === "cables" ? "FIFO" : null)));
+
 export const PC = Object.fromEntries(productCategories.map((c) => [c.slug, c.id])) as Record<string, string>;
 
 type Opt = [string, LocalizedText];
@@ -94,11 +97,11 @@ const attr = (code: string, name: LocalizedText, type: AttributeRec["type"], gro
 });
 
 export const attributes: AttributeRec[] = [
-  attr("cooling_btu", L("Soyutma gücü", "Мощность охлаждения", "Cooling capacity"), "SELECT", G.main, { unit: "BTU/saat", required: true, variantDefining: true, opts: [o("9000", "9000"), o("12000", "12000"), o("18000", "18000"), o("24000", "24000")] }),
+  attr("cooling_btu", L("Soyutma gücü", "Мощность охлаждения", "Cooling capacity"), "SELECT", G.main, { unit: "BTU/saat", required: true, variantDefining: true, opts: [o("9000", "9000"), o("12000", "12000"), o("18000", "18000"), o("24000", "24000"), o("36000", "36000"), o("48000", "48000")] }),
   attr("heating_kw", L("İsitmə gücü", "Мощность обогрева", "Heating capacity"), "NUMBER_UNIT", G.energy, { unit: "kW", filterable: false }),
   attr("inverter", L("Texnologiya", "Технология", "Technology"), "SELECT", G.main, { opts: [o("inverter", L("Inverter", "Инвертор", "Inverter")), o("onoff", L("On/Off", "On/Off", "On/Off"))] }),
-  attr("energy_class", L("Enerji sinfi", "Класс энергоэффективности", "Energy class"), "SELECT", G.energy, { opts: [o("A+", "A+"), o("A++", "A++"), o("A+++", "A+++")] }),
-  attr("refrigerant", L("Qaz tipi", "Тип хладагента", "Refrigerant"), "SELECT", G.tech, { opts: [o("R32", "R32"), o("R410A", "R410A"), o("R22", "R22")] }),
+  attr("energy_class", L("Enerji sinfi", "Класс энергоэффективности", "Energy class"), "SELECT", G.energy, { opts: [o("A+", "A+"), o("A++", "A++"), o("A+++", "A+++"), o("A", "A")] }),
+  attr("refrigerant", L("Qaz tipi", "Тип хладагента", "Refrigerant"), "SELECT", G.tech, { opts: [o("R32", "R32"), o("R410A", "R410A"), o("R22", "R22"), o("R290", "R290"), o("R134a", "R134a")] }),
   attr("room_area", L("Tövsiyə olunan sahə", "Рекомендуемая площадь", "Recommended area"), "NUMBER_UNIT", G.main, { unit: "m²", filterDisplay: "SLIDER" }),
   attr("noise_db", L("Səs səviyyəsi", "Уровень шума", "Noise level"), "NUMBER_UNIT", G.tech, { unit: "dB" }),
   attr("wifi", L("Wi-Fi", "Wi-Fi", "Wi-Fi"), "BOOLEAN", G.main, {}),
@@ -108,7 +111,7 @@ export const attributes: AttributeRec[] = [
   attr("fuel", L("Yanacaq növü", "Вид топлива", "Fuel"), "SELECT", G.main, { opts: [o("gas", L("Təbii qaz", "Природный газ", "Natural gas")), o("electric", L("Elektrik", "Электричество", "Electric"))] }),
   attr("hot_water", L("İsti su məhsuldarlığı", "Производительность ГВС", "Hot water output"), "NUMBER_UNIT", G.tech, { unit: "l/dəq", filterable: false }),
   attr("flue_type", L("Baca tipi", "Тип дымохода", "Flue type"), "SELECT", G.tech, { opts: [o("turbo", L("Turbo (qapalı)", "Турбо (закрытый)", "Turbo (sealed)")), o("chimney", L("Atmosfer", "Атмосферный", "Open flue"))] }),
-  attr("material", L("Material", "Материал", "Material"), "SELECT", G.main, { opts: [o("copper", L("Mis", "Медь", "Copper")), o("pprc", "PPR-C"), o("steel", L("Polad", "Сталь", "Steel")), o("aluminium", L("Alüminium", "Алюминий", "Aluminium")), o("bimetal", L("Bimetal", "Биметалл", "Bimetal"))] }),
+  attr("material", L("Material", "Материал", "Material"), "SELECT", G.main, { opts: [o("copper", L("Mis", "Медь", "Copper")), o("pprc", "PPR-C"), o("steel", L("Polad", "Сталь", "Steel")), o("aluminium", L("Alüminium", "Алюминий", "Aluminium")), o("bimetal", L("Bimetal", "Биметалл", "Bimetal")), o("pex", "PE-Xa"), o("multilayer", L("Metal-plastik", "Металлопластик", "Multilayer"))] }),
   attr("diameter_mm", L("Diametr", "Диаметр", "Diameter"), "SELECT", G.dims, { unit: "mm", variantDefining: true, opts: [o("6.35", "6.35 (1/4\")"), o("9.52", "9.52 (3/8\")"), o("12.7", "12.7 (1/2\")"), o("15.88", "15.88 (5/8\")"), o("20", "20"), o("25", "25")] }),
   attr("wall_mm", L("Divar qalınlığı", "Толщина стенки", "Wall thickness"), "NUMBER_UNIT", G.dims, { unit: "mm", filterable: false }),
   attr("pressure_bar", L("İşçi təzyiq", "Рабочее давление", "Working pressure"), "NUMBER_UNIT", G.tech, { unit: "bar", filterable: false }),
@@ -125,12 +128,15 @@ export const attributes: AttributeRec[] = [
   attr("cores", L("Damar sayı", "Количество жил", "Cores"), "SELECT", G.tech, { opts: [o("3", "3"), o("5", "5")] }),
 ];
 
+attributes.push(...extraAttributes.map(([code, [az, ru, en], type, group, unit, variantDefining, opts]) => attr(code, L(az, ru, en), type, G[group], { unit, variantDefining, opts: opts.map(([v, l]) => o(v, typeof l === "string" ? l : L(l[0], l[1], l[2]))) })));
+
 export interface BrandRec { id: string; slug: string; name: string; country: string; active: boolean }
 export const brands: BrandRec[] = [
   ["lg", "LG", "Cənubi Koreya"], ["samsung", "Samsung", "Cənubi Koreya"], ["bosch", "Bosch", "Almaniya"], ["midea", "Midea", "Çin"],
   ["daikin", "Daikin", "Yaponiya"], ["gree", "Gree", "Çin"], ["baxi", "Baxi", "İtaliya"], ["ariston", "Ariston", "İtaliya"],
   ["vaillant", "Vaillant", "Almaniya"], ["grundfos", "Grundfos", "Danimarka"], ["wilo", "Wilo", "Almaniya"], ["kermi", "Kermi", "Almaniya"],
   ["mueller", "Mueller", "ABŞ"], ["honeywell", "Honeywell", "ABŞ"], ["copeland", "Copeland", "ABŞ"], ["prysmian", "Prysmian", "İtaliya"],
+  ...extraBrands,
 ].map(([slug, name, country]) => ({ id: idFor(`brand:${slug}`), slug: slug!, name: name!, country: country!, active: true }));
 export const BRAND = Object.fromEntries(brands.map((b) => [b.slug, b.id])) as Record<string, string>;
 
@@ -162,6 +168,7 @@ const modelDefs: [string, string, string | null, string, string, string][] = [
   ["grundfos-scala2", "grundfos", "grundfos-scala", EQ.pump, "SCALA2 3-45", "SCALA2-345"],
   ["wilo-rs", "wilo", "wilo-star", EQ.pump, "Star-RS 25/6", "RS256"],
   ["pool-xyz", "grundfos", null, EQ.pool, "Pool Pump XYZ", "PPXYZ"],
+  ...extraModels.map(([key, brand, ser, eq, name, code]) => [key, brand, ser, EQ[eq], name, code] as [string, string, string | null, string, string, string]),
 ];
 export const models: ModelRec[] = modelDefs.map(([key, brand, ser, catId, name, code]) => ({
   id: idFor(`model:${key}`),
@@ -482,6 +489,26 @@ const pdefs: PDef[] = [
     rating: 4.9, reviews: 23, image: "ac", tone: "primary", warranty: 36, install: SVC["ac-install"], bulky: true, restriction: "return.installed",
   },
 ];
+
+// Genişləndirilmiş çeşid (catalogExtra.ts): təsvir kateqoriyaya görə avtomatik yaradılır
+const extraDesc = (name: [string, string, string], catSlug: string) => {
+  const c = productCategories.find((x) => x.slug === catSlug)!;
+  return L(
+    `${name[0]} — "${c.name.az}" bölməsindən. Rəsmi zəmanət, filiallarda stok və Bakı üzrə çatdırılma. Ustalar və B2B müştərilər üçün xüsusi qiymətlər mövcuddur.`,
+    `${name[1]} — раздел «${c.name.ru}». Официальная гарантия, наличие в филиалах и доставка по Баку. Специальные цены для мастеров и B2B.`,
+    `${name[2]} — from "${c.name.en}". Official warranty, branch stock and delivery across Baku. Special prices for technicians and B2B customers.`,
+  );
+};
+for (const e of extraProducts) {
+  const variants = e.variants?.length ? e.variants.map(([sku, attrs, price]) => variant(e.key, sku, attrs, price)) : [variant(e.key, e.sku ?? e.key.toUpperCase(), {}, e.price)];
+  const variantAttrs = e.variants?.length ? [...new Set(e.variants.flatMap(([, a]) => Object.keys(a)))] : [];
+  pdefs.push({
+    key: e.key, slug: e.slug, name: L(...e.name), desc: extraDesc(e.name, e.cat), highlights: (e.hl ?? []).map((h) => L(...h)), type: e.type, brand: e.brand, model: e.model, category: e.cat, unit: e.unit,
+    conversions: e.conv?.map(([unit, factor, packagePriceCents]) => ({ unit, factor, packagePriceCents })), attrs: e.attrs ?? {}, variantAttrs, variants, rating: e.rating ?? 4.5, reviews: e.reviews ?? 0, isNew: e.isNew,
+    image: e.image, tone: e.tone, warranty: e.warranty ?? 12, install: e.install ? SVC[e.install] : undefined, compatible: e.compat, visibility: e.pro ? ["TECHNICIAN", "PARTNER", "WHOLESALE", "CORPORATE"] : undefined,
+    restriction: e.cut ? "return.cutToLength" : undefined, bulky: e.bulky,
+  });
+}
 
 export const products: ProductRec[] = pdefs.map((d, i) => ({
   id: idFor(`product:${d.key}`),

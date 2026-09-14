@@ -490,3 +490,27 @@ h1, h2, h3 { font-family: "Manrope", "Plus Jakarta Sans", sans-serif; }
 .stage-editor .stage-head { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .stage-editor .handle { cursor: grab; color: var(--muted); }
 .color-swatch { width: 28px; height: 28px; border-radius: 8px; border: 1px solid var(--line); display: inline-block; vertical-align: middle; }
+
+/* ---------- Admin: dispetçer lövhəsi, workflow, cədvəl ---------- */
+.px-4 { padding-inline: 16px; }
+.ml-1 { margin-left: 4px; }
+.mr-1 { margin-right: 4px; }
+.hidden { display: none; }
+.dispatch-grid td { vertical-align: middle; }
+.dispatch-hours { display: grid; grid-template-columns: repeat(12, 1fr); font-size: 11px; color: var(--muted); }
+.dispatch-track { position: relative; height: 38px; background: repeating-linear-gradient(90deg, var(--surface-soft) 0 1px, transparent 1px calc(100% / 12)); border-radius: 6px; }
+.dispatch-ev { position: absolute; top: 4px; bottom: 4px; min-width: 40px; border-radius: 6px; background: var(--brand); color: #fff; font-size: 11px; font-weight: 600; padding: 0 6px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: left; border: 0; }
+.dispatch-ev.sla { background: var(--danger); }
+.dispatch-ev.conflict { background: repeating-linear-gradient(45deg, var(--warning) 0 6px, #d97706 6px 12px); color: #111; }
+.dispatch-ev.done { background: var(--success); }
+.wf-chain { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.wf-chip { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: var(--brand-light); color: var(--brand-dark); position: relative; }
+.wf-chip + .wf-chip::before { content: "→"; color: var(--muted-light); margin-right: 4px; margin-left: -2px; }
+.wf-chip.optional { background: var(--surface-soft); color: var(--muted); border: 1px dashed var(--line); }
+.wf-chip.parallel { background: var(--info-light); color: var(--info-text); }
+.kit-cal-ev { display: block; background: var(--brand-light); color: var(--brand-dark); border-radius: 6px; padding: 3px 6px; margin-bottom: 4px; font-size: 12px; font-weight: 600; }
+.kit-cal-ev.warn { background: var(--warning-light); color: var(--warning-text); }
+.kit-cal-ev.block { background: var(--danger-light); color: var(--danger-text); }
+.kit-cal-ev small { font-weight: 400; }
+.stage-editor fieldset { border: 0; min-width: 0; }
+.kit-table tr.diff td, .table-wrap tr.diff td { background: var(--warning-light); }
