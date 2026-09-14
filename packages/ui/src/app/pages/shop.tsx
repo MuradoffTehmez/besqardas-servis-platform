@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { BadgeCheck, Heart, Scale, ShoppingCart, SlidersHorizontal, Star, Truck, Wrench, X } from "lucide-react";
+import { BadgeCheck, ChevronDown, ChevronLeft, Flag, Heart, Scale, ShoppingCart, SlidersHorizontal, Star, Truck, Wrench, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@sp/utils";
 import { ApiError, idempotencyKey, post, qs, useApi, useQueryClient, del, patch } from "@sp/api-client";
@@ -8,7 +8,7 @@ import { useI18n } from "../core/i18n";
 import { Link, useRouter } from "../core/router";
 import { useSession } from "../core/session";
 import { Card, Check, EmptyState, ErrorState, FormError, KeyValue, Loading, Pagination, QueryView, Radios, SearchBox, SelectField, Stars, TextArea, TextField, errorText, useFormState } from "../kit/base";
-import { Dialog } from "../kit/actions";
+import { ConfirmDialog, Dialog } from "../kit/actions";
 import { PriceTag, StockPill } from "../kit/domain";
 import { ProductVisual, QuantityInput } from "../kit/media";
 
@@ -18,6 +18,7 @@ import { ProductVisual, QuantityInput } from "../kit/media";
 
 export function useCartActions() {
   const { t } = useI18n();
+  const { navigate } = useRouter();
   const qc = useQueryClient();
   const refresh = () => qc.invalidateQueries({ predicate: (q) => ["/cart", "/auth/session", "/checkout/options"].some((p) => String(q.queryKey[1] ?? "").startsWith(p)) });
   return {
@@ -25,7 +26,7 @@ export function useCartActions() {
       try {
         await post("/cart/items", { variantId, quantity: String(quantity), unit, withInstallation });
         await refresh();
-        toast.success(t("cart.added"));
+        toast.success(t("cart.added"), { action: { label: t("cart.title"), onClick: () => navigate("/cart") } });
       } catch (e) {
         toast.error(errorText(e, t("errors.generic")));
       }
@@ -34,17 +35,53 @@ export function useCartActions() {
   };
 }
 
+/**
+ * Favorit və müqayisə əməliyyatları. Hər əməliyyatdan sonra toast-da müvafiq səhifəyə keçid verilir —
+ * istifadəçi siyahının harada olduğunu itirmir; qonaq girişə yönləndirilir və geri qaytarılır.
+ */
+export function useProductActions() {
+  const { t } = useI18n();
+  const { navigate, path, search } = useRouter();
+  const { user, role } = useSession();
+  const qc = useQueryClient();
+  const requireLogin = () => {
+    if (user) return false;
+    toast.info(t("shop.loginRequired"));
+    navigate(`/login?next=${encodeURIComponent(path + search)}`);
+    return true;
+  };
+  const refresh = () => qc.invalidateQueries({ queryKey: ["api"] });
+  return {
+    toggleFavorite: async (p: { id: string; isFavorite?: boolean }) => {
+      if (requireLogin()) return;
+      try {
+        const r = await post("/favorites", { productId: p.id });
+        await refresh();
+        const favoritesPage = role === "CUSTOMER" ? "/account/favorites" : null;
+        toast.success(r.isFavorite ? t("shop.favoriteAdded") : t("shop.favoriteRemoved"), favoritesPage && r.isFavorite ? { action: { label: t("shop.viewFavorites"), onClick: () => navigate(favoritesPage) } } : undefined);
+      } catch (e) {
+        toast.error(errorText(e, t("errors.generic")));
+      }
+    },
+    toggleCompare: async (p: { id: string; inCompare?: boolean }) => {
+      if (requireLogin()) return;
+      try {
+        const before = (qc.getQueryData<any>(["api", "/auth/session"])?.compareCount ?? 0) as number;
+        const r = await post("/compare", { productId: p.id, action: p.inCompare ? "remove" : "add" });
+        await refresh();
+        if (p.inCompare) toast.success(t("shop.compareRemoved"));
+        else toast.success(before >= 4 ? t("shop.compareFull") : t("shop.compareAdded", { count: r.ids.length }), { action: { label: t("shop.viewCompare"), onClick: () => navigate("/compare") } });
+      } catch (e) {
+        toast.error(errorText(e, t("errors.generic")));
+      }
+    },
+  };
+}
+
 export function ProductTile({ p, compatibleBadge }: { p: any; compatibleBadge?: boolean }) {
   const { t, money } = useI18n();
   const { add } = useCartActions();
-  const { user } = useSession();
-  const qc = useQueryClient();
-  const toggleFav = async () => {
-    if (!user) return toast.info(t("shop.loginForFavorites"));
-    await post("/favorites", { productId: p.id });
-    await qc.invalidateQueries({ queryKey: ["api"] });
-    toast.success(t("shop.favoritesUpdated"));
-  };
+  const { toggleFavorite, toggleCompare } = useProductActions();
   const discounted = p.price && p.price.basePrice.amount !== p.price.effectivePrice.amount;
   const outOfStock = p.stockStatus === "OUT_OF_STOCK";
   return (
@@ -58,9 +95,14 @@ export function ProductTile({ p, compatibleBadge }: { p: any; compatibleBadge?: 
           {p.hasPromotion && <span className="badge badge-warning">{t("shop.sale")}</span>}
           {compatibleBadge && <span className="badge badge-success"><BadgeCheck size={12} /> {t("shop.fits")}</span>}
         </div>
-        <button type="button" className={cn("shop-tile-fav", p.isFavorite && "active")} aria-pressed={!!p.isFavorite} aria-label={`${t("shop.addFavorite")}: ${p.name}`} title={t("shop.addFavorite")} onClick={toggleFav}>
-          <Heart size={16} fill={p.isFavorite ? "currentColor" : "none"} />
-        </button>
+        <div className="shop-tile-tools">
+          <button type="button" className={cn("shop-tile-fav", p.isFavorite && "active")} aria-pressed={!!p.isFavorite} aria-label={`${t("shop.addFavorite")}: ${p.name}`} title={t("shop.addFavorite")} onClick={() => toggleFavorite(p)}>
+            <Heart size={16} fill={p.isFavorite ? "currentColor" : "none"} />
+          </button>
+          <button type="button" className={cn("shop-tile-fav is-compare", p.inCompare && "active")} aria-pressed={!!p.inCompare} aria-label={`${p.inCompare ? t("shop.inCompare") : t("shop.addCompare")}: ${p.name}`} title={p.inCompare ? t("shop.inCompare") : t("shop.addCompare")} onClick={() => toggleCompare(p)}>
+            <Scale size={16} />
+          </button>
+        </div>
       </div>
       <div className="shop-tile-body">
         {p.brandName && <span className="shop-tile-brand">{p.brandName}</span>}
@@ -87,7 +129,85 @@ export function ProductTile({ p, compatibleBadge }: { p: any; compatibleBadge?: 
 /* Kataloq (§24, §28)                                                   */
 /* ------------------------------------------------------------------ */
 
-export function ShopPage({ categoryPath }: { categoryPath?: string }) {
+/** Kataloqda bir səhifədə göstərilən məhsul sayı (server render ilə eyni olmalıdır — `server.ts`). */
+export const SHOP_PAGE_SIZE = 24;
+const TOP_CATEGORIES_VISIBLE = 8;
+const FACET_OPTIONS_VISIBLE = 6;
+
+/** Yan paneldə yığcam kateqoriya naviqasiyası: kökdə ilk 8 kateqoriya, daxildə yalnız seçilmiş budaq. */
+function CategoryNav({ nodes, categoryPath, base }: { nodes: any[]; categoryPath?: string; base: string }) {
+  const { t } = useI18n();
+  const [expanded, setExpanded] = useState(false);
+  const current = categoryPath?.split("/") ?? [];
+  const Branch = ({ list, depth }: { list: any[]; depth: number }) => (
+    <ul className={cn("shop-tree", depth > 0 && "nested")}>
+      {list.map((n) => {
+        const key = n.path.join("/");
+        const active = categoryPath === key;
+        const open = !!categoryPath && (categoryPath === key || categoryPath.startsWith(`${key}/`));
+        return (
+          <li key={n.id}>
+            <Link to={`${base}/${key}`} className={cn(active && "active", open && !active && "open")} aria-current={active ? "page" : undefined}><span>{n.name}</span> <small>{n.productCount}</small></Link>
+            {open && n.children?.length > 0 && <Branch list={n.children} depth={depth + 1} />}
+          </li>
+        );
+      })}
+    </ul>
+  );
+  if (current.length) {
+    const top = nodes.filter((n) => n.path[0] === current[0]);
+    return (
+      <>
+        <Link to={base} className="shop-tree-back"><ChevronLeft size={15} aria-hidden /> {t("shop.allCategories")}</Link>
+        <Branch list={top} depth={0} />
+      </>
+    );
+  }
+  const visible = expanded ? nodes : nodes.slice(0, TOP_CATEGORIES_VISIBLE);
+  return (
+    <>
+      <Branch list={visible} depth={0} />
+      {nodes.length > TOP_CATEGORIES_VISIBLE && (
+        <button type="button" className="shop-more" aria-expanded={expanded} onClick={() => setExpanded((x) => !x)}>
+          {expanded ? t("shop.lessCategories") : t("shop.moreCategories", { count: nodes.length - TOP_CATEGORIES_VISIBLE })}
+          <ChevronDown size={14} className={cn(expanded && "rotate-180")} aria-hidden />
+        </button>
+      )}
+    </>
+  );
+}
+
+/** Uzun seçim siyahılarında ilk 6 variant və seçilmişlər göstərilir, qalanı "Daha çox" ilə açılır. */
+function FacetOptions({ facet, isChecked, onToggle }: { facet: any; isChecked: (o: any) => boolean; onToggle: (o: any) => void }) {
+  const { t } = useI18n();
+  const [all, setAll] = useState(false);
+  const options: any[] = facet.options;
+  const hidden = options.length - FACET_OPTIONS_VISIBLE;
+  const shown = all || hidden <= 1 ? options : options.filter((o, i) => i < FACET_OPTIONS_VISIBLE || isChecked(o));
+  return (
+    <>
+      {shown.map((o) => (
+        <label key={o.value} className={cn("kit-check", o.count === 0 && !isChecked(o) && "disabled")}>
+          <input type="checkbox" checked={isChecked(o)} disabled={o.count === 0 && !isChecked(o)} onChange={() => onToggle(o)} />
+          <span className="grow">{o.label}</span>
+          <small className="shop-count">{o.count}</small>
+        </label>
+      ))}
+      {hidden > 1 && (
+        <button type="button" className="shop-more" aria-expanded={all} onClick={() => setAll((x) => !x)}>
+          {all ? t("shop.lessCategories") : t("shop.showMoreOptions", { count: hidden })}
+          <ChevronDown size={14} className={cn(all && "rotate-180")} aria-hidden />
+        </button>
+      )}
+    </>
+  );
+}
+
+/**
+ * Kataloq. `base` B2B kabinetlərində kataloqun öz ünvanıdır (`/partner/catalog`) — kateqoriya keçidləri
+ * istifadəçini kabinetdən çıxarmır.
+ */
+export function ShopPage({ categoryPath, base = "/shop" }: { categoryPath?: string; base?: string }) {
   const { t } = useI18n();
   const { query, setQuery, navigate } = useRouter();
   const { user } = useSession();
@@ -95,7 +215,7 @@ export function ShopPage({ categoryPath }: { categoryPath?: string }) {
   const categories = useApi<any[]>("/categories", { staleTime: 300_000 });
   const devices = useApi<any>(user && user.activeRole === "CUSTOMER" ? "/account/devices" : null);
   const params = Object.fromEntries(query.entries());
-  const url = `/products${qs({ ...params, category: categoryPath, pageSize: 12 })}`;
+  const url = `/products${qs({ ...params, category: categoryPath, pageSize: SHOP_PAGE_SIZE })}`;
   const list = useApi<any>(url, { placeholderData: (p: any) => p });
   const data = list.data;
   const activeChips = [...query.entries()].filter(([k]) => !["page", "sort", "q", "pageSize"].includes(k));
@@ -111,22 +231,7 @@ export function ShopPage({ categoryPath }: { categoryPath?: string }) {
     if (code === "deviceId") return t("shop.fitsMyDevice");
     return `${f?.name ?? code}: ${opt?.label ?? value}`;
   };
-  const Tree = ({ nodes, depth = 0 }: { nodes: any[]; depth?: number }) => (
-    <ul className={cn("shop-tree", depth && "nested")}>
-      {nodes.map((n) => {
-        const href = `/shop/${n.path.join("/")}`;
-        const active = categoryPath === n.path.join("/");
-        const open = categoryPath?.startsWith(n.path.join("/"));
-        return (
-          <li key={n.id}>
-            <Link to={href} className={cn(active && "active")} aria-current={active ? "page" : undefined}><span>{n.name}</span> <small>{n.productCount}</small></Link>
-            {open && n.children?.length > 0 && <Tree nodes={n.children} depth={depth + 1} />}
-          </li>
-        );
-      })}
-    </ul>
-  );
-  const Facets = () => (
+  const renderFacets = () => (
     <div className="shop-facets">
       {devices.data?.items?.length > 0 && (
         <SelectField label={t("shop.fitsMyDevice")} value={query.get("deviceId") ?? ""} onValue={(v) => setQuery({ deviceId: v, page: null })} placeholder={t("shop.anyDevice")} options={devices.data.items.map((d: any) => ({ value: d.id, label: `${d.nickname ?? d.modelName}` }))} />
@@ -135,13 +240,11 @@ export function ShopPage({ categoryPath }: { categoryPath?: string }) {
         <fieldset key={f.code} className="shop-facet">
           <legend>{f.name}{f.unit && f.display !== "CHECKBOX" ? `, ${f.unit}` : ""}</legend>
           {f.display === "CHECKBOX" ? (
-            f.options.map((o: any) => (
-              <label key={o.value} className={cn("kit-check", o.count === 0 && !o.selected && "disabled")}>
-                <input type="checkbox" checked={f.code === "rating" || f.code.startsWith("in") || f.code === "promo" || f.code === "isNew" ? query.get(f.code) === o.value : o.selected} disabled={o.count === 0 && !o.selected} onChange={() => (["inStock", "promo", "isNew", "rating"].includes(f.code) ? setQuery({ [f.code]: query.get(f.code) === o.value ? null : o.value, page: null }) : toggleOption(f.code, o.value))} />
-                <span className="grow">{o.label}</span>
-                <small className="shop-count">{o.count}</small>
-              </label>
-            ))
+            <FacetOptions
+              facet={f}
+              isChecked={(o) => (f.code === "rating" || f.code.startsWith("in") || f.code === "promo" || f.code === "isNew" ? query.get(f.code) === o.value : o.selected)}
+              onToggle={(o) => (["inStock", "promo", "isNew", "rating"].includes(f.code) ? setQuery({ [f.code]: query.get(f.code) === o.value ? null : o.value, page: null }) : toggleOption(f.code, o.value))}
+            />
           ) : f.range ? (
             <RangeFacet facet={f} onApply={(min, max) => setQuery({ [f.code === "price" ? "priceMin" : `${f.code}_min`]: min, [f.code === "price" ? "priceMax" : `${f.code}_max`]: max, page: null })} />
           ) : null}
@@ -152,8 +255,8 @@ export function ShopPage({ categoryPath }: { categoryPath?: string }) {
   return (
     <div className="container py-6 shop-page">
       <nav className="pg-crumbs mb-2" aria-label={t("common.breadcrumbs")}>
-        <Link to="/">{t("home")}</Link> › <Link to="/shop">{t("nav.shop")}</Link>
-        {data?.breadcrumbs?.map((b: any) => <span key={b.slug}> › <Link to={b.href}>{b.name}</Link></span>)}
+        {base === "/shop" && <><Link to="/">{t("home")}</Link> › </>}<Link to={base}>{base === "/shop" ? t("nav.shop") : t("b2b.nav.catalog")}</Link>
+        {data?.breadcrumbs?.map((b: any) => <span key={b.slug}> › <Link to={b.href.replace(/^\/shop/, base)}>{b.name}</Link></span>)}
       </nav>
       <header className="shop-head">
         <div>
@@ -163,7 +266,7 @@ export function ShopPage({ categoryPath }: { categoryPath?: string }) {
       </header>
       {data?.children?.length > 0 && (
         <nav className={cn("shop-subcats", !categoryPath && "is-root")} aria-label={t("shop.categories")}>
-          {data.children.map((c: any) => <Link key={c.id} to={`/shop/${c.path.join("/")}`} className="chip">{c.name} <small>{c.productCount}</small></Link>)}
+          {data.children.map((c: any) => <Link key={c.id} to={`${base}/${c.path.join("/")}`} className="chip">{c.name} <small>{c.productCount}</small></Link>)}
         </nav>
       )}
       {activeChips.length > 0 && (
@@ -173,13 +276,13 @@ export function ShopPage({ categoryPath }: { categoryPath?: string }) {
               {labelFor(k!, v!)} <X size={12} />
             </button>
           ))}
-          <button type="button" className="btn ghost btn-sm" onClick={() => navigate(categoryPath ? `/shop/${categoryPath}` : "/shop", { replace: true })}>{t("shop.resetAll")}</button>
+          <button type="button" className="btn ghost btn-sm" onClick={() => navigate(categoryPath ? `${base}/${categoryPath}` : base, { replace: true })}>{t("shop.resetAll")}</button>
         </div>
       )}
       <div className="shop-grid-layout">
         <aside className="shop-side" aria-label={t("shop.filters")}>
-          <Card title={t("shop.categories")}>{categories.isLoading ? <Loading /> : <Tree nodes={categories.data ?? []} />}</Card>
-          <Card title={t("shop.filters")}><Facets /></Card>
+          <Card title={t("shop.categories")}>{categories.isLoading ? <Loading /> : <CategoryNav nodes={categories.data ?? []} categoryPath={categoryPath} base={base} />}</Card>
+          {data?.facets?.length > 0 && <Card title={t("shop.filters")}>{renderFacets()}</Card>}
         </aside>
         <section className="shop-results" aria-live="polite">
           <div className="shop-toolbar">
@@ -193,7 +296,7 @@ export function ShopPage({ categoryPath }: { categoryPath?: string }) {
             <button type="button" className="btn outline shop-filter-btn" onClick={() => setFiltersOpen(true)}><SlidersHorizontal size={16} /> {t("shop.filters")}{activeChips.length > 0 && <span className="shop-count on">{activeChips.length}</span>}</button>
           </div>
           {list.isLoading ? <Loading rows={6} /> : list.error ? <ErrorState error={list.error} onRetry={() => list.refetch()} /> : !data.items.length ? (
-            <EmptyState title={t("shop.noProducts")} text={t("shop.noProductsText")} action={<button type="button" className="btn outline" onClick={() => navigate("/shop")}>{t("shop.resetAll")}</button>} />
+            <EmptyState title={t("shop.noProducts")} text={t("shop.noProductsText")} action={<button type="button" className="btn outline" onClick={() => navigate(base)}>{t("shop.resetAll")}</button>} />
           ) : (
             <>
               <div className={cn("shop-grid", list.isFetching && "is-fetching")}>
@@ -205,7 +308,11 @@ export function ShopPage({ categoryPath }: { categoryPath?: string }) {
         </section>
       </div>
       <Dialog open={filtersOpen} onClose={() => setFiltersOpen(false)} title={t("shop.filters")} footer={<button type="button" className="btn primary w-full" onClick={() => setFiltersOpen(false)}>{t("shop.showResults", { count: data?.meta?.total ?? 0 })}</button>}>
-        <Facets />
+        <div className="shop-dialog-cats">
+          <h3 className="h4">{t("shop.categories")}</h3>
+          <CategoryNav nodes={categories.data ?? []} categoryPath={categoryPath} base={base} />
+        </div>
+        {renderFacets()}
       </Dialog>
     </div>
   );
@@ -231,10 +338,10 @@ function RangeFacet({ facet, onApply }: { facet: any; onApply: (min: string | nu
 
 export function ProductPage({ slug }: { slug: string }) {
   const { t, text, money, qty, date, unit: unitName } = useI18n();
-  const { query, setQuery, navigate } = useRouter();
+  const { query, setQuery } = useRouter();
   const { user } = useSession();
   const { add } = useCartActions();
-  const qc = useQueryClient();
+  const { toggleFavorite, toggleCompare } = useProductActions();
   const q = useApi<any>(`/products/${slug}`);
   const devices = useApi<any>(user?.activeRole === "CUSTOMER" ? "/account/devices" : null);
   const [image, setImage] = useState(0);
@@ -319,8 +426,11 @@ export function ProductPage({ slug }: { slug: string }) {
             {p.returnRestriction && <p className="kit-note text-sm">{p.returnRestriction}</p>}
             <div className="flex gap-2 flex-wrap mt-4">
               <button type="button" className="btn primary btn-lg flex-1" disabled={variant.stockStatus === "OUT_OF_STOCK" || !(Number(amount) > 0)} onClick={() => add(variant.id, amount, currentUnit, install)}><ShoppingCart size={18} /> {t("add")}</button>
-              <button type="button" className={cn("icon-button", p.isFavorite && "active")} aria-pressed={p.isFavorite} aria-label={t("shop.addFavorite")} onClick={async () => { if (!user) return navigate(`/login?next=/product/${slug}`); await post("/favorites", { productId: p.id }); await qc.invalidateQueries({ queryKey: ["api"] }); }}><Heart size={18} fill={p.isFavorite ? "currentColor" : "none"} /></button>
-              <button type="button" className={cn("icon-button", p.inCompare && "active")} aria-label={t("shop.compare")} onClick={async () => { if (!user) return navigate(`/login?next=/product/${slug}`); await post("/compare", { productId: p.id, action: p.inCompare ? "remove" : "add" }); await qc.invalidateQueries({ queryKey: ["api"] }); toast.success(t("shop.compareUpdated")); }}><Scale size={18} /></button>
+              <button type="button" className={cn("icon-button product-fav", p.isFavorite && "active")} aria-pressed={!!p.isFavorite} aria-label={t("shop.addFavorite")} title={t("shop.addFavorite")} onClick={() => toggleFavorite(p)}><Heart size={18} fill={p.isFavorite ? "currentColor" : "none"} /></button>
+            </div>
+            <div className="product-secondary-actions">
+              <button type="button" className={cn("btn btn-sm ghost", p.inCompare && "active")} aria-pressed={!!p.inCompare} onClick={() => toggleCompare(p)}><Scale size={16} /> {p.inCompare ? t("shop.inCompare") : t("shop.addCompare")}</button>
+              {p.inCompare && <Link to="/compare" className="btn btn-sm ghost text-brand">{t("shop.viewCompare")} →</Link>}
             </div>
             <ul className="product-delivery mt-4">
               {p.deliveryOptions.map((d: any) => <li key={d.method}>{d.method === "WITH_INSTALLATION" ? <Wrench size={15} /> : <Truck size={15} />} <span>{d.label}</span> <small>{d.price ? (Number(d.price.amount) ? money(d.price) : t("shop.free")) : "—"} · {d.eta}</small></li>)}
@@ -369,7 +479,7 @@ export function ProductPage({ slug }: { slug: string }) {
                 <p>{r.comment}</p>
                 {(r.pros || r.cons) && <p className="text-sm">{r.pros && <>+ {r.pros} </>}{r.cons && <>− {r.cons}</>}</p>}
                 {r.reply && <p className="kit-note text-sm">{r.reply}</p>}
-                <small className="text-muted">{date(r.createdAt)}</small>
+                <div className="flex justify-between items-center gap-2"><small className="text-muted">{date(r.createdAt)}</small><ReportReviewButton reviewId={r.id} reported={r.reported} /></div>
               </li>
             ))}
           </ul>
@@ -383,6 +493,46 @@ export function ProductPage({ slug }: { slug: string }) {
       )}
       {reviewOpen && <ReviewDialog target="PRODUCT" targetId={p.id} onClose={() => setReviewOpen(false)} />}
     </div>
+  );
+}
+
+/** Rəyə şikayət (§55): moderasiyaya göndərilir, rəy dərhal gizlədilmir. */
+export function ReportReviewButton({ reviewId, reported }: { reviewId: string; reported?: boolean }) {
+  const { t } = useI18n();
+  const { user } = useSession();
+  const { navigate, path, search } = useRouter();
+  const [open, setOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(!!reported);
+  if (done) return <small className="text-muted review-report"><Flag size={12} aria-hidden /> {t("reviews.reported")}</small>;
+  return (
+    <>
+      <button type="button" className="btn ghost btn-sm review-report" onClick={() => (user ? setOpen(true) : navigate(`/login?next=${encodeURIComponent(path + search)}`))}>
+        <Flag size={13} aria-hidden /> {t("reviews.report")}
+      </button>
+      <ConfirmDialog
+        open={open}
+        busy={busy}
+        danger
+        title={t("reviews.report")}
+        text={t("reviews.reportConfirm")}
+        confirmLabel={t("reviews.report")}
+        onClose={() => setOpen(false)}
+        onConfirm={async () => {
+          setBusy(true);
+          try {
+            await post(`/reviews/${reviewId}/report`);
+            setDone(true);
+            setOpen(false);
+            toast.success(t("reviews.reported"));
+          } catch (e) {
+            toast.error(errorText(e, t("errors.generic")));
+          } finally {
+            setBusy(false);
+          }
+        }}
+      />
+    </>
   );
 }
 

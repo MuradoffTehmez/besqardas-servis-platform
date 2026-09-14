@@ -215,6 +215,8 @@ export function productSummaryDto(p: ProductRec, ctx: Ctx) {
     variantCount: p.variants.length,
     defaultVariantId: variant.id,
     highlights: p.highlights,
+    isFavorite: !!ctx.user?.favorites?.includes(p.id),
+    inCompare: !!ctx.user?.compare?.includes(p.id),
     country: p.country,
     installable: !!p.installServiceId,
   };
@@ -410,6 +412,9 @@ export function serviceOrderSummaryDto(o: ServiceOrderRec, ctx: Ctx) {
     addressShort: o.address ? `${o.address.city}, ${o.address.street}` : o.executionForm === "CARRY_IN" ? tr(db.branches.find((b) => b.id === o.branchId)!.name, ctx.locale) : null,
     progress: progressOf(o),
     needsReschedule: o.needsReschedule,
+    // Korporativ müştəridə şirkətdaxili təsdiq gözləyən sifariş (§45)
+    approvalPending: o.approvalPending,
+    canApprove: o.approvalPending && ctx.role === "CORPORATE_CUSTOMER" && ["OWNER", "APPROVER"].includes(ctx.user?.companyRole ?? ""),
   };
 }
 

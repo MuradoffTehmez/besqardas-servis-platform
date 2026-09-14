@@ -535,7 +535,12 @@ button.panel-nav-label:hover { color: var(--ink); background: var(--surface-soft
 .shop-tile-media .kit-visual { aspect-ratio: 1 / 1; width: 100%; transition: transform .35s ease; }
 .shop-tile:hover .shop-tile-media .kit-visual { transform: scale(1.03); }
 .shop-tile-flags { position: absolute; top: 20px; left: 20px; display: flex; gap: 4px; flex-wrap: wrap; pointer-events: none; }
-.shop-tile-fav { position: absolute; top: 18px; right: 18px; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, .92); color: var(--ink-secondary); border: 1px solid var(--line-subtle); box-shadow: var(--shadow-xs); transition: color .15s, transform .15s, background .15s; }
+.shop-tile-tools { position: absolute; top: 18px; right: 18px; display: grid; gap: 6px; z-index: 1; }
+.shop-tile-fav.is-compare { opacity: 0; transform: translateY(-4px); }
+.shop-tile:hover .shop-tile-fav.is-compare, .shop-tile-fav.is-compare:focus-visible, .shop-tile-fav.is-compare.active { opacity: 1; transform: none; }
+.shop-tile-fav.is-compare:hover, .shop-tile-fav.is-compare.active { color: var(--brand); }
+@media (hover: none) { .shop-tile-fav.is-compare { opacity: 1; transform: none; } }
+.shop-tile-fav { position: relative; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: rgba(255, 255, 255, .92); color: var(--ink-secondary); border: 1px solid var(--line-subtle); box-shadow: var(--shadow-xs); transition: color .15s, transform .15s, background .15s; }
 .shop-tile-fav:hover { color: #e11d48; transform: scale(1.08); }
 .shop-tile-fav.active { color: #e11d48; }
 .shop-tile-body { padding: 12px 14px 0; display: grid; gap: 6px; flex: 1; align-content: start; }
@@ -817,3 +822,43 @@ a.mobile-nav-link, a.nav-link { text-decoration: none; }
 @media (max-width: 360px) {
   .site-header .logo-text { display: none; }
 }
+
+/* Kateqoriya naviqasiyası, "daha çox", müqayisə və B2B təsdiq növbəsi */
+.shop-tree-back { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 600; color: var(--muted); padding: 4px 6px 10px; }
+.shop-tree-back:hover { color: var(--brand); }
+.shop-tree a.open { color: var(--ink); font-weight: 650; }
+.shop-more { display: inline-flex; align-items: center; gap: 6px; margin: 6px 4px 0; padding: 6px 6px; border: 0; background: none; color: var(--brand); font-size: 13px; font-weight: 600; cursor: pointer; border-radius: 6px; }
+.shop-more:hover { background: var(--brand-light); }
+.shop-more svg { transition: transform .2s; }
+.rotate-180 { transform: rotate(180deg); }
+.shop-dialog-cats { padding-bottom: 12px; margin-bottom: 8px; border-bottom: 1px solid var(--line-subtle); }
+.product-secondary-actions { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+.product-secondary-actions .btn.active { color: var(--brand); background: var(--brand-light); }
+.product-fav.active { color: #e11d48; border-color: #fecdd3; background: #fff1f2; }
+.header-compare .cart-badge { background: var(--ink-secondary); }
+.review-report { color: var(--muted); font-size: 12px; display: inline-flex; align-items: center; gap: 4px; }
+.review-report.btn:hover { color: var(--danger-text); }
+.approval-queue { border-color: var(--warning-border, #fcd34d); }
+.approval-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.approval-row .order-head { margin-top: 2px; }
+
+/* Geniş ekran: məzmun sahəsi 1440px — yanlarda reklam blokları üçün yer qalır */
+.container { max-width: 1440px; padding-left: clamp(16px, 2.5vw, 32px); padding-right: clamp(16px, 2.5vw, 32px); }
+@media (min-width: 1680px) { .shop-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+
+/* Başlıq: menyu mətnləri heç vaxt sınmır; yer çatmayanda mobil menyuya keçir */
+.site-header .nav-link, .site-header .lang-toggle, .site-header .user-btn, .site-header .logo-text { white-space: nowrap; }
+.site-header .desktop-nav { flex: 1 1 auto; justify-content: center; min-width: 0; }
+.site-header .header-actions { flex-shrink: 0; }
+@media (max-width: 1400px) {
+  .site-header .header-inner { gap: 12px; }
+  .site-header .nav-link { padding: 8px 10px; }
+  .site-header .header-actions { gap: 6px; }
+  .site-header .user-btn-label { max-width: 110px; }
+}
+@media (max-width: 1279px) {
+  .site-header .desktop-nav { display: none; }
+  .site-header .mobile-toggle { display: inline-flex; }
+}
+@media (min-width: 1201px) and (max-width: 1279px) { .mobile-drawer { display: block; } }
+.site-header .lang-toggle { width: auto; min-width: 38px; padding: 0 10px; gap: 4px; }

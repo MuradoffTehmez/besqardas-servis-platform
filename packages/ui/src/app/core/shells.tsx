@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Bell, CalendarDays, ChevronDown, ChevronRight, Compass, Globe, HardDrive, Home, LayoutDashboard, LayoutGrid, Package, Truck, Wallet, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Search, Settings2, ShoppingBag, UserRound, Wrench, X } from "lucide-react";
+import { Bell, Heart, Scale, CalendarDays, ChevronDown, ChevronRight, Compass, Globe, HardDrive, Home, LayoutDashboard, LayoutGrid, Package, Truck, Wallet, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Search, Settings2, ShoppingBag, UserRound, Wrench, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@sp/utils";
 import { post, put, useApi, useApiMutation, useQueryClient } from "@sp/api-client";
@@ -45,6 +45,8 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
         onNavigate={(href) => navigate(href === "/account" || href === "/login" ? accountHref : href)}
         onLocaleChange={setLocale}
         onOpenCart={() => navigate("/cart")}
+        compareCount={session?.compareCount ?? 0}
+        onOpenCompare={() => navigate("/compare")}
         onOpenSearch={() => navigate("/search")}
         userMenu={userMenu}
         userMenuTitle={user ? user.companyName ?? enumLabel("Role", user.activeRole) : undefined}
@@ -71,6 +73,8 @@ function roleMenu(role: string, t: (k: string) => string): MenuItem[] {
         { label: t("acc.nav.services"), href: "/account/services", icon: Wrench },
         { label: t("acc.nav.orders"), href: "/account/orders", icon: Package },
         { label: t("acc.nav.devices"), href: "/account/devices", icon: HardDrive },
+        { label: t("acc.nav.favorites"), href: "/account/favorites", icon: Heart },
+        { label: t("compare.title"), href: "/compare", icon: Scale },
         { label: t("acc.nav.notifications"), href: "/account/notifications", icon: Bell },
         { label: t("acc.nav.profile"), href: "/account/profile", icon: UserRound },
       ];

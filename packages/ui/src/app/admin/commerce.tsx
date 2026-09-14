@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { cn } from "@sp/utils";
 import { del, patch, post, put, useApi } from "@sp/api-client";
 import { useI18n } from "../core/i18n";
+import { webUrl } from "../core/shells";
 import { Link, useRouter } from "../core/router";
 import { useSession } from "../core/session";
 import { Card, Check, EmptyState, EnumBadge, FormError, Grid, KeyValue, Loading, PageHeader, QueryView, SelectField, Stat, Tabs, TextArea, TextField, Toggle, errorText } from "../kit/base";
@@ -204,7 +205,7 @@ export function ProductEditorPage({ id }: { id: string }) {
   const priceTypes = Object.keys(draft.variants[0]?.prices ?? {});
   return (
     <>
-      <PageHeader back="/products" title={text(p.name)} badge={<EnumBadge group="ProductStatus" code={draft.status} />} subtitle={`${p.brandName} · ${p.categoryName} · ${enumLabel("ProductType", p.type)}`} actions={<Link to={`/product/${p.slug}`} className="btn outline" target="_blank">{t("adm.products.onSite")}</Link>} />
+      <PageHeader back="/products" title={text(p.name)} badge={<EnumBadge group="ProductStatus" code={draft.status} />} subtitle={`${p.brandName} · ${p.categoryName} · ${enumLabel("ProductType", p.type)}`} actions={<a href={webUrl(`/product/${p.slug}`)} className="btn outline" target="_blank" rel="noopener noreferrer">{t("adm.products.onSite")}</a>} />
       <FormError error={error} />
       <Tabs value={tab} onChange={(v) => setQuery({ tab: v })} tabs={[{ id: "main", label: t("adm.products.main") }, { id: "attributes", label: t("adm.nav.attributes"), badge: p.attributeSchema.length }, { id: "variants", label: t("adm.products.variants"), badge: p.variantsAdmin.length }, { id: "units", label: t("adm.nav.units") }, { id: "compatibility", label: t("adm.nav.compatibility"), badge: draft.compatibleModelIds.length }, { id: "stock", label: t("adm.f.stock") }, { id: "media", label: t("adm.products.media"), badge: p.gallery.filter((g: any) => !g.synthetic).length || null }]} />
       {tab === "main" && (
