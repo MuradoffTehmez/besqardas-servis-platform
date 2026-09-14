@@ -37,6 +37,8 @@ export interface SessionData {
   entitlements: Record<string, boolean | number | string>;
   plan: { code: string; name: string; tier: number } | null;
   cartCount: number;
+  compareCount?: number;
+  favoritesCount?: number;
   unreadNotifications: number;
   addresses: any[];
   redirectTo: string | null;

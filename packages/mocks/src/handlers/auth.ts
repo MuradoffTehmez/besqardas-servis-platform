@@ -72,6 +72,8 @@ export function sessionDto(ctx: Ctx) {
     plan: ctx.plan ? { code: ctx.plan.code, name: ctx.plan.name, tier: ctx.plan.tier } : null,
     tenant: { id: db.branding.tenantId, name: db.branding.companyName },
     cartCount: cart ? cartItemCount(cart) : 0,
+    compareCount: user?.compare?.length ?? 0,
+    favoritesCount: user?.favorites?.length ?? 0,
     unreadNotifications: user ? db.notifications.filter((n) => n.userId === user.id && !n.read).length : 0,
     addresses: user ? db.addresses.filter((a) => a.ownerId === (ctx.role === "CORPORATE_CUSTOMER" ? user.companyId : user.id)).map((a) => ({ ...a })) : [],
     redirectTo: user ? redirectFor(ctx.role) : null,

@@ -564,7 +564,7 @@ export function DeviceDetailPage({ id }: { id: string }) {
 
 const ACTIVE = ["NEW", "CONFIRMED", "IN_PROGRESS", "WAITING_FOR_CUSTOMER", "ON_HOLD"];
 
-export function ServiceOrdersPage({ base = "/account/services", title }: { base?: string; title?: string }) {
+export function ServiceOrdersPage({ base = "/account/services", title, intro }: { base?: string; title?: string; intro?: React.ReactNode }) {
   const { t, dateTime, money, text } = useI18n();
   const { query, setQuery } = useRouter();
   const tab = query.get("tab") ?? "active";
@@ -573,6 +573,7 @@ export function ServiceOrdersPage({ base = "/account/services", title }: { base?
   return (
     <>
       <PageHeader title={title ?? t("acc.orders.serviceTitle")} actions={<Link to="/services" className="btn primary"><Plus size={16} /> {t("book")}</Link>} />
+      {intro}
       <Tabs value={tab} onChange={(v) => setQuery({ tab: v })} tabs={[{ id: "active", label: t("acc.orders.active"), badge: (q.data?.items ?? []).filter((o: any) => ACTIVE.includes(o.status)).length }, { id: "done", label: t("acc.orders.archive") }]} />
       <QueryView query={q} isEmpty={() => !items.length} empty={<EmptyState icon={Wrench} title={tab === "active" ? t("acc.orders.noActive") : t("acc.orders.noArchive")} action={<Link to="/services" className="btn primary">{t("book")}</Link>} />}>
         {() => (
@@ -591,6 +592,7 @@ export function ServiceOrdersPage({ base = "/account/services", title }: { base?
                       </div>
                     </div>
                     <div className="flex gap-2 items-center flex-wrap">
+                      {o.approvalPending && <span className="badge badge-warning">{t("b2b.services.pendingBadge")}</span>}
                       {o.urgent && <span className="badge badge-danger">{t("acc.orders.urgent")}</span>}
                       {o.total && <strong>{money(o.total)}</strong>}
                       <EnumBadge group="OrderStatus" code={o.status} />
@@ -678,6 +680,7 @@ export function ServiceOrderDetailPage({ id, back = "/account/services" }: { id:
               }
             />
             {o.needsReschedule && <div className="kit-note warning mb-4">{t("acc.orders.needsReschedule")}</div>}
+            {o.approvalPending && <div className="kit-note warning mb-4">{t("b2b.services.pendingNote")}</div>}
             {canDecide ? (
               <div className="next-step">
                 <FileText size={22} aria-hidden />

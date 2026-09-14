@@ -10,6 +10,7 @@ import {
   ChevronDown,
   Globe,
   LogOut,
+  Scale,
 } from "lucide-react";
 import { cn } from "@sp/utils";
 import { useI18n } from "../../app/core/i18n";
@@ -37,6 +38,8 @@ export interface HeaderProps {
   onLocaleChange: (locale: "az" | "ru" | "en") => void;
   onOpenCart?: () => void;
   onOpenSearch?: () => void;
+  compareCount?: number;
+  onOpenCompare?: () => void;
   className?: string;
 }
 
@@ -53,6 +56,8 @@ export function Header({
   onLocaleChange,
   onOpenCart,
   onOpenSearch,
+  compareCount = 0,
+  onOpenCompare,
   userMenu,
   userMenuTitle,
   logoutLabel,
@@ -79,7 +84,7 @@ export function Header({
     if (!mobileMenuOpen) return;
     const overflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    const media = window.matchMedia("(min-width: 1201px)");
+    const media = window.matchMedia("(min-width: 1280px)");
     const closeOnResize = () => { if (media.matches) setMobileMenuOpen(false); };
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") { setMobileMenuOpen(false); menuRef.current?.focus(); }
@@ -186,6 +191,14 @@ export function Header({
               </div>
             )}
           </div>
+
+          {/* Müqayisə — siyahıda məhsul olduqda görünür */}
+          {onOpenCompare && compareCount > 0 && (
+            <button type="button" className="cart-button icon-button header-compare" aria-label={t("site.compareWithCount", { count: compareCount })} title={t("site.compareWithCount", { count: compareCount })} onClick={onOpenCompare}>
+              <Scale size={19} />
+              <span className="cart-badge">{compareCount}</span>
+            </button>
+          )}
 
           {/* Səbət */}
           {onOpenCart && (

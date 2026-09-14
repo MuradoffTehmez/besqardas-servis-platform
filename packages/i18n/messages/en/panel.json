@@ -47,6 +47,7 @@
       "delivered": "Delivered",
       "approved": "Approved",
       "refunded": "Refunded",
+      "company_approval_requested": "Company approval requested",
       "company_approved": "Approved by company",
       "company_rejected": "Rejected by company"
     }
@@ -723,7 +724,15 @@
       "manager": "Site manager"
     },
     "services": {
-      "approverHint": "Orders requiring internal approval are shown on the overview."
+      "approverHint": "Orders created by employees are not dispatched until you approve them.",
+      "pendingTitle": "Awaiting approval ({count})",
+      "pendingBadge": "Awaiting company approval",
+      "pendingNote": "The order is waiting for the owner or approver to confirm it.",
+      "approve": "Approve",
+      "reject": "Reject",
+      "rejectReason": "Reason for rejection",
+      "approved": "{number} approved and dispatched",
+      "rejected": "{number} rejected"
     },
     "schedule": {
       "subtitle": "Periodic visits under contract",

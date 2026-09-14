@@ -127,6 +127,11 @@ export const accountHandlers = [
       attachments: data.attachments,
       siteId: ctx.role === "CORPORATE_CUSTOMER" ? data.addressId ?? null : null,
     });
+    // Sifarişçi və obyekt meneceri yaratdığı sifariş şirkət sahibinin/təsdiqləyicinin razılığını gözləyir (§45)
+    if (ctx.role === "CORPORATE_CUSTOMER" && !["OWNER", "APPROVER"].includes(u.companyRole ?? "")) {
+      order.approvalPending = true;
+      order.history.unshift({ id: newId("hist"), at: order.createdAt, actorName: fullName(u), action: "company_approval_requested" });
+    }
     notify(customerId, "ORDER_CREATED", "notif.orderCreated", L(`${order.number} sifarişiniz qəbul edildi`, `Заказ ${order.number} принят`, `Order ${order.number} received`), `/account/services/${order.id}`, "SMS");
     return serviceOrderDto(order, ctx);
   }),

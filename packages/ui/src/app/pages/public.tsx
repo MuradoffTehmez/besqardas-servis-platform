@@ -12,7 +12,7 @@ import { useSession } from "../core/session";
 import { Avatar, Card, EmptyState, ErrorState, FormError, KeyValue, Loading, PageHeader, QueryView, Radios, SearchBox, SelectField, Stars, TextArea, TextField, useFormState, EnumBadge } from "../kit/base";
 import { PlanComparison, SlotPicker } from "../kit/domain";
 import { FileDrop, MapView, PhoneField, type PickedFile } from "../kit/media";
-import { useCartActions } from "./shop";
+import { ReportReviewButton, useCartActions } from "./shop";
 
 /* ------------------------------------------------------------------ */
 /* Ana səhifə, servislər                                               */
@@ -473,7 +473,7 @@ export function TechnicianProfilePage({ id }: { id: string }) {
               </div>
               <Card title={t("techniciansPage.reviews")} className="mt-4">
                 {!x.reviews.length ? <EmptyState title={t("shop.noReviews")} /> : (
-                  <ul className="kit-reviews">{x.reviews.map((r: any) => <li key={r.id}><div className="flex justify-between"><strong>{r.authorName}</strong><Stars value={r.rating} /></div><p>{r.comment}</p>{r.reply && <p className="kit-note text-sm">{r.reply}</p>}<small className="text-muted">{date(r.createdAt)}</small></li>)}</ul>
+                  <ul className="kit-reviews">{x.reviews.map((r: any) => <li key={r.id}><div className="flex justify-between"><strong>{r.authorName}</strong><Stars value={r.rating} /></div><p>{r.comment}</p>{r.reply && <p className="kit-note text-sm">{r.reply}</p>}<div className="flex justify-between items-center gap-2"><small className="text-muted">{date(r.createdAt)}</small><ReportReviewButton reviewId={r.id} reported={r.reported} /></div></li>)}</ul>
                 )}
               </Card>
             </>

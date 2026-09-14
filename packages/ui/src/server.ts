@@ -160,7 +160,7 @@ async function prepare(locale: AppLocale, path: string, search: string, cookie: 
     }
   } else if (path === "/shop" || (params = match("/shop/*", path))) {
     const categoryPath = path === "/shop" ? undefined : path.slice("/shop/".length).split("/").map(decodeURIComponent).join("/");
-    const listUrl = `/products${qs({ ...Object.fromEntries(query.entries()), category: categoryPath, pageSize: 12 })}`;
+    const listUrl = `/products${qs({ ...Object.fromEntries(query.entries()), category: categoryPath, pageSize: 24 })}`;
     const [, list] = await Promise.all([load("/categories"), load<any>(listUrl)]);
     const crumbs: { name: string; path: string }[] = (list?.breadcrumbs ?? []).map((b: any) => ({ name: b.name, path: b.href }));
     const current = list?.category;

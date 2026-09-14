@@ -47,6 +47,7 @@
       "delivered": "Çatdırıldı",
       "approved": "Təsdiqləndi",
       "refunded": "Geri ödənildi",
+      "company_approval_requested": "Şirkət daxilində təsdiq istənildi",
       "company_approved": "Şirkət daxilində təsdiqləndi",
       "company_rejected": "Şirkət daxilində rədd edildi"
     }
@@ -723,7 +724,15 @@
       "manager": "Obyekt meneceri"
     },
     "services": {
-      "approverHint": "Şirkət daxili təsdiq tələb edən sifarişlər icmal səhifəsində göstərilir."
+      "approverHint": "Əməkdaşların yaratdığı sifarişlər siz təsdiqləyənə qədər ustaya ötürülmür.",
+      "pendingTitle": "Təsdiq gözləyən sifarişlər ({count})",
+      "pendingBadge": "Şirkət təsdiqi gözləyir",
+      "pendingNote": "Sifariş şirkət sahibinin və ya təsdiqləyicinin razılığını gözləyir.",
+      "approve": "Təsdiqlə",
+      "reject": "Rədd et",
+      "rejectReason": "Rədd səbəbi",
+      "approved": "{number} təsdiqləndi və icraya ötürüldü",
+      "rejected": "{number} rədd edildi"
     },
     "schedule": {
       "subtitle": "Müqavilə üzrə periodik baxışlar",

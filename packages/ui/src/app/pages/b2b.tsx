@@ -76,8 +76,8 @@ export const b2bRoutes: RouteDef[] = [
   route(CORP, "/corporate/profile", () => <ProfilePage />, "acc.nav.profile"),
 
   route(PART, "/partner", () => <B2BDashboardPage />, "b2b.nav.dashboard"),
-  route(PART, "/partner/catalog", () => <ShopPage />, "b2b.nav.catalog"),
-  route(PART, "/partner/catalog/*", (p) => <ShopPage categoryPath={p["*"]} />, "b2b.nav.catalog"),
+  route(PART, "/partner/catalog", () => <ShopPage base="/partner/catalog" />, "b2b.nav.catalog"),
+  route(PART, "/partner/catalog/*", (p) => <ShopPage base="/partner/catalog" categoryPath={p["*"]} />, "b2b.nav.catalog"),
   route(PART, "/partner/orders", () => <SalesOrdersPage base="/partner/orders" />, "b2b.nav.orders"),
   route(PART, "/partner/orders/:id", (p) => <SalesOrderDetailPage id={p.id!} back="/partner/orders" />, "b2b.nav.orders"),
   route(PART, "/partner/services", () => <B2BServicesPage base="/partner/services" />, "b2b.nav.services"),
@@ -90,8 +90,8 @@ export const b2bRoutes: RouteDef[] = [
   route(PART, "/partner/profile", () => <ProfilePage />, "acc.nav.profile"),
 
   route(WHOLE, "/wholesale", () => <B2BDashboardPage />, "b2b.nav.dashboard"),
-  route(WHOLE, "/wholesale/catalog", () => <ShopPage />, "b2b.nav.catalog"),
-  route(WHOLE, "/wholesale/catalog/*", (p) => <ShopPage categoryPath={p["*"]} />, "b2b.nav.catalog"),
+  route(WHOLE, "/wholesale/catalog", () => <ShopPage base="/wholesale/catalog" />, "b2b.nav.catalog"),
+  route(WHOLE, "/wholesale/catalog/*", (p) => <ShopPage base="/wholesale/catalog" categoryPath={p["*"]} />, "b2b.nav.catalog"),
   route(WHOLE, "/wholesale/quick-order", () => <QuickOrderPage />, "b2b.nav.quickOrder"),
   route(WHOLE, "/wholesale/quotes", () => <QuotesPage />, "b2b.nav.quotes"),
   route(WHOLE, "/wholesale/orders", () => <SalesOrdersPage base="/wholesale/orders" />, "b2b.nav.orders"),
@@ -277,19 +277,61 @@ function B2BDevicesPage() {
 function B2BServicesPage({ base }: { base: string }) {
   const { t } = useI18n();
   const { role } = useSession();
-  return (
-    <>
-      <ServiceOrdersPage base={base} title={t("b2b.nav.services")} />
-      {role === "CORPORATE_CUSTOMER" && <ApprovalsHint />}
-    </>
-  );
+  return <ServiceOrdersPage base={base} title={t("b2b.nav.services")} intro={role === "CORPORATE_CUSTOMER" ? <ApprovalQueue base={base} /> : null} />;
 }
 
-function ApprovalsHint() {
-  const { t } = useI18n();
+/** Şirkətdaxili təsdiq növbəsi (§45): sahib və təsdiqləyici əməkdaşların sifarişlərini təsdiqləyir və ya rədd edir. */
+function ApprovalQueue({ base }: { base: string }) {
+  const { t, text, dateTime } = useI18n();
   const { user } = useSession();
-  if (!user || !["OWNER", "APPROVER"].includes(user.companyRole ?? "")) return null;
-  return <p className="text-sm text-muted mt-4">{t("b2b.services.approverHint")}</p>;
+  const refresh = useRefresh();
+  const q = useApi<any>("/service-orders?pageSize=200");
+  const [rejecting, setRejecting] = useState<any | null>(null);
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState<string | null>(null);
+  const approver = ["OWNER", "APPROVER"].includes(user?.companyRole ?? "");
+  const pending = (q.data?.items ?? []).filter((o: any) => o.approvalPending);
+  if (!approver || !pending.length) return null;
+  const decide = async (o: any, approved: boolean, comment?: string) => {
+    setBusy(o.id);
+    try {
+      await post(`/b2b/services/${o.id}/approve`, { approved, comment });
+      await refresh();
+      toast.success(t(approved ? "b2b.services.approved" : "b2b.services.rejected", { number: o.number }));
+      setRejecting(null);
+      setReason("");
+    } catch (e) {
+      toast.error(errorText(e, t("errors.generic")));
+    } finally {
+      setBusy(null);
+    }
+  };
+  return (
+    <Card title={t("b2b.services.pendingTitle", { count: pending.length })} subtitle={t("b2b.services.approverHint")} className="mb-4 approval-queue">
+      <ul className="kit-list">
+        {pending.map((o: any) => (
+          <li key={o.id} className="approval-row">
+            <div className="grow">
+              <Link to={`${base}/${o.id}`} className="font-semibold text-brand">{o.number} · {text(o.serviceName)}</Link>
+              <div className="order-head text-sm">{o.addressShort && <span>{o.addressShort}</span>}{o.scheduledAt && <span>{dateTime(o.scheduledAt)}</span>}{o.customerName && <span>{o.customerName}</span>}</div>
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              <button type="button" className="btn primary btn-sm" disabled={busy === o.id} onClick={() => decide(o, true)}>{t("b2b.services.approve")}</button>
+              <button type="button" className="btn outline danger-outline btn-sm" disabled={busy === o.id} onClick={() => setRejecting(o)}>{t("b2b.services.reject")}</button>
+            </div>
+          </li>
+        ))}
+      </ul>
+      <Dialog
+        open={!!rejecting}
+        onClose={() => setRejecting(null)}
+        title={rejecting ? `${t("b2b.services.reject")} · ${rejecting.number}` : ""}
+        footer={<><button type="button" className="btn outline" onClick={() => setRejecting(null)}>{t("common.cancel")}</button><button type="button" className="btn danger" disabled={!reason.trim() || busy === rejecting?.id} onClick={() => decide(rejecting, false, reason.trim())}>{t("b2b.services.reject")}</button></>}
+      >
+        <TextArea label={t("b2b.services.rejectReason")} required rows={3} value={reason} onValue={setReason} />
+      </Dialog>
+    </Card>
+  );
 }
 
 function SchedulePlanPage() {
