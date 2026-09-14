@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { Star, ShieldCheck, Calendar, MapPin, CheckCircle2 } from "lucide-react";
+import { Star, ShieldCheck, Calendar, CheckCircle2 } from "lucide-react";
 import { cn } from "@sp/utils";
 import { resolveText, resolveTechnicianName, getInitials, type AppLocale } from "../../utils/i18n";
 

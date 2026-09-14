@@ -5,11 +5,7 @@ import {
   ArrowRight,
   ShieldCheck,
   CheckCircle2,
-  Clock,
   Sparkles,
-  Users,
-  Award,
-  PhoneCall,
 } from "lucide-react";
 import { ServiceCard } from "../../components/domain/service-card";
 import { ProductCard } from "../../components/domain/product-card";

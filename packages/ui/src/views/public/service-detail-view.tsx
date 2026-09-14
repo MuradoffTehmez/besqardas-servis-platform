@@ -5,10 +5,8 @@ import {
   Clock,
   ShieldCheck,
   CheckCircle2,
-  HelpCircle,
   ArrowLeft,
   Calendar,
-  Sparkles,
 } from "lucide-react";
 import { Timeline } from "../../components/ui/timeline";
 import { resolveText, type AppLocale } from "../../utils/i18n";

@@ -23,6 +23,8 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
       - run: pnpm typecheck
+      - run: node scripts/check-i18n.mjs
       - run: pnpm test
       - run: pnpm build

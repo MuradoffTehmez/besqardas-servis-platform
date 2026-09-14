@@ -30,7 +30,7 @@ export function getCart(ctx: Ctx, create = false): CartRec | null {
 export function mergeGuestCart(guestKey: string, userId: string) {
   const guest = db.carts.find((c) => c.ownerKey === guestKey);
   if (!guest || !guest.items.length) return;
-  let cart = db.carts.find((c) => c.ownerKey === userId);
+  const cart = db.carts.find((c) => c.ownerKey === userId);
   if (!cart) {
     guest.ownerKey = userId;
     guest.merged = true;

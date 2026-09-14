@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { Wrench, Phone, Mail, MapPin, ShieldCheck } from "lucide-react";
+import { Wrench, Phone, Mail, ShieldCheck } from "lucide-react";
 import { cn } from "@sp/utils";
 
 export interface FooterProps {
@@ -17,7 +17,7 @@ export function Footer({
   companyName = "besqardasServis.az",
   phone = "+994 (12) 500-00-00",
   email = "info@besqardas.az",
-  address = "Bakı şəhəri, Nərimanov r-nu",
+  address: _address = "Bakı şəhəri, Nərimanov r-nu",
   locale = "az",
   onNavigate,
   className,

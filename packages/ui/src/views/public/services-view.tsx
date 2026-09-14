@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useMemo } from "react";
-import { Search, Filter, Wrench } from "lucide-react";
+import { Search, Wrench } from "lucide-react";
 import { ServiceCard } from "../../components/domain/service-card";
 import { resolveText, type AppLocale } from "../../utils/i18n";
 

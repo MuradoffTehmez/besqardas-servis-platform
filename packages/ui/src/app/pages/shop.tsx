@@ -1,9 +1,9 @@
 "use client";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { BadgeCheck, Heart, Scale, ShoppingCart, SlidersHorizontal, Star, Truck, Wrench, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@sp/utils";
-import { ApiError, idempotencyKey, post, qs, useApi, useApiMutation, useQueryClient, del, patch } from "@sp/api-client";
+import { ApiError, idempotencyKey, post, qs, useApi, useQueryClient, del, patch } from "@sp/api-client";
 import { useI18n } from "../core/i18n";
 import { Link, useRouter } from "../core/router";
 import { useSession } from "../core/session";
@@ -80,7 +80,7 @@ export function ProductTile({ p, compatibleBadge }: { p: any; compatibleBadge?: 
 /* ------------------------------------------------------------------ */
 
 export function ShopPage({ categoryPath }: { categoryPath?: string }) {
-  const { t, text } = useI18n();
+  const { t } = useI18n();
   const { query, setQuery, navigate } = useRouter();
   const { user } = useSession();
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -582,7 +582,7 @@ export function CartPage() {
 /* ------------------------------------------------------------------ */
 
 export function CheckoutPage() {
-  const { t, money, text, enumLabel, dateTime, time, date } = useI18n();
+  const { t, money, time, date } = useI18n();
   const { navigate } = useRouter();
   const { session, refresh } = useSession();
   const [key] = useState(() => idempotencyKey());
