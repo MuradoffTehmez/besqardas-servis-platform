@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { BarChart3, Building2, CalendarClock, ClipboardList, CreditCard, FileSignature, FileText, HardDrive, LayoutDashboard, Package, Percent, Plus, ShoppingBag, Trash2, Upload, UserRound, Users, Wallet, Wrench, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@sp/utils";
-import { patch, post, put, qs, useApi } from "@sp/api-client";
+import { patch, post, put, useApi } from "@sp/api-client";
 import { useI18n } from "../core/i18n";
 import { Link, useRouter } from "../core/router";
 import { useSession } from "../core/session";
@@ -318,7 +318,7 @@ function SchedulePlanPage() {
 }
 
 function ContractsPage() {
-  const { t, date, enumLabel } = useI18n();
+  const { t, date } = useI18n();
   const q = useApi<any[]>("/b2b/contracts");
   return (
     <>

@@ -1,3 +1,11 @@
 packages:
   - "apps/*"
   - "packages/*"
+
+# Quraşdırma zamanı build skripti icra etməsinə icazə verilən paketlər
+onlyBuiltDependencies:
+  - esbuild
+  - msw
+  - sharp
+  - "@tailwindcss/oxide"
+  - unrs-resolver

@@ -623,7 +623,7 @@ function technicianWarehouse(techId: string | null, order: ServiceOrderRec) {
   return db.warehouses[0]!.id;
 }
 
-export function buildEstimateLines(order: ServiceOrderRec, lines: NonNullable<ServiceOrderActionRequest["lines"]>, ctx: Ctx): EstimateLineRec[] {
+export function buildEstimateLines(order: ServiceOrderRec, lines: NonNullable<ServiceOrderActionRequest["lines"]>, _ctx: Ctx): EstimateLineRec[] {
   return lines.map((l) => {
     let name = L(l.name);
     let unitCents = Math.round(Number(l.unitPrice ?? "0") * 100);

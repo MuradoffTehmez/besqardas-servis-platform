@@ -10,10 +10,10 @@ import { useSession } from "../core/session";
 import { PanelShell, type NavGroup } from "../core/shells";
 import type { RouteDef } from "../core/router";
 import { Avatar, Card, Check, EmptyState, EnumBadge, FormError, Grid, KeyValue, Loading, PageHeader, QueryView, SearchBox, SelectField, Stars, Stat, Tabs, TextArea, TextField, Toggle, errorText } from "../kit/base";
-import { ConfirmDialog, Dialog, ResourceTable } from "../kit/actions";
+import { Dialog, ResourceTable } from "../kit/actions";
 import { EstimateView, StageTimeline } from "../kit/domain";
 import { BarsChart, DonutChart, FileDrop, LinesChart, MapView, QuantityInput, type PickedFile } from "../kit/media";
-import { DocumentsList, HistoryList, Progress, PromptDialog, UsageBar, pct, useOrderAction, useRefresh } from "./common";
+import { DocumentsList, HistoryList, Progress, PromptDialog, UsageBar, useRefresh } from "./common";
 import { OrderActions } from "./workflow";
 import { ProfilePage, SubscriptionPage } from "./account";
 
@@ -246,7 +246,7 @@ function DeclineOffer({ offer, onClose }: { offer: any; onClose: () => void }) {
 }
 
 function JobDetailPage({ id }: { id: string }) {
-  const { t, dateTime, enumLabel, text, money, date } = useI18n();
+  const { t, dateTime, enumLabel, text, money } = useI18n();
   const q = useApi<any>(`/service-orders/${id}`, { refetchInterval: 20_000 });
   const { query, setQuery } = useRouter();
   const tab = query.get("tab") ?? "work";

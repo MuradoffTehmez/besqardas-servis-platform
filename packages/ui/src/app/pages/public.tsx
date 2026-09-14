@@ -1,16 +1,15 @@
 "use client";
-import React, { useEffect, useMemo, useState } from "react";
-import { BadgeCheck, CalendarClock, CheckCircle2, Clock, Crown, Mail, MapPin, Megaphone, Phone, QrCode, ShieldCheck, Star } from "lucide-react";
-import { toast } from "sonner";
+import React, { useEffect, useState } from "react";
+import { BadgeCheck, CalendarClock, CheckCircle2, Clock, Crown, Mail, MapPin, Megaphone, Phone, QrCode, ShieldCheck } from "lucide-react";
 import { cn } from "@sp/utils";
-import { ApiError, idempotencyKey, post, qs, useApi, useQueryClient } from "@sp/api-client";
+import { idempotencyKey, post, qs, useApi, useQueryClient } from "@sp/api-client";
 import { HomeView } from "../../views/public/home-view";
 import { ServicesView } from "../../views/public/services-view";
 import { ServiceDetailView } from "../../views/public/service-detail-view";
 import { useI18n } from "../core/i18n";
 import { Link, useRouter } from "../core/router";
 import { useSession } from "../core/session";
-import { Avatar, Card, EmptyState, ErrorState, FormError, KeyValue, Loading, PageHeader, QueryView, Radios, SearchBox, SelectField, Stars, TextArea, TextField, errorText, useFormState, EnumBadge } from "../kit/base";
+import { Avatar, Card, EmptyState, ErrorState, FormError, KeyValue, Loading, PageHeader, QueryView, Radios, SearchBox, SelectField, Stars, TextArea, TextField, useFormState, EnumBadge } from "../kit/base";
 import { PlanComparison, SlotPicker } from "../kit/domain";
 import { FileDrop, MapView, PhoneField, type PickedFile } from "../kit/media";
 import { useCartActions } from "./shop";
@@ -20,7 +19,7 @@ import { useCartActions } from "./shop";
 /* ------------------------------------------------------------------ */
 
 export function HomePage() {
-  const { locale, t, text } = useI18n();
+  const { locale, t } = useI18n();
   const { navigate } = useRouter();
   const home = useApi<any>("/home");
   const cats = useApi<any[]>("/equipment-categories", { staleTime: 300_000 });
@@ -80,7 +79,7 @@ export function ServicesPage() {
 }
 
 export function ServiceDetailPage({ slug }: { slug: string }) {
-  const { locale, t, money, text, enumLabel, minutes } = useI18n();
+  const { locale, t, money, enumLabel, minutes } = useI18n();
   const { navigate } = useRouter();
   const q = useApi<any>(`/services/${slug}`);
   const fees = useApi<any>(q.data ? `/services/${q.data.id}/fees` : null);
@@ -131,8 +130,8 @@ export function ServiceDetailPage({ slug }: { slug: string }) {
 /* ------------------------------------------------------------------ */
 
 export function BookingPage({ slug }: { slug: string }) {
-  const { t, text, enumLabel, money, dateTime, minutes } = useI18n();
-  const { navigate, query } = useRouter();
+  const { t, enumLabel, money, dateTime, minutes } = useI18n();
+  const { query } = useRouter();
   const { session, ent, user } = useSession();
   const qc = useQueryClient();
   const service = useApi<any>(`/services/${slug}`);
@@ -391,7 +390,7 @@ export function BookingPage({ slug }: { slug: string }) {
 /* ------------------------------------------------------------------ */
 
 export function TechniciansPage() {
-  const { t, text } = useI18n();
+  const { t } = useI18n();
   const { query, setQuery, navigate } = useRouter();
   const specs = useApi<any[]>("/specializations");
   const list = useApi<any>(`/technicians${qs({ q: query.get("q"), pageSize: 30, sort: query.get("sort") })}`);
@@ -434,7 +433,7 @@ export function TechniciansPage() {
 }
 
 export function TechnicianProfilePage({ id }: { id: string }) {
-  const { t, text, enumLabel, date } = useI18n();
+  const { t, enumLabel, date } = useI18n();
   const q = useApi<any>(`/technicians/${id}`);
   const services = useApi<any>("/services?pageSize=100");
   return (
@@ -545,7 +544,7 @@ export function WarrantyVerifyPage({ code: initial }: { code?: string }) {
 /* ------------------------------------------------------------------ */
 
 export function BranchesPage() {
-  const { t, text } = useI18n();
+  const { t } = useI18n();
   const q = useApi<any>("/branches");
   const [focus, setFocus] = useState<string | null>(null);
   return (

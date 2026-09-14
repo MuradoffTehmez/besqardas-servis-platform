@@ -146,7 +146,7 @@ export function CreateServiceOrderPage() {
   const [newCustomer, setNewCustomer] = useState(false);
   const service = lookups.data?.services?.find((s: any) => s.id === v.serviceId);
   useEffect(() => { if (service && !service.executionForms.includes(v.executionForm)) setV((x) => ({ ...x, executionForm: service.executionForms[0] })); }, [v.serviceId]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => { const a = customer.data?.addresses; if (a?.length) setV((x) => ({ ...x, addressId: a.find((y: any) => y.isDefault)?.id ?? a[0].id, deviceId: "" })); }, [customer.data]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { const a = customer.data?.addresses; if (a?.length) setV((x) => ({ ...x, addressId: a.find((y: any) => y.isDefault)?.id ?? a[0].id, deviceId: "" })); }, [customer.data]);
   const submit = async () => {
     setBusy(true);
     setError(null);

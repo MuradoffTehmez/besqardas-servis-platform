@@ -423,7 +423,6 @@ export function serviceOrderDto(o: ServiceOrderRec, ctx: Ctx) {
   const techAccepted = !!o.technicianId && o.stages.some((s) => s.assigneeId === o.technicianId && ["ACCEPTED", "ON_THE_WAY", "ARRIVED", "IN_PROGRESS", "COMPLETED"].includes(s.status));
   const stages = o.stages
     .filter((s) => !customerView || s.customerName)
-    .filter((s) => ctx.role !== "TECHNICIAN" || true)
     .map((s) => stageDto(o, s, ctx));
   const plan = customer ? db.plans.find((p) => p.id === customer.planId) : null;
   return {

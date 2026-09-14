@@ -129,7 +129,7 @@ function VariantScanner({ onPick, onCreate }: { onPick: (v: VariantHit) => void;
     if (!q.trim()) { setHits([]); return; }
     const timer = setTimeout(() => void search(q.trim()), 220);
     return () => clearTimeout(timer);
-  }, [q]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [q]);
   useEffect(() => {
     const onDown = (e: MouseEvent) => { if (box.current && !box.current.contains(e.target as Node)) setOpen(false); };
     document.addEventListener("mousedown", onDown);

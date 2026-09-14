@@ -232,7 +232,7 @@ export function ResourceTable<T extends { id: string }>({ path, columns, filters
     const esc = (v: unknown) => `"${String(v ?? "").replaceAll('"', '""')}"`;
     const header = cols.map((c) => esc(typeof c.header === "string" ? c.header : c.key)).join(",");
     const body = rows.map((r) => cols.map((c) => esc(typeof (r as Record<string, unknown>)[c.key] === "object" ? JSON.stringify((r as Record<string, unknown>)[c.key]) : (r as Record<string, unknown>)[c.key])).join(",")).join("\n");
-    const blob = new Blob([`﻿${header}\n${body}`], { type: "text/csv;charset=utf-8" });
+    const blob = new Blob([`\uFEFF${header}\n${body}`], { type: "text/csv;charset=utf-8" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = `${path.split("/").pop()}.csv`;
