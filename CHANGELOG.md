@@ -2,6 +2,59 @@
 
 ## [Unreleased]
 
+## [v0.3.1] - 2026-09-14
+
+### Əlavə edildi (Added)
+
+#### SEO və Server-Side Rendering (SSR) (PRD §72)
+- Public səhifələr üçün tam Server-Side Rendering (SSR) və TanStack Query cache hidratasiyası.
+- Hər bir səhifə üçün dinamik metadata: başlıq (title), təsvir (description), canonical URL, çoxdilli hreflang (AZ, RU, EN), OpenGraph və JSON-LD strukturları (`BreadcrumbList`, `WebSite`).
+- Çoxdilli `sitemap.xml` və axtarış sistemləri üçün `robots.txt`; qapalı zonalar, səbət, axtarış və filtrlər üçün noindex qaydaları.
+- Prefikssiz ünvanlar üçün dil deteksiyası və avtomatik yönləndirmə proxisi (`proxy.ts`), fərdi 404 səhifələri.
+- ICU-dan asılı olmayan sabit cədvəllə ədəd, ay və həftə günü formatlaması (SSR və brauzer çıxışlarının tam uyğunluğu).
+
+#### Müqayisə sistemi və kateqoriya üzrə müqayisə səhifəsi
+- Kateqoriyalar üzrə müqayisə modulu (`/compare`): yalnız eyni əsas kateqoriya daxilində yan-yana müqayisə (hər kateqoriyada 4 məhsula qədər).
+- "Yalnız fərqləri göstər" rejimi, xüsusiyyət qrupları və fərqlərin vizual vurğulanması.
+- Mobil cihazlar üçün fərdi 2 məhsullu müqayisə, yerdəyişmə və kart bölmələri.
+- Başlıqda say nişanlı müqayisə ikonu, kartda və məhsul səhifəsində müqayisə düyməsi, toast vasitəsilə səhifəyə keçid.
+- API ilə tam sinxronizasiya (`isFavorite`, `inCompare`); qonaq istifadəçilər üçün girişə yönləndirmə.
+
+#### Xidmətlər kataloqu və xidmət detalı yenidən dizaynı
+- Kataloq: axtarış və statistikalı hero bölməsi, ikonlu kateqoriya plitələri, zəngin xidmət kartları (reytinq, sifariş sayı, icra formaları, zəmanət, qiymət).
+- Xidmət detalı: əsas faktlar, problem seçimi (sifariş formasına ötürülür), 5 addımlı icra prosesi, xidmətə daxil olanlar, hüquqlar və ləğv şərtləri, FAQ akkordeonu, rəylər və oxşar xidmətlər.
+- Mobil görünüş: üfüqi kateqoriya zolağı, şaquli addımlar və altda sabit sifariş paneli.
+
+#### E2E testlər və stabillik
+- Playwright E2E və axe əlçatanlıq testləri (`e2e/auth.spec.ts`, `e2e/checkout.spec.ts`, `e2e/mobile.spec.ts`, `e2e/seo-a11y.spec.ts`, `e2e/service-flow.spec.ts`).
+- `loginWithEmail` funksiyasında retry logic və 2FA gözləmə/idarəetmə mexanizmi.
+- Səhifələrdə hidratasiya siqnalı (`html[data-hydrated]`) ilə testlərin interaktivliyi gözləməsi.
+
+### Dəyişdirildi (Changed)
+
+#### Məhsul kataloqu və məhsul kartı
+- Məhsul kartında fərqləndirilmiş qiymət bloku solda, səbət düyməsi sağda; favorit ikonu birbaşa şəkil üzərində.
+- Başlıq, axtarış və sıralama vahid alətlər panelinə birləşdirildi; alt kateqoriyalar üçün üfüqi sürüşən zolaq.
+- Kateqoriya ağacı və filtrlər: say göstəriciləri, aktiv bənd vurğulanması, fieldset stilləri; daxili scroll qutusu ləğv edildi.
+- Mobil: 2 sütunlu adaptiv şəbəkə, yan-yana yerləşən filtr və sıralama düymələri.
+- Kataloqda hər səhifədə 24 məhsul və 6-dan çox parametr olduqda yığılan filtrlər.
+- Sayt konteynerinin maksimal eni 1440px-ə qədər artırıldı.
+
+#### Məhsul səhifəsi və səbət
+- Məhsul detalı: zəngin qalereya (əsas şəkil + miniatürlər), endirim nişanı, variant düymələri, taksit/qənaət bloku, quraşdırma seçimi, filial anbar qalıqları və rəy kartları.
+- Səbət səhifəsi: fərdi sətir kartları, quraşdırma xidməti seçimi, promo kod bloku, sətir xəbərdarlıqları, yekun qənaət və mobil üçün sabit alt rəsmiləşdirmə paneli.
+
+#### B2B və korporativ kabinet
+- B2B kabinet daxilində şirkətdaxili təsdiq növbəsi (sifarişlərin təsdiq/rədd edilməsi), sifarişlərdə "təsdiq gözləyir" nişanı.
+- B2B kataloq keçidləri kabinet daxilində saxlanılır.
+- İstifadəçi rəylərinə şikayət mexanizmi; admin paneldən birbaşa canlı saytda baxış keçidi.
+
+### Düzəlişlər (Fixed)
+- **i18n**: Sayt başlığı, footer, ana səhifə və kartlardakı bütün sabit mətnlər `site.*` tərcümə açarlarına keçirildi (AZ / RU / EN).
+- **Formatlama**: Pul, müddət və tarixlər formatlayıcılar vasitəsilə vahid standartla əks etdirilir.
+- **Əlçatanlıq (a11y)**: Keçidlər standart `<a href>` teqlərinə çevrildi, etiketsiz form elementlərinə əlçatan adlar təyin edildi.
+- **Lint**: Vahid flat ESLint konfiqurasiyası (`eslint.config.mjs`) təyin edildi, istifadəsiz kodlar və xətalar aradan qaldırıldı.
+
 ## [v0.3.0] - 2026-09-14
 
 ### Əlavə edildi (Added)
