@@ -443,9 +443,9 @@ function PlatformContent({ admin = false }: { admin?: boolean }) {
               <ServiceDetailView
                 service={data.service}
                 locale={locale}
-                onBack={() => go("/services")}
-                onBook={(s) => {
-                  setBookingService(s);
+                onNavigate={(href) => go(href)}
+                onBook={() => {
+                  setBookingService(data.service);
                   setBookingWizardOpen(true);
                 }}
               />
