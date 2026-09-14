@@ -31,12 +31,24 @@ export async function open(page: Page, url: string) {
 /** E-poçt və şifrə ilə UI vasitəsilə giriş. */
 export async function loginWithEmail(page: Page, email: string, opts: { next?: string; base?: string } = {}) {
   const base = opts.base ?? "";
-  await open(page, `${base}/az/login${opts.next ? `?next=${encodeURIComponent(opts.next)}` : ""}`);
-  const emailTab = page.getByRole("tab", { name: t("auth.byEmail") });
-  if (await emailTab.isVisible()) await emailTab.click();
-  await page.getByLabel(t("email")).fill(email);
-  await page.getByLabel(t("password")).fill(PASSWORD);
-  await page.getByRole("button", { name: t("auth.signIn") }).click();
+  const url = `${base}/az/login${opts.next ? `?next=${encodeURIComponent(opts.next)}` : ""}`;
+  // Dev serverdə ilk kompilyasiya səhifəni yenidən yükləyə bilər — forma vəziyyəti itərsə bir dəfə təkrarlanır
+  for (let attempt = 0; attempt < 2; attempt++) {
+    if (attempt === 0 || page.url().includes("/login")) await open(page, url);
+    const emailTab = page.getByRole("tab", { name: t("auth.byEmail") });
+    if (await emailTab.isVisible()) await emailTab.click();
+    const emailInput = page.getByLabel(t("email"));
+    await emailInput.waitFor({ state: "visible" });
+    await emailInput.fill(email);
+    await page.getByLabel(t("password")).fill(PASSWORD);
+    await page.getByRole("button", { name: t("auth.signIn") }).click();
+    const left = await page
+      .waitForURL((u) => !u.pathname.endsWith("/login"), { timeout: 15_000 })
+      .then(() => true)
+      .catch(() => false);
+    // 2FA addımı da girişin davamıdır
+    if (left || (await page.getByRole("heading", { name: t("auth.twoFactorTitle") }).isVisible())) return;
+  }
 }
 
 /** OTP / 2FA kodunu rəqəm xanalarına daxil edir. */
