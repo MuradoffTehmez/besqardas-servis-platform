@@ -862,3 +862,93 @@ a.mobile-nav-link, a.nav-link { text-decoration: none; }
 }
 @media (min-width: 1201px) and (max-width: 1279px) { .mobile-drawer { display: block; } }
 .site-header .lang-toggle { width: auto; min-width: 38px; padding: 0 10px; gap: 4px; }
+
+/* ---------- Müqayisə (desktop) ---------- */
+.compare-page { padding-bottom: 56px; }
+.compare-head { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px; margin-bottom: 18px; }
+.compare-head h1 { margin: 0; font-size: clamp(1.5rem, 1.1rem + 1.2vw, 2.1rem); }
+.compare-head p { margin: 4px 0 0; }
+.compare-head-actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.compare-groups { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; }
+.compare-groups .chip small { color: inherit; opacity: .75; font-weight: 700; margin-left: 2px; }
+.compare-groups-hint { font-size: 12.5px; color: var(--muted); margin-left: 6px; }
+.compare-table-wrap { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-lg); box-shadow: var(--shadow-xs); overflow-x: auto; }
+.compare-grid { display: grid; grid-template-columns: minmax(170px, 230px) repeat(var(--compare-cols, 2), minmax(210px, 1fr)); min-width: min-content; }
+.compare-row { display: contents; }
+.compare-label, .compare-cell { padding: 12px 18px; border-bottom: 1px solid var(--line-subtle); font-size: 14px; line-height: 1.45; min-width: 0; }
+.compare-label { color: var(--muted); font-weight: 500; display: flex; align-items: flex-start; gap: 8px; background: var(--surface); position: sticky; left: 0; z-index: 1; border-right: 1px solid var(--line-subtle); }
+.compare-cell { color: var(--ink); }
+.compare-cell + .compare-cell { border-left: 1px solid var(--line-subtle); }
+.compare-cell.is-empty { color: var(--muted); }
+.compare-cell.is-slot { background: repeating-linear-gradient(135deg, transparent 0 8px, var(--surface-soft) 8px 9px); }
+.compare-row.is-diff .compare-cell { font-weight: 600; background: color-mix(in srgb, var(--brand-light) 45%, transparent); }
+.compare-row.is-diff .compare-cell.is-slot { background: none; }
+.compare-diff-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--brand); margin-top: 7px; flex-shrink: 0; }
+.compare-row:hover .compare-cell, .compare-row:hover .compare-label { background-color: var(--surface-soft); }
+.compare-row-head .compare-label, .compare-row-head .compare-cell { border-bottom: 1px solid var(--line); padding: 16px 18px; vertical-align: top; }
+.compare-row-head .compare-label { flex-direction: column; justify-content: flex-end; }
+.compare-label-title { font-size: 13px; font-weight: 700; color: var(--ink); text-transform: uppercase; letter-spacing: .04em; }
+.compare-section { grid-column: 1 / -1; display: block; }
+.compare-section > div { padding: 10px 18px; background: var(--surface-soft); font-size: 12.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-secondary); border-bottom: 1px solid var(--line-subtle); position: sticky; left: 0; }
+.compare-nodiff { grid-column: 1 / -1; padding: 24px; text-align: center; color: var(--muted); margin: 0; }
+
+.compare-card { position: relative; display: grid; gap: 6px; align-content: start; }
+.compare-card-media { display: block; width: 104px; border-radius: var(--radius-md); overflow: hidden; }
+.compare-card-media .kit-visual { aspect-ratio: 1; width: 100%; }
+.compare-card-brand { font-size: 12px; color: var(--muted); font-weight: 600; margin-top: 4px; }
+.compare-card-name { font-weight: 650; color: var(--ink); line-height: 1.35; font-size: 14.5px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.7em; }
+.compare-card-name:hover { color: var(--brand); }
+.compare-card-price { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.compare-card-price strong { font-size: 18px; font-weight: 800; color: var(--ink); white-space: nowrap; }
+.compare-card-price strong.is-sale { color: #c2410c; }
+.compare-card-price s { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+.compare-card-add { justify-self: start; margin-top: 4px; }
+.compare-remove { position: absolute; top: -4px; right: -6px; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--line); background: var(--surface); color: var(--muted); cursor: pointer; transition: color .15s, border-color .15s; }
+.compare-remove:hover { color: var(--danger-text); border-color: currentColor; }
+.compare-add-slot { height: 100%; min-height: 220px; display: grid; place-content: center; justify-items: center; gap: 6px; text-align: center; border: 1.5px dashed var(--line); border-radius: var(--radius-md); color: var(--ink-secondary); padding: 16px; transition: border-color .15s, background .15s; }
+.compare-add-slot:hover { border-color: var(--brand); background: var(--brand-light); color: var(--brand); }
+.compare-add-slot small { color: var(--muted); max-width: 180px; }
+.compare-add-icon { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--brand-light); color: var(--brand); }
+
+/* ---------- Müqayisə (mobil — ayrıca interfeys) ---------- */
+.compare-m { display: grid; gap: 0; }
+.compare-m-sticky { position: sticky; top: 64px; z-index: 5; background: var(--bg, #f8fafc); padding: 8px 0 10px; margin-inline: -16px; padding-inline: 16px; box-shadow: 0 8px 12px -12px rgba(15, 23, 42, .25); }
+.compare-m-pickers { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: 6px; align-items: center; margin-bottom: 8px; }
+.compare-m-select { font-size: 13px; padding: 8px 28px 8px 10px; min-width: 0; text-overflow: ellipsis; }
+.compare-m-swap { width: 36px; height: 36px; min-width: 36px; min-height: 36px; }
+.compare-m-addbtn { justify-content: center; }
+.compare-m-cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.compare-m-cards.single { grid-template-columns: minmax(0, 1fr); }
+.compare-card.compact { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 10px; gap: 4px; grid-template-columns: 52px minmax(0, 1fr); column-gap: 8px; }
+.compare-card.compact .compare-card-media { width: 52px; grid-row: span 3; }
+.compare-card.compact .compare-card-brand { display: none; }
+.compare-card.compact .compare-card-name { font-size: 12.5px; min-height: 0; margin-top: 0; padding-right: 16px; }
+.compare-card.compact .compare-card-price { grid-column: 2; }
+.compare-card.compact .compare-card-price strong { font-size: 14px; }
+.compare-card.compact .compare-card-price s { display: none; }
+.compare-card.compact .compare-card-add { grid-column: 1 / -1; justify-self: stretch; justify-content: center; min-height: 36px; padding: 6px; }
+.compare-card.compact .compare-remove { top: 4px; right: 4px; width: 26px; height: 26px; }
+.compare-m-toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 2px 6px; }
+.compare-m-section { margin-top: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-md); overflow: hidden; }
+.compare-m-section h2 { font-size: 12.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-secondary); background: var(--surface-soft); padding: 10px 14px; margin: 0; font-family: inherit; }
+.compare-m-row { padding: 10px 14px 12px; border-top: 1px solid var(--line-subtle); }
+.compare-m-section h2 + .compare-m-row { border-top: 0; }
+.compare-m-label { font-size: 12px; color: var(--muted); font-weight: 600; margin-bottom: 6px; }
+.compare-m-values { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; font-size: 14px; color: var(--ink); }
+.compare-m-values > div + div { border-left: 1px solid var(--line-subtle); padding-left: 12px; }
+.compare-m-row.single .compare-m-values { grid-template-columns: minmax(0, 1fr); }
+.compare-m-row.is-diff { background: color-mix(in srgb, var(--brand-light) 45%, transparent); }
+.compare-m-row.is-diff .compare-m-values { font-weight: 650; }
+.compare-m-row.is-diff .compare-m-label::after { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--brand); margin-left: 6px; vertical-align: middle; }
+/* Mobil müqayisə kartı: səbət düyməsi qiymətin yanında, kart daha alçaq */
+.compare-card.compact { grid-template-columns: 44px minmax(0, 1fr) auto; grid-template-rows: auto auto; align-items: center; row-gap: 2px; padding: 8px; }
+.compare-card.compact .compare-card-media { width: 44px; grid-row: 1 / span 2; grid-column: 1; }
+.compare-card.compact .compare-card-name { grid-column: 2 / span 2; -webkit-line-clamp: 1; padding-right: 22px; }
+.compare-card.compact .compare-card-price { grid-column: 2; }
+.compare-card.compact .compare-card-add { grid-column: 3; grid-row: 2; width: 34px; height: 34px; min-height: 34px; padding: 0; margin: 0; justify-self: end; }
+.compare-card.compact .compare-remove { top: 2px; right: 2px; width: 24px; height: 24px; border: 0; background: transparent; }
+@media (max-width: 420px) { .site-header .logo-text { display: none; } }
+.compare-card.compact { column-gap: 6px; }
+.compare-card.compact .compare-card-price { min-width: 0; overflow: hidden; }
+.compare-card.compact .compare-card-price strong { font-size: 13px; }
+.compare-card.compact .compare-card-add { width: 30px; height: 30px; min-height: 30px; min-width: 30px; }
