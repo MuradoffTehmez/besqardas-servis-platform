@@ -152,8 +152,10 @@ async function prepare(locale: AppLocale, path: string, search: string, cookie: 
     if (s === null) page.status = 404;
     else if (s) {
       await load(`/services/${s.id}/fees`);
-      page.title = t("seo.serviceTitle", { name: s.name });
-      page.description = clip(s.shortDescription || s.description);
+      // Admin paneldə yazılmış SEO başlığı sayt adını artıq ehtiva edir
+      page.title = s.seoTitle || t("seo.serviceTitle", { name: s.name });
+      page.absoluteTitle = !!s.seoTitle;
+      page.description = clip(s.seoDescription || s.shortDescription || s.description);
       page.jsonLd.push(breadcrumbs(locale, [home, { name: t("services"), path: "/services" }, { name: s.name, path }]));
     }
   } else if (path === "/shop" || (params = match("/shop/*", path))) {

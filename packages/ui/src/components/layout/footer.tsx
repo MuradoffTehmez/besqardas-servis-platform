@@ -1,7 +1,9 @@
 "use client";
 import React from "react";
-import { Wrench, Phone, Mail, ShieldCheck } from "lucide-react";
+import { Wrench, Phone, Mail, ShieldCheck, MapPin } from "lucide-react";
 import { cn } from "@sp/utils";
+import { useI18n } from "../../app/core/i18n";
+import { anchorProps } from "../nav-anchor";
 
 export interface FooterProps {
   companyName?: string;
@@ -13,183 +15,79 @@ export interface FooterProps {
   className?: string;
 }
 
-export function Footer({
-  companyName = "besqardasServis.az",
-  phone = "+994 (12) 500-00-00",
-  email = "info@besqardas.az",
-  address: _address = "Bakı şəhəri, Nərimanov r-nu",
-  locale = "az",
-  onNavigate,
-  className,
-}: FooterProps) {
-  const t = {
-    az: {
-      services: "Xidmətlər",
-      allServices: "Bütün xidmətlər",
-      shop: "Məhsul və hissələr",
-      technicians: "Peşəkar ustalar",
-      pricing: "Abunəlik planları",
-      company: "Şirkət",
-      about: "Haqqımızda",
-      branches: "Filiallar",
-      contact: "Əlaqə",
-      faq: "Tez-tez verilən suallar",
-      customerCare: "Müştəri Xidmətləri",
-      warrantyVerify: "Zəmanət yoxlanışı",
-      becomeTech: "Usta kimi qoşul",
-      corporate: "Korporativ müştərilər",
-      platformMap: "Platforma xəritəsi (demo)",
-      terms: "İstifadə qaydaları",
-      privacy: "Məxfilik siyasəti",
-      rights: "Bütün hüquqlar qorunur.",
-      guarantee: "Rəsmi zəmanət və peşəkar servis təminatı",
-    },
-    ru: {
-      services: "Услуги",
-      allServices: "Все услуги",
-      shop: "Магазин и запчасти",
-      technicians: "Мастера",
-      pricing: "Тарифные планы",
-      company: "Компания",
-      about: "О нас",
-      branches: "Филиалы",
-      contact: "Контакты",
-      faq: "Частые вопросы",
-      customerCare: "Поддержка",
-      warrantyVerify: "Проверка гарантии",
-      becomeTech: "Стать мастером",
-      corporate: "Корпоративным клиентам",
-      platformMap: "Карта платформы (демо)",
-      terms: "Условия использования",
-      privacy: "Политика конфиденциальности",
-      rights: "Все права защищены.",
-      guarantee: "Официальная гарантия и профессиональный сервис",
-    },
-    en: {
-      services: "Services",
-      allServices: "All services",
-      shop: "Shop & spare parts",
-      technicians: "Technicians",
-      pricing: "Subscription plans",
-      company: "Company",
-      about: "About us",
-      branches: "Branches",
-      contact: "Contact",
-      faq: "FAQ",
-      customerCare: "Customer Care",
-      warrantyVerify: "Warranty verification",
-      becomeTech: "Become a technician",
-      corporate: "Corporate clients",
-      platformMap: "Platform map (demo)",
-      terms: "Terms of use",
-      privacy: "Privacy policy",
-      rights: "All rights reserved.",
-      guarantee: "Official warranty & professional service delivery",
-    },
-  }[locale];
+export function Footer({ companyName = "besqardasServis.az", phone, email, address, locale = "az", onNavigate, className }: FooterProps) {
+  const { t } = useI18n();
+  const link = (href: string) => anchorProps(locale, href, onNavigate);
+  const columns: { title: string; links: [string, string][] }[] = [
+    { title: t("site.footer.services"), links: [["/services", t("site.footer.allServices")], ["/shop", t("site.footer.shop")], ["/technicians", t("site.footer.technicians")], ["/pricing", t("site.footer.pricing")]] },
+    { title: t("site.footer.company"), links: [["/about", t("about")], ["/branches", t("nav.branches")], ["/contact", t("contact")], ["/faq", t("site.footer.faq")]] },
+    { title: t("site.footer.customerCare"), links: [["/warranty/verify", t("site.footer.warrantyVerify")], ["/become-technician", t("site.footer.becomeTech")], ["/business", t("site.footer.corporate")], ["/demo", t("site.footer.platformMap")]] },
+  ];
 
   return (
     <footer className={cn("site-footer", className)}>
       <div className="container footer-grid">
-        {/* Brand Column */}
         <div className="footer-col brand-col">
-          <button className="brand-logo" onClick={() => onNavigate("/")}>
+          <a className="brand-logo" {...link("/")}>
             <span className="logo-icon">
               <Wrench size={22} />
             </span>
             <span className="logo-text">
               <strong>besqardas</strong>
-              <span className="logo-sub">SERVİS</span>
+              <span className="logo-sub">{t("site.logoSub")}</span>
             </span>
-          </button>
-
-          <p className="footer-tagline">
-            Evinizin və müəssisənizin texniki avadanlıqlarının rəsmi quraşdırılması, təmiri və periodik servisi.
-          </p>
-
+          </a>
+          <p className="footer-tagline">{t("site.footer.tagline")}</p>
           <div className="footer-guarantee">
             <ShieldCheck size={16} />
-            <span>{t.guarantee}</span>
+            <span>{t("site.footer.guarantee")}</span>
           </div>
         </div>
 
-        {/* Services Links */}
-        <div className="footer-col">
-          <h4>{t.services}</h4>
-          <ul className="footer-links">
-            <li>
-              <button onClick={() => onNavigate("/services")}>{t.allServices}</button>
-            </li>
-            <li>
-              <button onClick={() => onNavigate("/shop")}>{t.shop}</button>
-            </li>
-            <li>
-              <button onClick={() => onNavigate("/technicians")}>{t.technicians}</button>
-            </li>
-            <li>
-              <button onClick={() => onNavigate("/pricing")}>{t.pricing}</button>
-            </li>
-          </ul>
-        </div>
-
-        {/* Company Links */}
-        <div className="footer-col">
-          <h4>{t.company}</h4>
-          <ul className="footer-links">
-            <li>
-              <button onClick={() => onNavigate("/about")}>{t.about}</button>
-            </li>
-            <li>
-              <button onClick={() => onNavigate("/branches")}>{t.branches}</button>
-            </li>
-            <li>
-              <button onClick={() => onNavigate("/contact")}>{t.contact}</button>
-            </li>
-            <li>
-              <button onClick={() => onNavigate("/faq")}>{t.faq}</button>
-            </li>
-          </ul>
-        </div>
-
-        {/* Customer Care & Contacts */}
-        <div className="footer-col">
-          <h4>{t.customerCare}</h4>
-          <ul className="footer-links">
-            <li>
-              <button onClick={() => onNavigate("/warranty/verify")}>{t.warrantyVerify}</button>
-            </li>
-            <li>
-              <button onClick={() => onNavigate("/become-technician")}>{t.becomeTech}</button>
-            </li>
-            <li>
-              <button onClick={() => onNavigate("/business")}>{t.corporate}</button>
-            </li>
-            <li>
-              <button onClick={() => onNavigate("/demo")}>{t.platformMap}</button>
-            </li>
-          </ul>
-
-          <div className="footer-contacts">
-            <div className="contact-item">
-              <Phone size={15} />
-              <strong>{phone}</strong>
-            </div>
-            <div className="contact-item">
-              <Mail size={15} />
-              <span>{email}</span>
-            </div>
+        {columns.map((col, i) => (
+          <div className="footer-col" key={col.title}>
+            <h2 className="footer-heading">{col.title}</h2>
+            <ul className="footer-links">
+              {col.links.map(([href, label]) => (
+                <li key={href}>
+                  <a {...link(href)}>{label}</a>
+                </li>
+              ))}
+            </ul>
+            {i === columns.length - 1 && (phone || email || address) && (
+              <address className="footer-contacts">
+                {phone && (
+                  <a className="contact-item" href={`tel:${phone.replace(/[^\d+]/g, "")}`}>
+                    <Phone size={15} />
+                    <strong>{phone}</strong>
+                  </a>
+                )}
+                {email && (
+                  <a className="contact-item" href={`mailto:${email}`}>
+                    <Mail size={15} />
+                    <span>{email}</span>
+                  </a>
+                )}
+                {address && (
+                  <span className="contact-item">
+                    <MapPin size={15} />
+                    <span>{address}</span>
+                  </span>
+                )}
+              </address>
+            )}
           </div>
-        </div>
+        ))}
       </div>
 
       <div className="container footer-bottom">
         <p>
-          © {new Date().getFullYear()} {companyName}. {t.rights}
+          © {new Date().getFullYear()} {companyName}. {t("site.footer.rights")}
         </p>
         <div className="footer-bottom-links">
-          <button onClick={() => onNavigate("/terms")}>{t.terms}</button>
-          <span>·</span>
-          <button onClick={() => onNavigate("/privacy")}>{t.privacy}</button>
+          <a {...link("/terms")}>{t("legal.terms")}</a>
+          <span aria-hidden>·</span>
+          <a {...link("/privacy")}>{t("legal.privacy")}</a>
         </div>
       </div>
     </footer>

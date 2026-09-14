@@ -2,7 +2,8 @@
 import React from "react";
 import { Star, Plus, ShieldCheck } from "lucide-react";
 import { cn } from "@sp/utils";
-import { resolveText, type AppLocale } from "../../utils/i18n";
+import { useI18n } from "../../app/core/i18n";
+import { anchorProps } from "../nav-anchor";
 
 export interface ProductCardData {
   id: string;
@@ -28,83 +29,73 @@ export interface ProductCardProps {
   className?: string;
 }
 
-export function ProductCard({
-  product,
-  locale = "az",
-  onSelect,
-  onAddToCart,
-  className,
-}: ProductCardProps) {
+export function ProductCard({ product, locale = "az", onSelect, onAddToCart, className }: ProductCardProps) {
+  const { t, text, money } = useI18n();
   const isOutOfStock = product.stockStatus === "OUT_OF_STOCK";
   const price = product.price?.effectivePrice;
-  const displayName = resolveText(product.name, locale as AppLocale, "Məhsul");
-  const displayBrand = resolveText(product.brandName, locale as AppLocale, "BESQARDAS");
+  const displayName = text(product.name);
+  const displayBrand = text(product.brandName);
+  const detail = onSelect ? anchorProps(locale, `/product/${product.slug}`, () => onSelect(product)) : null;
+  const addLabel = `${t("site.card.addToCart")}: ${displayName}`;
 
   return (
     <article className={cn("product-card", className)}>
-      <div
-        className="product-art cursor-pointer"
-        onClick={() => onSelect && onSelect(product)}
-      >
-        <div className="appliance">
-          <span className="appliance-brand">{displayBrand}</span>
-          <span className="appliance-light" />
-          <div className="vents" />
-          <span className="appliance-display">24°</span>
+      {detail ? (
+        <a className="product-art cursor-pointer" tabIndex={-1} aria-hidden {...detail}>
+          <ApplianceArt brand={displayBrand} />
+        </a>
+      ) : (
+        <div className="product-art" aria-hidden>
+          <ApplianceArt brand={displayBrand} />
         </div>
-        <div className="air-line" />
-        <div className="air-line second" />
-      </div>
+      )}
 
       <div className="product-info">
-        {displayBrand && (
-          <span className="product-brand">{displayBrand}</span>
-        )}
+        {displayBrand && <span className="product-brand">{displayBrand}</span>}
 
-        <h3 className="product-title">{onSelect ? <button className="title-action" onClick={() => onSelect(product)}>{displayName}</button> : displayName}</h3>
+        <h3 className="product-title">{detail ? <a className="title-action" {...detail}>{displayName}</a> : displayName}</h3>
 
         <div className="product-meta">
           {product.rating != null && (
             <div className="rating">
-              <Star size={13} fill="currentColor" />
+              <Star size={13} fill="currentColor" aria-hidden />
               <span>{product.rating}</span>
-              {product.reviewCount ? (
-                <span className="review-count">({product.reviewCount})</span>
-              ) : null}
+              {product.reviewCount ? <span className="review-count">({product.reviewCount})</span> : null}
             </div>
           )}
 
           {product.warrantyMonths ? (
             <span className="warranty-tag">
-              <ShieldCheck size={12} /> {product.warrantyMonths}{" "}
-              {locale === "az" ? "ay zəmanət" : locale === "ru" ? "мес. гарантия" : "mo warranty"}
+              <ShieldCheck size={12} /> {t("site.card.warrantyMonths", { months: product.warrantyMonths })}
             </span>
           ) : null}
         </div>
       </div>
 
       <div className="card-bottom">
-        <div className="price-box">
-          {price ? (
-            <strong>
-              {price.amount} {price.currency || "AZN"}
-            </strong>
-          ) : (
-            <span>-</span>
-          )}
-        </div>
+        <div className="price-box">{price ? <strong>{money(price)}</strong> : <span>—</span>}</div>
 
         {onAddToCart && (
-          <button
-            className="icon-button add"
-            disabled={isOutOfStock}
-            aria-label="Səbətə əlavə et"
-            onClick={() => onAddToCart(product)}
-          >
+          <button type="button" className="icon-button add" disabled={isOutOfStock} aria-label={addLabel} title={addLabel} onClick={() => onAddToCart(product)}>
             <Plus size={18} />
           </button>
         )}
       </div>
     </article>
+  );
+}
+
+function ApplianceArt({ brand }: { brand: string }) {
+  return (
+    <>
+      <div className="appliance">
+        <span className="appliance-brand">{brand}</span>
+        <span className="appliance-light" />
+        <div className="vents" />
+        <span className="appliance-display">24°</span>
+      </div>
+      <div className="air-line" />
+      <div className="air-line second" />
+    </>
   );
 }

@@ -83,13 +83,14 @@ export function ServiceDetailPage({ slug }: { slug: string }) {
   const { navigate } = useRouter();
   const q = useApi<any>(`/services/${slug}`);
   const fees = useApi<any>(q.data ? `/services/${q.data.id}/fees` : null);
+  const brand = useApi<any>("/branding", { staleTime: 300_000 });
   if (q.isLoading) return <div className="container py-8"><Loading rows={6} /></div>;
   if (q.error) return <div className="container py-8"><ErrorState error={q.error} onRetry={() => q.refetch()} /></div>;
   const s = q.data;
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "Service", name: s.name, serviceType: enumLabel("ServiceType", s.serviceType), provider: { "@type": "LocalBusiness", name: "besqardasServis.az" }, areaServed: "Azerbaijan", aggregateRating: { "@type": "AggregateRating", ratingValue: s.rating, reviewCount: s.completedCount } }) }} />
-      <ServiceDetailView service={s} locale={locale} onBack={() => navigate("/services")} onBook={() => navigate(`/services/${slug}/book`)} />
+      <ServiceDetailView service={s} locale={locale} supportPhone={brand.data?.contacts?.phone} onBack={() => navigate("/services")} onBook={() => navigate(`/services/${slug}/book`)} />
       <div className="container pb-8">
         <div className="kit-grid cols-2">
           <Card title={t("serviceInfo.howItWorks")}>

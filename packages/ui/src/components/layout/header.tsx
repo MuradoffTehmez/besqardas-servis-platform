@@ -12,6 +12,8 @@ import {
   LogOut,
 } from "lucide-react";
 import { cn } from "@sp/utils";
+import { useI18n } from "../../app/core/i18n";
+import { anchorProps } from "../nav-anchor";
 
 export interface NavItem {
   label: string;
@@ -38,6 +40,8 @@ export interface HeaderProps {
   className?: string;
 }
 
+const LANGUAGE_NAMES = { az: "Azərbaycan", ru: "Русский", en: "English" } as const;
+
 export function Header({
   logoText = "besqardas",
   navItems,
@@ -55,6 +59,7 @@ export function Header({
   onLogout,
   className,
 }: HeaderProps) {
+  const { t } = useI18n();
   const [userOpen, setUserOpen] = useState(false);
   const userRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -104,65 +109,56 @@ export function Header({
     }
   }, [langDropdownOpen]);
 
-  const handleNavClick = (href: string) => {
-    setMobileMenuOpen(false);
-    onNavigate(href);
-  };
+  const link = (href: string) => anchorProps(locale, href, onNavigate, () => setMobileMenuOpen(false));
+  const accountLabel = user ? user.fullName || t("site.myAccount") : t("login");
 
   return (
     <header className={cn("site-header", className)}>
       <div className="container header-inner">
-        {/* Brand Logo */}
-        <button
-          className="brand-logo"
-          onClick={() => handleNavClick("/")}
-          aria-label="Ana Səhifə"
-        >
+        {/* Brend loqosu */}
+        <a className="brand-logo" {...link("/")} aria-label={t("site.homeLink")}>
           <span className="logo-icon">
             <Wrench size={22} />
           </span>
           <span className="logo-text">
             <strong>{logoText}</strong>
-            <span className="logo-sub">SERVİS</span>
+            <span className="logo-sub">{t("site.logoSub")}</span>
           </span>
-        </button>
+        </a>
 
-        {/* Desktop Navigation */}
-        <nav className="desktop-nav" aria-label="Əsas Menyu">
+        {/* Desktop naviqasiya */}
+        <nav className="desktop-nav" aria-label={t("site.mainMenu")}>
           {navItems.map((item) => {
             const isActive = currentPath === item.href || (item.href !== "/" && currentPath.startsWith(item.href));
             return (
-              <button
+              <a
                 key={item.href}
                 className={cn("nav-link", isActive && "active")}
                 aria-current={isActive ? "page" : undefined}
-                onClick={() => handleNavClick(item.href)}
+                {...link(item.href)}
               >
                 {item.label}
                 {item.badge != null && <span className="nav-badge">{item.badge}</span>}
-              </button>
+              </a>
             );
           })}
         </nav>
 
-        {/* Actions Bar */}
+        {/* Əməliyyatlar */}
         <div className="header-actions">
           {onOpenSearch && (
-            <button
-              className="icon-button"
-              aria-label="Axtarış"
-              onClick={onOpenSearch}
-            >
+            <button type="button" className="icon-button" aria-label={t("search.title")} onClick={onOpenSearch}>
               <Search size={20} />
             </button>
           )}
 
-          {/* Language Switcher */}
+          {/* Dil seçimi */}
           <div className="lang-switcher" ref={langRef}>
             <button
+              type="button"
               className="lang-toggle icon-button"
               onClick={() => setLangDropdownOpen(!langDropdownOpen)}
-              aria-label="Dili dəyiş"
+              aria-label={t("site.changeLanguage")}
               aria-expanded={langDropdownOpen}
               aria-controls="language-options"
             >
@@ -175,27 +171,25 @@ export function Header({
               <div id="language-options" className="dropdown-menu lang-menu">
                 {(["az", "ru", "en"] as const).map((l) => (
                   <button
+                    type="button"
                     key={l}
+                    lang={l}
                     className={cn("dropdown-item", locale === l && "active")}
                     onClick={() => {
                       onLocaleChange(l);
                       setLangDropdownOpen(false);
                     }}
                   >
-                    {l === "az" ? "Azərbaycan" : l === "ru" ? "Русский" : "English"}
+                    {LANGUAGE_NAMES[l]}
                   </button>
                 ))}
               </div>
             )}
           </div>
 
-          {/* Cart Icon */}
+          {/* Səbət */}
           {onOpenCart && (
-            <button
-              className="cart-button icon-button"
-              aria-label={`Səbət (${cartCount})`}
-              onClick={onOpenCart}
-            >
+            <button type="button" className="cart-button icon-button" aria-label={t("site.cartWithCount", { count: cartCount })} onClick={onOpenCart}>
               <ShoppingBag size={20} />
               {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
             </button>
@@ -204,15 +198,14 @@ export function Header({
           {/* İstifadəçi menyusu və ya giriş düyməsi */}
           <div className="lang-switcher" ref={userRef}>
             <button
+              type="button"
               className="user-btn btn btn-sm outline"
               aria-haspopup={hasMenu ? "menu" : undefined}
               aria-expanded={hasMenu ? userOpen : undefined}
-              onClick={() => (hasMenu ? setUserOpen((o) => !o) : handleNavClick(user ? "/account" : "/login"))}
+              onClick={() => (hasMenu ? setUserOpen((o) => !o) : onNavigate(user ? "/account" : "/login"))}
             >
               {user?.avatarUrl ? <img src={user.avatarUrl} alt="" className="user-btn-avatar" /> : <UserRound size={16} />}
-              <span className="user-btn-label">
-                {user ? user.fullName || "Hesabım" : locale === "az" ? "Daxil ol" : locale === "ru" ? "Войти" : "Login"}
-              </span>
+              <span className="user-btn-label">{accountLabel}</span>
               {hasMenu && <ChevronDown size={14} />}
             </button>
             {hasMenu && userOpen && (
@@ -221,13 +214,13 @@ export function Header({
                 {userMenu!.map((item) => {
                   const Icon = item.icon;
                   return (
-                    <button key={item.href + item.label} role="menuitem" className="dropdown-item" onClick={() => { setUserOpen(false); handleNavClick(item.href); }}>
+                    <button type="button" key={item.href + item.label} role="menuitem" className="dropdown-item" onClick={() => { setUserOpen(false); onNavigate(item.href); }}>
                       {Icon && <Icon size={15} />} {item.label}
                     </button>
                   );
                 })}
                 {onLogout && (
-                  <button role="menuitem" className="dropdown-item danger" onClick={() => { setUserOpen(false); onLogout(); }}>
+                  <button type="button" role="menuitem" className="dropdown-item danger" onClick={() => { setUserOpen(false); onLogout(); }}>
                     <LogOut size={15} /> {logoutLabel}
                   </button>
                 )}
@@ -235,13 +228,14 @@ export function Header({
             )}
           </div>
 
-          {/* Mobile Menu Toggle */}
+          {/* Mobil menyu düyməsi */}
           <button
+            type="button"
             className="mobile-toggle icon-button"
             ref={menuRef}
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-navigation"
-            aria-label="Menyu"
+            aria-label={t("common.menu")}
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
@@ -249,18 +243,14 @@ export function Header({
         </div>
       </div>
 
-      {/* Mobile Navigation Drawer */}
+      {/* Mobil naviqasiya */}
       {mobileMenuOpen && (
         <div id="mobile-navigation" className="mobile-drawer">
-          <nav className="mobile-nav" aria-label="Mobil menyu">
+          <nav className="mobile-nav" aria-label={t("site.mobileMenu")}>
             {navItems.map((item) => (
-              <button
-                key={item.href}
-                className={cn("mobile-nav-link", currentPath === item.href && "active")}
-                onClick={() => handleNavClick(item.href)}
-              >
+              <a key={item.href} className={cn("mobile-nav-link", currentPath === item.href && "active")} {...link(item.href)}>
                 {item.label}
-              </button>
+              </a>
             ))}
             <div className="mobile-nav-divider" />
             {hasMenu ? (
@@ -268,27 +258,24 @@ export function Header({
                 {userMenu!.map((item) => {
                   const Icon = item.icon ?? UserRound;
                   return (
-                    <button key={item.href + item.label} className="mobile-nav-link" onClick={() => handleNavClick(item.href)}>
+                    <a key={item.href + item.label} className="mobile-nav-link" {...link(item.href)}>
                       <Icon size={18} />
                       <span>{item.label}</span>
-                    </button>
+                    </a>
                   );
                 })}
                 {onLogout && (
-                  <button className="mobile-nav-link" onClick={() => { setMobileMenuOpen(false); onLogout(); }}>
+                  <button type="button" className="mobile-nav-link" onClick={() => { setMobileMenuOpen(false); onLogout(); }}>
                     <LogOut size={18} />
                     <span>{logoutLabel}</span>
                   </button>
                 )}
               </>
             ) : (
-              <button
-                className="mobile-nav-link"
-                onClick={() => handleNavClick(user ? "/account" : "/login")}
-              >
+              <a className="mobile-nav-link" {...link(user ? "/account" : "/login")}>
                 <UserRound size={18} />
-                <span>{user ? user.fullName || "Hesabım" : "Daxil ol"}</span>
-              </button>
+                <span>{accountLabel}</span>
+              </a>
             )}
           </nav>
         </div>

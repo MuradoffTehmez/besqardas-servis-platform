@@ -1,17 +1,9 @@
 "use client";
 import React from "react";
-import {
-  Wrench,
-  Snowflake,
-  Flame,
-  Waves,
-  Droplets,
-  Zap,
-  Clock,
-  ArrowUpRight,
-} from "lucide-react";
+import { Wrench, Snowflake, Flame, Waves, Droplets, Zap, Clock, ArrowUpRight } from "lucide-react";
 import { cn } from "@sp/utils";
-import { resolveText, type AppLocale } from "../../utils/i18n";
+import { useI18n } from "../../app/core/i18n";
+import { anchorProps } from "../nav-anchor";
 
 export interface ServiceCardData {
   id: string;
@@ -40,26 +32,17 @@ const ICON_MAP: Record<string, typeof Wrench> = {
   zap: Zap,
 };
 
-export function ServiceCard({
-  service,
-  locale = "az",
-  onSelect,
-  onBook,
-  className,
-}: ServiceCardProps) {
+export function ServiceCard({ service, locale = "az", onSelect, onBook, className }: ServiceCardProps) {
+  const { t, text, money, minutes } = useI18n();
   const Icon = (service.icon && ICON_MAP[service.icon]) || Wrench;
-  const displayName = resolveText(service.name, locale as AppLocale, "Xidmət");
-  const displayDesc = resolveText(service.shortDescription, locale as AppLocale, "");
-
-  const getPriceLabel = () => {
-    if (service.price) {
-      const prefix = service.priceModel === "STARTING_FROM" ? (locale === "az" ? "-dan " : "от ") : "";
-      return `${prefix}${service.price.amount} ${service.price.currency || "AZN"}`;
-    }
-    if (locale === "az") return "Diaqnostikadan sonra";
-    if (locale === "ru") return "После диагностики";
-    return "After diagnosis";
-  };
+  const displayName = text(service.name);
+  const displayDesc = text(service.shortDescription);
+  const detail = onSelect ? anchorProps(locale, `/services/${service.slug}`, () => onSelect(service)) : null;
+  const priceLabel = service.price
+    ? service.priceModel === "STARTING_FROM"
+      ? t("serviceInfo.from", { price: money(service.price) })
+      : money(service.price)
+    : t("site.serviceDetail.afterDiagnostics");
 
   return (
     <article className={cn("service-card", className)}>
@@ -70,42 +53,31 @@ export function ServiceCard({
         {service.estimatedDurationMinutes ? (
           <span className="duration-badge">
             <Clock size={13} />
-            {service.estimatedDurationMinutes} {locale === "az" ? "dəq" : locale === "ru" ? "мин" : "min"}
+            {minutes(service.estimatedDurationMinutes)}
           </span>
         ) : null}
       </div>
 
-      <h3 className="service-title">{onSelect ? <button className="title-action" onClick={() => onSelect(service)}>{displayName}</button> : displayName}</h3>
+      <h3 className="service-title">{detail ? <a className="title-action" {...detail}>{displayName}</a> : displayName}</h3>
 
-      {displayDesc ? (
-        <p className="service-desc">{displayDesc}</p>
-      ) : null}
+      {displayDesc ? <p className="service-desc">{displayDesc}</p> : null}
 
       <div className="card-bottom">
         <div>
-          <small className="text-muted block">
-            {locale === "az" ? "Qiymət" : locale === "ru" ? "Цена" : "Price"}
-          </small>
-          <strong>{getPriceLabel()}</strong>
+          <small className="text-muted block">{t("site.card.price")}</small>
+          <strong>{priceLabel}</strong>
         </div>
 
         <div className="card-actions">
           {onBook && (
-            <button
-              className="btn btn-sm primary"
-              onClick={() => onBook(service)}
-            >
-              {locale === "az" ? "Sifariş et" : locale === "ru" ? "Заказать" : "Book"}
+            <button type="button" className="btn btn-sm primary" onClick={() => onBook(service)}>
+              {t("site.card.book")}
             </button>
           )}
-          {onSelect && (
-            <button
-              className="round-link"
-              aria-label={displayName}
-              onClick={() => onSelect(service)}
-            >
+          {detail && (
+            <a className="round-link" aria-label={displayName} {...detail}>
               <ArrowUpRight size={18} />
-            </button>
+            </a>
           )}
         </div>
       </div>
