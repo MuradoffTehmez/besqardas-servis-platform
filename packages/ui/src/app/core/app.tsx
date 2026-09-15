@@ -6,7 +6,7 @@ import { HydrationBoundary, QueryClient, QueryClientProvider, isUnreachable, use
 import { I18nProvider, useI18n } from "./i18n";
 import { ParamsProvider, RouterProvider, matchRoute, useRouter, type InitialLocation, type RouteDef } from "./router";
 import { SessionProvider, useSession } from "./session";
-import { CourierShell, MockPanel, PublicShell, adminUrl, homeFor, webUrl } from "./shells";
+import { MockPanel, PublicShell, adminUrl, homeFor, webUrl } from "./shells";
 import { Loading } from "../kit/base";
 import { CurrentRouteProvider } from "./nav";
 
@@ -205,5 +205,4 @@ export function RoutedApp({ routes, shells, app }: { routes: RouteDef[]; shells:
 export const defaultShells: Record<string, ShellRender> = {
   public: (c) => <PublicShell>{c}</PublicShell>,
   bare: (c) => <>{c}</>,
-  courier: (c) => <CourierShell>{c}</CourierShell>,
 };

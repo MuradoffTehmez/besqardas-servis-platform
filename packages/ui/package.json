@@ -1,12 +1,14 @@
 {
   "name": "@sp/ui",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "private": true,
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./web": "./src/web.ts",
+    "./admin": "./src/admin.ts",
     "./server": "./src/server.ts",
     "./locale": "./src/locale.ts",
     "./styles.css": "./src/styles.css",
@@ -19,9 +21,12 @@
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
+    "@sp/api-client": "workspace:*",
     "@sp/i18n": "workspace:*",
+    "@sp/schemas": "workspace:*",
     "@sp/types": "workspace:*",
     "@sp/utils": "workspace:*",
+    "@tanstack/react-query": "^5.102.8",
     "@tanstack/react-table": "^8.21.3",
     "class-variance-authority": "^0.7.1",
     "cmdk": "^1.1.1",
@@ -29,9 +34,6 @@
     "radix-ui": "^1.6.7",
     "recharts": "^3.10.1",
     "sonner": "^2.0.8",
-    "@tanstack/react-query": "^5.102.8",
-    "@sp/api-client": "workspace:*",
-    "@sp/schemas": "workspace:*",
     "zod": "^4.3.3"
   },
   "peerDependencies": {
@@ -40,8 +42,13 @@
   },
   "devDependencies": {
     "@sp/config": "workspace:*",
+    "@storybook/react-vite": "10.6.0",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
-    "typescript": "^5.9.3"
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "storybook": "10.6.0",
+    "typescript": "^5.9.3",
+    "vite": "8.3.0"
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Bell, Heart, Scale, CalendarDays, ChevronDown, ChevronRight, Compass, Globe, HardDrive, Home, LayoutDashboard, LayoutGrid, Package, Truck, Wallet, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Search, Settings2, ShoppingBag, UserRound, Wrench, X } from "lucide-react";
+import { Bell, Heart, Scale, CalendarDays, ChevronDown, ChevronRight, Compass, HardDrive, Home, LayoutDashboard, LayoutGrid, Package, Truck, Wallet, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Search, Settings2, ShoppingBag, UserRound, Wrench, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@sp/utils";
 import { post, put, useApi, useApiMutation, useQueryClient } from "@sp/api-client";
@@ -11,11 +11,15 @@ import { Link, useRouter } from "./router";
 import { INTERNAL_ROLES, useSession } from "./session";
 import { Avatar, EmptyState, Loading } from "../kit/base";
 import { notificationMeta } from "../../components/domain/notification-meta";
+import { LOCALE_CODES, LOCALE_NAMES, LocaleFlag } from "../../components/domain/locale-flag";
 import { CommandPalette, UserMenu, fold, useCurrentRoute, useMedia, usePaletteHotkey, type Command, type MenuLink } from "./nav";
 
 /* ------------------------------------------------------------------ */
 /* Public shell                                                        */
 /* ------------------------------------------------------------------ */
+
+/** Header-də hesab düyməsi göstərilməyən giriş axını səhifələri */
+const AUTH_PATHS = ["/login", "/register", "/forgot-password", "/reset-password", "/verify", "/2fa", "/select-mode"];
 
 export function PublicShell({ children }: { children: React.ReactNode }) {
   const { t, enumLabel } = useI18n();
@@ -50,6 +54,8 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
         onOpenCompare={() => navigate("/compare")}
         onOpenSearch={() => navigate("/search")}
         userMenu={userMenu}
+        actions={user ? <NotificationBell count={session?.unreadNotifications ?? 0} /> : null}
+        hideAccount={AUTH_PATHS.includes(path)}
         userMenuTitle={user ? user.companyName ?? enumLabel("Role", user.activeRole) : undefined}
         logoutLabel={t("logout")}
         onLogout={async () => { await logout(); navigate("/"); }}
@@ -320,14 +326,7 @@ export function PanelShell({ nav, title, children, homeLink = true, app = homeLi
             <span>{t("panel.searchShort")}</span>
             <kbd>Ctrl K</kbd>
           </button>
-          <label className="panel-locale">
-            <Globe size={15} aria-hidden />
-            <select value={locale} onChange={(e) => setLocale(e.target.value as "az")} aria-label={t("common.language")}>
-              <option value="az">AZ</option>
-              <option value="ru">RU</option>
-              <option value="en">EN</option>
-            </select>
-          </label>
+          <LocaleMenu locale={locale} onChange={setLocale} />
           <NotificationBell count={session?.unreadNotifications ?? 0} />
           <UserMenu links={menuLinks} onAdmin={toAdmin} />
         </div>
@@ -338,6 +337,64 @@ export function PanelShell({ nav, title, children, homeLink = true, app = homeLi
       {open && <button type="button" className="panel-scrim" aria-label={t("common.close")} onClick={() => setOpen(false)} />}
       <CommandPalette open={palette} onClose={() => setPalette(false)} commands={commands} />
     </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/* Sayt daxilində iş sahəsi: müştəri kabineti, usta paneli, B2B kabineti */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Kabinetlər sayt qabığının (header/footer) içində açılır: solda istifadəçi kartı və bölmələr, sağda məzmun.
+ * Planşet və mobildə bölmələr yuxarıda yapışqan, üfüqi sürüşən zolaq olur.
+ */
+export function SiteWorkspace({ nav, title, badge, children }: { nav: NavGroup[]; title: string; badge?: { label: string; to?: string; icon?: React.ComponentType<{ size?: number }> } | null; children: React.ReactNode }) {
+  const { t, enumLabel } = useI18n();
+  const { user, logout, can } = useSession();
+  const { path, navigate } = useRouter();
+  const groups = nav
+    .map((g) => ({ ...g, items: g.items.filter((i) => !i.hidden && (!i.permission || (Array.isArray(i.permission) ? i.permission.some(can) : can(i.permission)))) }))
+    .filter((g) => g.items.length);
+  const items = groups.flatMap((g) => g.items);
+  const active = items.filter((i) => path === i.to || (!i.exact && path.startsWith(`${i.to}/`))).sort((a, b) => b.to.length - a.to.length)[0];
+  const BadgeIcon = badge?.icon;
+  return (
+    <PublicShell>
+      <div className="acc-shell">
+        <div className="container acc-grid">
+          <aside className="acc-side" aria-label={title}>
+            {user && (
+              <div className="acc-user">
+                <Avatar name={user.fullName} tone={user.avatarTone} src={user.avatarUrl} size={52} />
+                <div className="acc-user-copy">
+                  <strong>{user.fullName}</strong>
+                  <small>{user.companyName ?? user.email ?? user.phone ?? enumLabel("Role", user.activeRole)}</small>
+                  {badge && (badge.to ? <Link to={badge.to} className="acc-plan">{BadgeIcon && <BadgeIcon size={12} />} {badge.label}</Link> : <span className="acc-plan">{BadgeIcon && <BadgeIcon size={12} />} {badge.label}</span>)}
+                </div>
+              </div>
+            )}
+            <nav className="acc-nav">
+              {groups.map((g, gi) => (
+                <div key={g.label ?? gi} className="acc-nav-group">
+                  {g.label && <span className="acc-nav-label">{g.label}</span>}
+                  {g.items.map((i) => (
+                    <Link key={i.to} to={i.to} className={cn("acc-nav-link", active === i && "active")} aria-current={active === i ? "page" : undefined}>
+                      <i.icon size={17} />
+                      <span>{i.label}</span>
+                      {i.badge ? <b className="acc-badge">{i.badge}</b> : null}
+                    </Link>
+                  ))}
+                </div>
+              ))}
+            </nav>
+            <button type="button" className="acc-logout" onClick={async () => { await logout(); navigate("/"); }} aria-label={t("logout")}>
+              <LogOut size={17} aria-hidden /> <span>{t("logout")}</span>
+            </button>
+          </aside>
+          <div className="acc-content">{children}</div>
+        </div>
+      </div>
+    </PublicShell>
   );
 }
 
@@ -360,6 +417,40 @@ export function webUrl(path = "") {
   u.pathname = `/${window.location.pathname.split("/")[1] || "az"}${path}`;
   u.search = "";
   return u.toString();
+}
+
+/** Panel üst zolağında bayraqlı dil seçimi */
+function LocaleMenu({ locale, onChange }: { locale: "az" | "ru" | "en"; onChange: (l: "az" | "ru" | "en") => void }) {
+  const { t } = useI18n();
+  const [open, setOpen] = useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey); };
+  }, [open]);
+  return (
+    <div className="kit-dropdown" ref={ref}>
+      <button type="button" className="panel-locale" onClick={() => setOpen((o) => !o)} aria-label={t("common.language")} aria-expanded={open} aria-haspopup="menu">
+        <LocaleFlag locale={locale} />
+        <span>{locale.toUpperCase()}</span>
+        <ChevronDown size={14} aria-hidden />
+      </button>
+      {open && (
+        <div className="kit-dropdown-menu locale-menu" role="menu">
+          {LOCALE_CODES.map((l) => (
+            <button key={l} type="button" role="menuitemradio" aria-checked={locale === l} lang={l} className={cn("dropdown-item", locale === l && "active")} onClick={() => { setOpen(false); onChange(l); }}>
+              <LocaleFlag locale={l} />
+              <span>{LOCALE_NAMES[l]}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function NotificationBell({ count }: { count: number }) {
@@ -400,32 +491,6 @@ function NotificationBell({ count }: { count: number }) {
           )}
         </div>
       )}
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* Kuryer shell — sadə mobil interfeys (PRD §21.6)                      */
-/* ------------------------------------------------------------------ */
-
-export function CourierShell({ children }: { children: React.ReactNode }) {
-  const { t } = useI18n();
-  const { user, logout } = useSession();
-  const { navigate, locale, setLocale } = useRouter();
-  return (
-    <div className="courier-shell">
-      <header className="courier-top">
-        <Link to="/courier" className="brand-logo"><span className="logo-icon">bq</span><span className="logo-text">{t("courier.title")}</span></Link>
-        <div className="flex items-center gap-2">
-          <select className="form-input courier-lang" value={locale} onChange={(e) => setLocale(e.target.value as "az")} aria-label={t("common.language")}>
-            <option value="az">AZ</option><option value="ru">RU</option><option value="en">EN</option>
-          </select>
-          {user && <Link to="/courier/profile" className="courier-avatar" aria-label={t("acc.nav.profile")}><Avatar name={user.fullName} tone={user.avatarTone} src={user.avatarUrl} size={34} /></Link>}
-          <button type="button" className="icon-button" aria-label={t("logout")} onClick={async () => { await logout(); navigate("/login"); }}><LogOut size={18} /></button>
-        </div>
-      </header>
-      {user && <p className="courier-user">{user.fullName}</p>}
-      <main id="main-content" className="courier-main">{children}</main>
     </div>
   );
 }

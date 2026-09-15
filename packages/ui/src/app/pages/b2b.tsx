@@ -1,114 +1,38 @@
 "use client";
 import React, { useState } from "react";
-import { BarChart3, Building2, CalendarClock, ClipboardList, CreditCard, FileSignature, FileText, HardDrive, LayoutDashboard, Package, Percent, Plus, ShoppingBag, Trash2, Upload, UserRound, Users, Wallet, Wrench, Zap } from "lucide-react";
+import { AlertTriangle, BadgePercent, Building2, ChevronRight, ClipboardList, CreditCard, FileSignature, FileText, Gauge, Megaphone, Package, Percent, Plus, ShieldCheck, ShoppingBag, Timer, Trash2, Upload, Wallet, Wrench, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@sp/utils";
 import { patch, post, put, useApi } from "@sp/api-client";
 import { useI18n } from "../core/i18n";
 import { Link, useRouter } from "../core/router";
 import { useSession } from "../core/session";
-import { PanelShell, type NavGroup } from "../core/shells";
-import type { RouteDef } from "../core/router";
+import { formatMonth } from "@sp/i18n";
 import { Card, EmptyState, EnumBadge, FormError, Grid, KeyValue, PageHeader, QueryView, SelectField, Stat, TextArea, TextField, errorText } from "../kit/base";
 import { ConfirmDialog, Dialog, ResourceTable } from "../kit/actions";
 import { BarsChart, DonutChart, MapView } from "../kit/media";
 import { PhoneField } from "../kit/media";
 import { AvatarUploader } from "../kit/upload";
-import { DocumentsPage, ProfilePage, SalesOrderDetailPage, SalesOrdersPage, ServiceOrderDetailPage, ServiceOrdersPage } from "./account";
-import { ShopPage } from "./shop";
-import { DocumentDialog, Progress, UsageBar, useRefresh } from "./common";
+import { DocumentsPage, ServiceOrdersPage } from "./account";
+import { DocumentDialog, UsageBar, useRefresh } from "./common";
 
 /**
  * B2B kabinetləri (PRD §44–45, §60.5): korporativ müştəri, partner və topdan alıcı. Qiymət, limit və borc API-dən gəlir.
  */
 
-type Segment = "corporate" | "partner" | "wholesale";
+export type Segment = "corporate" | "partner" | "wholesale";
 
-function segmentOf(role: string): Segment {
+export function segmentOf(role: string): Segment {
   return role === "PARTNER" ? "partner" : role === "WHOLESALE_CUSTOMER" ? "wholesale" : "corporate";
 }
 
-export function B2BShell({ children }: { children: React.ReactNode }) {
-  const { t } = useI18n();
-  const { role, user } = useSession();
-  const seg = segmentOf(role);
-  const base = `/${seg}`;
-  const common = [
-    { to: `${base}/documents`, label: t("b2b.nav.documents"), icon: FileText },
-    { to: `${base}/users`, label: t("b2b.nav.users"), icon: Users },
-    { to: `${base}/company`, label: t("b2b.nav.companyProfile"), icon: Building2 },
-    { to: `${base}/profile`, label: t("acc.nav.profile"), icon: UserRound },
-  ];
-  const nav: Record<Segment, NavGroup[]> = {
-    corporate: [
-      { items: [{ to: base, label: t("b2b.nav.dashboard"), icon: LayoutDashboard, exact: true }, { to: `${base}/services`, label: t("b2b.nav.services"), icon: Wrench }, { to: `${base}/schedule`, label: t("b2b.nav.schedule"), icon: CalendarClock }, { to: `${base}/sites`, label: t("b2b.nav.sites"), icon: Building2 }, { to: `${base}/devices`, label: t("b2b.nav.devices"), icon: HardDrive }] },
-      { label: t("b2b.nav.company"), items: [{ to: `${base}/contracts`, label: t("b2b.nav.contracts"), icon: FileSignature }, { to: `${base}/reports`, label: t("b2b.nav.reports"), icon: BarChart3 }, ...common] },
-    ],
-    partner: [
-      { items: [{ to: base, label: t("b2b.nav.dashboard"), icon: LayoutDashboard, exact: true }, { to: `${base}/catalog`, label: t("b2b.nav.catalog"), icon: ShoppingBag }, { to: `${base}/orders`, label: t("b2b.nav.orders"), icon: Package }, { to: `${base}/services`, label: t("b2b.nav.services"), icon: Wrench }] },
-      { label: t("b2b.nav.finance"), items: [{ to: `${base}/commissions`, label: t("b2b.nav.commissions"), icon: Percent }, { to: `${base}/balance`, label: t("b2b.nav.balance"), icon: Wallet }, ...common] },
-    ],
-    wholesale: [
-      { items: [{ to: base, label: t("b2b.nav.dashboard"), icon: LayoutDashboard, exact: true }, { to: `${base}/catalog`, label: t("b2b.nav.catalog"), icon: ShoppingBag }, { to: `${base}/quick-order`, label: t("b2b.nav.quickOrder"), icon: Zap }, { to: `${base}/quotes`, label: t("b2b.nav.quotes"), icon: ClipboardList }, { to: `${base}/orders`, label: t("b2b.nav.orders"), icon: Package }] },
-      { label: t("b2b.nav.finance"), items: [{ to: `${base}/balance`, label: t("b2b.nav.balance"), icon: Wallet }, ...common] },
-    ],
-  };
-  return <PanelShell nav={nav[seg]} title={user?.companyName ?? t(`b2b.${seg}`)}>{children}</PanelShell>;
-}
-
-const route = (roles: string[], pattern: string, render: RouteDef["render"], titleKey: string): RouteDef => ({ pattern, render, shell: "b2b", roles, titleKey });
-const CORP = ["CORPORATE_CUSTOMER"];
-const PART = ["PARTNER"];
-const WHOLE = ["WHOLESALE_CUSTOMER"];
-
-export const b2bRoutes: RouteDef[] = [
-  route(CORP, "/corporate", () => <B2BDashboardPage />, "b2b.nav.dashboard"),
-  route(CORP, "/corporate/sites", () => <SitesPage />, "b2b.nav.sites"),
-  route(CORP, "/corporate/devices", () => <B2BDevicesPage />, "b2b.nav.devices"),
-  route(CORP, "/corporate/services", () => <B2BServicesPage base="/corporate/services" />, "b2b.nav.services"),
-  route(CORP, "/corporate/services/:id", (p) => <ServiceOrderDetailPage id={p.id!} back="/corporate/services" />, "b2b.nav.services"),
-  route(CORP, "/corporate/schedule", () => <SchedulePlanPage />, "b2b.nav.schedule"),
-  route(CORP, "/corporate/contracts", () => <ContractsPage />, "b2b.nav.contracts"),
-  route(CORP, "/corporate/documents", () => <B2BDocumentsPage />, "b2b.nav.documents"),
-  route(CORP, "/corporate/reports", () => <ReportsPage />, "b2b.nav.reports"),
-  route(CORP, "/corporate/users", () => <CompanyUsersPage />, "b2b.nav.users"),
-  route(CORP, "/corporate/company", () => <CompanyProfilePage />, "b2b.nav.companyProfile"),
-  route(CORP, "/corporate/profile", () => <ProfilePage />, "acc.nav.profile"),
-
-  route(PART, "/partner", () => <B2BDashboardPage />, "b2b.nav.dashboard"),
-  route(PART, "/partner/catalog", () => <ShopPage base="/partner/catalog" />, "b2b.nav.catalog"),
-  route(PART, "/partner/catalog/*", (p) => <ShopPage base="/partner/catalog" categoryPath={p["*"]} />, "b2b.nav.catalog"),
-  route(PART, "/partner/orders", () => <SalesOrdersPage base="/partner/orders" />, "b2b.nav.orders"),
-  route(PART, "/partner/orders/:id", (p) => <SalesOrderDetailPage id={p.id!} back="/partner/orders" />, "b2b.nav.orders"),
-  route(PART, "/partner/services", () => <B2BServicesPage base="/partner/services" />, "b2b.nav.services"),
-  route(PART, "/partner/services/:id", (p) => <ServiceOrderDetailPage id={p.id!} back="/partner/services" />, "b2b.nav.services"),
-  route(PART, "/partner/commissions", () => <CommissionsPage />, "b2b.nav.commissions"),
-  route(PART, "/partner/documents", () => <B2BDocumentsPage />, "b2b.nav.documents"),
-  route(PART, "/partner/balance", () => <BalancePage />, "b2b.nav.balance"),
-  route(PART, "/partner/users", () => <CompanyUsersPage />, "b2b.nav.users"),
-  route(PART, "/partner/company", () => <CompanyProfilePage />, "b2b.nav.companyProfile"),
-  route(PART, "/partner/profile", () => <ProfilePage />, "acc.nav.profile"),
-
-  route(WHOLE, "/wholesale", () => <B2BDashboardPage />, "b2b.nav.dashboard"),
-  route(WHOLE, "/wholesale/catalog", () => <ShopPage base="/wholesale/catalog" />, "b2b.nav.catalog"),
-  route(WHOLE, "/wholesale/catalog/*", (p) => <ShopPage base="/wholesale/catalog" categoryPath={p["*"]} />, "b2b.nav.catalog"),
-  route(WHOLE, "/wholesale/quick-order", () => <QuickOrderPage />, "b2b.nav.quickOrder"),
-  route(WHOLE, "/wholesale/quotes", () => <QuotesPage />, "b2b.nav.quotes"),
-  route(WHOLE, "/wholesale/orders", () => <SalesOrdersPage base="/wholesale/orders" />, "b2b.nav.orders"),
-  route(WHOLE, "/wholesale/orders/:id", (p) => <SalesOrderDetailPage id={p.id!} back="/wholesale/orders" />, "b2b.nav.orders"),
-  route(WHOLE, "/wholesale/documents", () => <B2BDocumentsPage />, "b2b.nav.documents"),
-  route(WHOLE, "/wholesale/balance", () => <BalancePage />, "b2b.nav.balance"),
-  route(WHOLE, "/wholesale/users", () => <CompanyUsersPage />, "b2b.nav.users"),
-  route(WHOLE, "/wholesale/company", () => <CompanyProfilePage />, "b2b.nav.companyProfile"),
-  route(WHOLE, "/wholesale/profile", () => <ProfilePage />, "acc.nav.profile"),
-];
 
 /* ------------------------------------------------------------------ */
 /* Dashboard                                                            */
 /* ------------------------------------------------------------------ */
 
-function B2BDashboardPage() {
-  const { t, money, date, enumLabel } = useI18n();
+export function B2BDashboardPage() {
+  const { t, money, date, enumLabel, num, locale } = useI18n();
   const { role } = useSession();
   const seg = segmentOf(role);
   const q = useApi<any>("/b2b/dashboard");
@@ -117,65 +41,128 @@ function B2BDashboardPage() {
       {(d) => {
         const used = Number(d.currentDebt.amount);
         const limit = Number(d.creditLimit.amount);
+        const pct = limit ? Math.min(100, Math.round((used / limit) * 100)) : 0;
+        const orderLink = (o: any) => (o.kind === "SERVICE" ? (seg !== "wholesale" ? `/${seg}/services/${o.id}` : null) : seg !== "corporate" ? `/${seg}/orders/${o.id}` : null);
+        const cta = seg === "corporate"
+          ? <Link to="/services" className="btn primary"><Wrench size={16} /> {t("book")}</Link>
+          : seg === "wholesale" ? <Link to="/wholesale/quick-order" className="btn primary"><Zap size={16} /> {t("b2b.nav.quickOrder")}</Link>
+          : <Link to="/partner/catalog" className="btn primary"><ShoppingBag size={16} /> {t("b2b.nav.catalog")}</Link>;
         return (
-          <>
-            <PageHeader
-              title={d.companyName}
-              subtitle={t("b2b.dash.subtitle", { manager: d.accountManager, priceList: enumLabel("PriceType", d.priceList) })}
-              actions={
-                seg === "corporate" ? <Link to="/services" className="btn primary"><Wrench size={16} /> {t("book")}</Link> : seg === "wholesale" ? <Link to="/wholesale/quick-order" className="btn primary"><Zap size={16} /> {t("b2b.nav.quickOrder")}</Link> : <Link to="/partner/catalog" className="btn primary"><ShoppingBag size={16} /> {t("b2b.nav.catalog")}</Link>
-              }
-            />
-            {Number(d.overdue.amount) > 0 && <div className="kit-note danger mb-4">{t("b2b.dash.overdue", { amount: money(d.overdue) })}</div>}
-            {d.pendingApprovals > 0 && <div className="kit-note warning mb-4">{t("b2b.dash.approvals", { count: d.pendingApprovals })}</div>}
-            <Grid cols={4}>
-              <Stat label={t("b2b.dash.credit")} value={money(d.availableCredit)} hint={t("b2b.dash.ofLimit", { limit: money(d.creditLimit) })} icon={CreditCard} tone="success" to={`/${seg}/balance`} />
-              <Stat label={t("b2b.dash.debt")} value={money(d.currentDebt)} hint={d.paymentTerms === "DEFERRED" ? t("b2b.dash.deferred", { days: d.deferredDays }) : enumLabel("PaymentTerms", d.paymentTerms)} icon={Wallet} tone="warning" />
-              {seg === "partner" ? <Stat label={t("b2b.dash.commission")} value={money(d.commissionBalance)} icon={Percent} tone="info" to="/partner/commissions" /> : <Stat label={t("b2b.dash.openServices")} value={d.openServices} icon={Wrench} tone="info" to={seg === "corporate" ? "/corporate/services" : undefined} />}
-              <Stat label={t("b2b.dash.openOrders")} value={d.openOrders} icon={Package} to={seg !== "corporate" ? `/${seg}/orders` : undefined} />
-            </Grid>
-            <div className="kit-split">
-              <div className="kit-stack">
-                <Card title={t("b2b.dash.spend")}><BarsChart data={d.spendByMonth} xKey="month" bars={[{ key: "amount", label: t("common.total") }]} /></Card>
-                <Card title={t("b2b.dash.recent")}>
+          <div className="bz-dash">
+            <header className="bz-hero">
+              <div className="bz-hero-main">
+                <span className="bz-seg"><Building2 size={14} aria-hidden /> {enumLabel("Segment", d.segment)}</span>
+                <h1>{d.companyName}</h1>
+                <div className="bz-hero-meta">
+                  <span className="bz-manager"><span className="bz-manager-avatar">{d.accountManager?.[0]}</span><span><small>{t("b2b.dash.manager")}</small>{d.accountManager}</span></span>
+                  <span className="bz-chip"><BadgePercent size={14} aria-hidden /> {t("b2b.dash.priceListLabel")}: {enumLabel("PriceType", d.priceList)}</span>
+                  <span className="bz-chip"><Timer size={14} aria-hidden /> {d.paymentTerms === "DEFERRED" ? t("b2b.dash.deferred", { days: d.deferredDays }) : enumLabel("PaymentTerms", d.paymentTerms)}</span>
+                </div>
+              </div>
+              <div className="bz-hero-actions">{cta}<Link to={`/${seg}/documents`} className="btn outline"><FileText size={16} /> {t("b2b.nav.documents")}</Link></div>
+            </header>
+
+            {Number(d.overdue.amount) > 0 && <div className="tp-alert danger"><AlertTriangle size={18} aria-hidden /><span className="grow">{t("b2b.dash.overdue", { amount: money(d.overdue) })}</span><Link to={`/${seg}/balance`} className="btn btn-sm outline">{t("b2b.dash.viewBalance")}</Link></div>}
+            {d.pendingApprovals > 0 && <div className="tp-alert warning"><ShieldCheck size={18} aria-hidden /><span className="grow">{t("b2b.dash.approvals", { count: d.pendingApprovals })}</span>{seg !== "wholesale" && <Link to={`/${seg}/services`} className="btn btn-sm outline">{t("b2b.dash.viewApprovals")}</Link>}</div>}
+
+            <div className="tp-kpis">
+              <Link to={`/${seg}/balance`} className="tp-kpi tone-green">
+                <span className="tp-kpi-icon"><CreditCard size={20} /></span>
+                <span className="tp-kpi-label">{t("b2b.dash.credit")}</span>
+                <strong className="tp-kpi-value">{money(d.availableCredit)}</strong>
+                <span className="tp-kpi-hint">{t("b2b.dash.ofLimit", { limit: money(d.creditLimit) })}</span>
+              </Link>
+              <div className={cn("tp-kpi", pct > 80 ? "tone-red" : "tone-amber")}>
+                <span className="tp-kpi-icon"><Wallet size={20} /></span>
+                <span className="tp-kpi-label">{t("b2b.dash.debt")}</span>
+                <strong className="tp-kpi-value">{money(d.currentDebt)}</strong>
+                <span className={cn("tp-meter", pct > 80 && "is-full")}><i style={{ width: `${pct}%` }} /></span>
+              </div>
+              {seg === "partner" ? (
+                <Link to="/partner/commissions" className="tp-kpi tone-violet"><span className="tp-kpi-icon"><Percent size={20} /></span><span className="tp-kpi-label">{t("b2b.dash.commission")}</span><strong className="tp-kpi-value">{money(d.commissionBalance)}</strong><span className="tp-kpi-hint">&nbsp;</span></Link>
+              ) : (
+                <Link to={seg === "corporate" ? "/corporate/services" : "/wholesale/quotes"} className="tp-kpi tone-blue"><span className="tp-kpi-icon"><Wrench size={20} /></span><span className="tp-kpi-label">{t("b2b.dash.openServices")}</span><strong className="tp-kpi-value">{num(d.openServices)}</strong><span className="tp-kpi-hint">&nbsp;</span></Link>
+              )}
+              <Link to={seg !== "corporate" ? `/${seg}/orders` : "/corporate/documents"} className="tp-kpi tone-teal"><span className="tp-kpi-icon"><Package size={20} /></span><span className="tp-kpi-label">{t("b2b.dash.openOrders")}</span><strong className="tp-kpi-value">{num(d.openOrders)}</strong><span className="tp-kpi-hint">&nbsp;</span></Link>
+            </div>
+
+            <div className="tp-grid">
+              <div className="tp-main">
+                <section className="tp-section">
+                  <div className="tp-section-head"><h2>{t("b2b.dash.spend")}</h2></div>
+                  <BarsChart data={d.spendByMonth.map((x: any) => { const m = formatMonth(`${x.month}-15T12:00:00Z`, locale).split(" ")[0] ?? x.month; return { ...x, month: m.charAt(0).toLocaleUpperCase(locale) + m.slice(1) }; })} xKey="month" bars={[{ key: "amount", label: t("common.total") }]} />
+                </section>
+                <section className="tp-section">
+                  <div className="tp-section-head"><h2>{t("b2b.dash.recent")}</h2>{seg !== "corporate" ? <Link to={`/${seg}/orders`} className="tp-link">{t("common.viewAll")} <ChevronRight size={15} aria-hidden /></Link> : <Link to="/corporate/services" className="tp-link">{t("common.viewAll")} <ChevronRight size={15} aria-hidden /></Link>}</div>
                   {d.recentOrders.length ? (
-                    <ul className="kit-list">
-                      {d.recentOrders.map((o: any) => (
-                        <li key={o.id}>
-                          <Link to={o.kind === "SERVICE" ? `/${seg === "wholesale" ? "corporate" : seg}/services/${o.id}` : `/${seg === "corporate" ? "partner" : seg}/orders/${o.id}`} className="grow"><strong>{o.number}</strong><small className="block text-muted">{enumLabel("OrderKind", o.kind)} · {date(o.createdAt)}</small></Link>
-                          {o.total && <strong>{money(o.total)}</strong>}
-                          <EnumBadge group={o.kind === "SERVICE" ? "OrderStatus" : "SalesOrderStatus"} code={o.status} />
+                    <ul className="bz-orders">
+                      {d.recentOrders.map((o: any) => {
+                        const href = orderLink(o);
+                        const inner = (
+                          <>
+                            <span className={cn("bz-order-icon", o.kind === "SERVICE" ? "tone-blue" : "tone-violet")}>{o.kind === "SERVICE" ? <Wrench size={18} /> : <Package size={18} />}</span>
+                            <span className="bz-order-copy"><strong>{o.number}</strong><small>{enumLabel("OrderKind", o.kind)} · {date(o.createdAt)}</small></span>
+                            {o.total ? <strong className="bz-order-sum">{money(o.total)}</strong> : <span className="bz-order-sum">—</span>}
+                            <EnumBadge group={o.kind === "SERVICE" ? "OrderStatus" : "SalesOrderStatus"} code={o.status} />
+                            {href && <ChevronRight size={16} className="bz-chev" aria-hidden />}
+                          </>
+                        );
+                        return <li key={o.id}>{href ? <Link to={href} className="bz-order">{inner}</Link> : <div className="bz-order">{inner}</div>}</li>;
+                      })}
+                    </ul>
+                  ) : <EmptyState />}
+                </section>
+              </div>
+              <aside className="tp-side">
+                <section className="tp-section">
+                  <div className="tp-section-head"><h2>{t("b2b.dash.limit")}</h2></div>
+                  <div className="bz-limit">
+                    <div className="bz-ring" style={{ ["--p" as string]: `${pct}` }} role="img" aria-label={`${pct}%`}><span><strong>{pct}%</strong><small>{t("b2b.dash.used")}</small></span></div>
+                    <dl>
+                      <div><dt>{t("b2b.dash.debt")}</dt><dd>{money(d.currentDebt)}</dd></div>
+                      <div><dt>{t("b2b.dash.available")}</dt><dd className="ok">{money(d.availableCredit)}</dd></div>
+                      <div><dt>{t("b2b.dash.limit")}</dt><dd>{money(d.creditLimit)}</dd></div>
+                    </dl>
+                  </div>
+                  {d.addressUsage && <UsageBar label={t("b2b.dash.sites")} used={d.addressUsage.used} limit={d.addressUsage.limit} />}
+                  {Number(d.minOrder.amount) > 0 && <p className="text-sm text-muted">{t("b2b.dash.minOrder", { amount: money(d.minOrder) })}</p>}
+                </section>
+                {d.sla && (
+                  <section className="tp-section">
+                    <div className="tp-section-head"><h2>{t("b2b.dash.sla")}</h2></div>
+                    <div className="bz-sla">
+                      <div className="tone-green"><Gauge size={18} aria-hidden /><strong>{num(d.sla.compliance, 1)}%</strong><small>{t("b2b.dash.compliance")}</small></div>
+                      <div className="tone-blue"><Timer size={18} aria-hidden /><strong>{d.sla.avgReactionMinutes}</strong><small>{t("b2b.dash.reaction")}</small></div>
+                      <div className={d.sla.breaches ? "tone-red" : "tone-green"}><AlertTriangle size={18} aria-hidden /><strong>{d.sla.breaches}</strong><small>{t("b2b.dash.breaches")}</small></div>
+                    </div>
+                  </section>
+                )}
+                {d.contract && (
+                  <section className="tp-section">
+                    <div className="tp-section-head"><h2>{t("b2b.nav.contracts")}</h2><Link to={`/${seg}/contracts`} className="tp-link">{t("common.view")}</Link></div>
+                    <div className="bz-contract">
+                      <span className="bz-contract-icon"><FileSignature size={22} aria-hidden /></span>
+                      <div><strong>{d.contract.number}</strong><small>{date(d.contract.startsAt)} — {date(d.contract.endsAt)}</small></div>
+                    </div>
+                    <p className="bz-file"><FileText size={15} aria-hidden /> {d.contract.fileName}</p>
+                  </section>
+                )}
+                {d.campaigns.length > 0 && (
+                  <section className="tp-section">
+                    <div className="tp-section-head"><h2>{t("b2b.dash.campaigns")}</h2></div>
+                    <ul className="bz-campaigns">
+                      {d.campaigns.map((c: any) => (
+                        <li key={c.id}>
+                          <span className="bz-campaign-icon"><Megaphone size={16} aria-hidden /></span>
+                          <div><strong>{c.title}</strong><p>{c.description}</p><small><Timer size={12} aria-hidden /> {t("b2b.dash.until", { date: date(c.endsAt) })}</small></div>
                         </li>
                       ))}
                     </ul>
-                  ) : <EmptyState />}
-                </Card>
-              </div>
-              <div className="kit-stack">
-                <Card title={t("b2b.dash.limit")}>
-                  <div className="flex justify-between text-sm"><span>{t("b2b.dash.debt")}</span><strong>{money(d.currentDebt)} / {money(d.creditLimit)}</strong></div>
-                  <Progress value={limit ? (used / limit) * 100 : 0} tone={used / limit > 0.8 ? "warning" : undefined} />
-                  {d.addressUsage && <div className="mt-3"><UsageBar label={t("b2b.dash.sites")} used={d.addressUsage.used} limit={d.addressUsage.limit} /></div>}
-                  {Number(d.minOrder.amount) > 0 && <p className="text-sm text-muted">{t("b2b.dash.minOrder", { amount: money(d.minOrder) })}</p>}
-                </Card>
-                {d.sla && (
-                  <Card title={t("b2b.dash.sla")}>
-                    <KeyValue cols={1} items={[[t("b2b.dash.compliance"), `${d.sla.compliance}%`], [t("b2b.dash.reaction"), t("b2b.dash.minutes", { count: d.sla.avgReactionMinutes })], [t("b2b.dash.breaches"), d.sla.breaches]]} />
-                  </Card>
+                  </section>
                 )}
-                {d.contract && (
-                  <Card title={t("b2b.nav.contracts")}>
-                    <KeyValue cols={1} items={[[t("fields.number"), d.contract.number], [t("b2b.contracts.period"), `${date(d.contract.startsAt)} — ${date(d.contract.endsAt)}`], [t("b2b.contracts.file"), d.contract.fileName]]} />
-                  </Card>
-                )}
-                {d.campaigns.length > 0 && (
-                  <Card title={t("b2b.dash.campaigns")}>
-                    <ul className="kit-list">{d.campaigns.map((c: any) => <li key={c.id}><span className="grow"><strong>{c.title}</strong><small className="block text-muted">{c.description}</small><small className="text-warning">{t("b2b.dash.until", { date: date(c.endsAt) })}</small></span></li>)}</ul>
-                  </Card>
-                )}
-              </div>
+              </aside>
             </div>
-          </>
+          </div>
         );
       }}
     </QueryView>
@@ -186,7 +173,7 @@ function B2BDashboardPage() {
 /* Korporativ: obyektlər, cihazlar, servislər, qrafik, müqavilə, hesabat */
 /* ------------------------------------------------------------------ */
 
-function SitesPage() {
+export function SitesPage() {
   const { t, date } = useI18n();
   const q = useApi<any>("/b2b/sites");
   const [adding, setAdding] = useState(false);
@@ -250,7 +237,7 @@ function LimitDialog({ current, onClose }: { current: number; onClose: () => voi
   );
 }
 
-function B2BDevicesPage() {
+export function B2BDevicesPage() {
   const { t, date, enumLabel } = useI18n();
   const sites = useApi<any>("/b2b/sites");
   return (
@@ -274,7 +261,7 @@ function B2BDevicesPage() {
   );
 }
 
-function B2BServicesPage({ base }: { base: string }) {
+export function B2BServicesPage({ base }: { base: string }) {
   const { t } = useI18n();
   const { role } = useSession();
   return <ServiceOrdersPage base={base} title={t("b2b.nav.services")} intro={role === "CORPORATE_CUSTOMER" ? <ApprovalQueue base={base} /> : null} />;
@@ -334,7 +321,7 @@ function ApprovalQueue({ base }: { base: string }) {
   );
 }
 
-function SchedulePlanPage() {
+export function SchedulePlanPage() {
   const { t, date, text } = useI18n();
   const refresh = useRefresh();
   const { navigate } = useRouter();
@@ -359,7 +346,7 @@ function SchedulePlanPage() {
   );
 }
 
-function ContractsPage() {
+export function ContractsPage() {
   const { t, date } = useI18n();
   const q = useApi<any[]>("/b2b/contracts");
   return (
@@ -381,7 +368,7 @@ function ContractsPage() {
   );
 }
 
-function ReportsPage() {
+export function ReportsPage() {
   const { t, money } = useI18n();
   const q = useApi<any>("/b2b/reports");
   return (
@@ -414,7 +401,7 @@ function ReportsPage() {
 /* Ümumi: sənədlər, balans, istifadəçilər                              */
 /* ------------------------------------------------------------------ */
 
-function B2BDocumentsPage() {
+export function B2BDocumentsPage() {
   const { t } = useI18n();
   const refresh = useRefresh();
   const [doc, setDoc] = useState<string | null>(null);
@@ -427,7 +414,7 @@ function B2BDocumentsPage() {
   );
 }
 
-function BalancePage() {
+export function BalancePage() {
   const { t, money, date, text } = useI18n();
   const q = useApi<any>("/b2b/balance");
   return (
@@ -475,7 +462,7 @@ function BalancePage() {
 /* Şirkət profili                                                       */
 /* ------------------------------------------------------------------ */
 
-function CompanyProfilePage() {
+export function CompanyProfilePage() {
   const { t, date, money, enumLabel } = useI18n();
   const q = useApi<any>("/b2b/company");
   const refresh = useRefresh();
@@ -565,7 +552,7 @@ function CompanyProfilePage() {
 
 const COMPANY_ROLES = ["ORDERER", "APPROVER", "ACCOUNTANT", "SITE_MANAGER"];
 
-function CompanyUsersPage() {
+export function CompanyUsersPage() {
   const { t, relative, enumLabel, money } = useI18n();
   const { user } = useSession();
   const q = useApi<any>("/b2b/users");
@@ -627,7 +614,7 @@ function InviteDialog({ onClose }: { onClose: () => void }) {
 /* Partner: komissiyalar                                                */
 /* ------------------------------------------------------------------ */
 
-function CommissionsPage() {
+export function CommissionsPage() {
   const { t, money, date, enumLabel } = useI18n();
   const q = useApi<any>("/b2b/commissions?pageSize=50");
   return (
@@ -667,7 +654,7 @@ function CommissionsPage() {
 /* Topdan: sürətli sifariş və kommersiya təklifləri (§45.3)             */
 /* ------------------------------------------------------------------ */
 
-function QuickOrderPage() {
+export function QuickOrderPage() {
   const { t, money, text, qty } = useI18n();
   const { navigate } = useRouter();
   const refresh = useRefresh();
@@ -744,7 +731,7 @@ function QuickOrderPage() {
   );
 }
 
-function QuotesPage() {
+export function QuotesPage() {
   const { t, money, date, text, qty } = useI18n();
   const q = useApi<any>("/b2b/quotes?pageSize=50");
   const refresh = useRefresh();

@@ -12,6 +12,7 @@ import { adminUrl, homeFor, webUrl } from "../core/shells";
 import { Check, FormError, Loading, Radios, SelectField, TextField, errorText, useFormState } from "../kit/base";
 import { FileDrop, OtpInput, PhoneField, type PickedFile } from "../kit/media";
 import { InfoHero } from "./info";
+import { LocaleFlag } from "../../components/domain/locale-flag";
 
 /* ------------------------------------------------------------------ */
 /* Ümumi auth layout                                                   */
@@ -31,61 +32,80 @@ export function AuthLayout({ title, subtitle, children, wide, icon: Icon }: { ti
   const features = admin
     ? [{ icon: LayoutDashboard, text: t("auth.storyAdmin1") }, { icon: Boxes, text: t("auth.storyAdmin2") }, { icon: ShieldCheck, text: t("auth.storyAdmin3") }]
     : [{ icon: Wrench, text: t("auth.story1") }, { icon: FileText, text: t("auth.story2") }, { icon: ShieldCheck, text: t("auth.story3") }];
-  const siteLink = admin ? <a href={webUrl()} className="auth-back"><ArrowLeft size={16} aria-hidden /> {t("auth.backToSite")}</a> : <Link to="/" className="auth-back"><ArrowLeft size={16} aria-hidden /> {t("auth.backToSite")}</Link>;
+  const card = (
+    <div className="auth-card">
+      {Icon && <span className="auth-card-icon"><Icon size={24} aria-hidden /></span>}
+      <h1>{title}</h1>
+      {subtitle && <p className="auth-subtitle">{subtitle}</p>}
+      {children}
+    </div>
+  );
+
+  // Sayt: header/footer PublicShell-dən gəlir; burada yalnız tanıtım paneli və forma kartı qalır
+  if (!admin) {
+    return (
+      <section className={cn("auth-site", wide && "wide")}>
+        <div className="container auth-site-grid">
+          <aside className="auth-story auth-site-story">
+            <div className="auth-story-body">
+              <span className="auth-story-eyebrow">{t("auth.storyEyebrow")}</span>
+              <h2>{t("auth.storyTitle")}</h2>
+              <p>{t("auth.storyText")}</p>
+              <ul>
+                {features.map((f, i) => <li key={i}><span><f.icon size={18} aria-hidden /></span>{f.text}</li>)}
+              </ul>
+            </div>
+            {stats && (
+              <dl className="auth-stats">
+                <div><dt>{t("homeExtra.completed")}</dt><dd>{num(stats.completedServices)}+</dd></div>
+                <div><dt>{t("homeExtra.rating")}</dt><dd>{num(stats.rating, 1)}<small>/5</small></dd></div>
+                <div><dt>{t("homeExtra.branches")}</dt><dd>{num(stats.branches)}</dd></div>
+              </dl>
+            )}
+          </aside>
+          <div className="auth-site-main">
+            {card}
+            <p className="auth-site-secure"><Lock size={13} aria-hidden /> {t("auth.secureNote")}</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Admin (CRM): ayrıca tətbiqdir, öz ikisütunlu giriş görünüşündə qalır
   return (
-    <div className={cn("auth-shell", admin && "is-admin")}>
+    <div className="auth-shell is-admin">
       <aside className="auth-story">
         <div className="auth-story-top">
-          {admin ? (
-            <span className="auth-brand"><span className="auth-brand-icon"><Wrench size={20} aria-hidden /></span><span>besqardas <small>CRM</small></span></span>
-          ) : (
-            <Link to="/" className="auth-brand"><span className="auth-brand-icon"><Wrench size={20} aria-hidden /></span><span>besqardas <small>servis</small></span></Link>
-          )}
+          <span className="auth-brand"><span className="auth-brand-icon"><Wrench size={20} aria-hidden /></span><span>besqardas <small>CRM</small></span></span>
         </div>
         <div className="auth-story-body">
-          <span className="auth-story-eyebrow">{admin ? t("auth.storyAdminEyebrow") : t("auth.storyEyebrow")}</span>
-          <h2>{admin ? t("auth.storyAdminTitle") : t("auth.storyTitle")}</h2>
-          <p>{admin ? t("auth.storyAdminText") : t("auth.storyText")}</p>
+          <span className="auth-story-eyebrow">{t("auth.storyAdminEyebrow")}</span>
+          <h2>{t("auth.storyAdminTitle")}</h2>
+          <p>{t("auth.storyAdminText")}</p>
           <ul>
             {features.map((f, i) => <li key={i}><span><f.icon size={18} aria-hidden /></span>{f.text}</li>)}
           </ul>
         </div>
-        {stats ? (
-          <dl className="auth-stats">
-            <div><dt>{t("homeExtra.completed")}</dt><dd>{num(stats.completedServices)}+</dd></div>
-            <div><dt>{t("homeExtra.rating")}</dt><dd>{num(stats.rating, 1)}<small>/5</small></dd></div>
-            <div><dt>{t("homeExtra.branches")}</dt><dd>{num(stats.branches)}</dd></div>
-          </dl>
-        ) : (
-          <p className="auth-secure"><Lock size={15} aria-hidden /> {t("auth.secureNote")}</p>
-        )}
+        <p className="auth-secure"><Lock size={15} aria-hidden /> {t("auth.secureNote")}</p>
       </aside>
       <main id="main-content" className={cn("auth-main", wide && "wide")}>
         <div className="auth-top">
-          {siteLink}
+          <a href={webUrl()} className="auth-back"><ArrowLeft size={16} aria-hidden /> {t("auth.backToSite")}</a>
           <div className="auth-langs" role="group" aria-label={t("common.language")}>
             {AUTH_LOCALES.map(([code, label]) => (
-              <button key={code} type="button" className={cn(locale === code && "active")} aria-pressed={locale === code} onClick={() => setLocale(code)}>{label}</button>
+              <button key={code} type="button" className={cn(locale === code && "active")} aria-pressed={locale === code} onClick={() => setLocale(code)}><LocaleFlag locale={code} width={18} />{label}</button>
             ))}
           </div>
         </div>
         <div className="auth-center">
-          <div className="auth-mobile-brand"><span className="auth-brand-icon"><Wrench size={18} aria-hidden /></span><span>besqardas <small>{admin ? "CRM" : "servis"}</small></span></div>
-          <div className="auth-card">
-            {Icon && <span className="auth-card-icon"><Icon size={24} aria-hidden /></span>}
-            <h1>{title}</h1>
-            {subtitle && <p className="auth-subtitle">{subtitle}</p>}
-            {children}
-          </div>
+          <div className="auth-mobile-brand"><span className="auth-brand-icon"><Wrench size={18} aria-hidden /></span><span>besqardas <small>CRM</small></span></div>
+          {card}
           <p className="auth-secure-inline"><Lock size={13} aria-hidden /> {t("auth.secureNote")}</p>
         </div>
         <footer className="auth-foot">
           <span>© {year} {brand.data?.companyName ?? "besqardasServis.az"}</span>
-          {admin ? (
-            <><a href={webUrl("/terms")}>{t("legal.terms")}</a><a href={webUrl("/privacy")}>{t("legal.privacy")}</a></>
-          ) : (
-            <><Link to="/terms">{t("legal.terms")}</Link><Link to="/privacy">{t("legal.privacy")}</Link><Link to="/contact">{t("contact")}</Link></>
-          )}
+          <a href={webUrl("/terms")}>{t("legal.terms")}</a><a href={webUrl("/privacy")}>{t("legal.privacy")}</a>
         </footer>
       </main>
     </div>

@@ -8,13 +8,13 @@ import {
   X,
   Search,
   ChevronDown,
-  Globe,
   LogOut,
   Scale,
 } from "lucide-react";
 import { cn } from "@sp/utils";
 import { useI18n } from "../../app/core/i18n";
 import { anchorProps } from "../nav-anchor";
+import { LOCALE_CODES, LOCALE_NAMES, LocaleFlag } from "../domain/locale-flag";
 
 export interface NavItem {
   label: string;
@@ -40,10 +40,12 @@ export interface HeaderProps {
   onOpenSearch?: () => void;
   compareCount?: number;
   onOpenCompare?: () => void;
+  /** Dil seçimindən sonra göstərilən əlavə əməliyyatlar (məs. bildiriş zəngi) */
+  actions?: React.ReactNode;
+  /** Giriş/qeydiyyat səhifələrində hesab düyməsi gizlədilir */
+  hideAccount?: boolean;
   className?: string;
 }
-
-const LANGUAGE_NAMES = { az: "Azərbaycan", ru: "Русский", en: "English" } as const;
 
 export function Header({
   logoText = "besqardas",
@@ -62,6 +64,8 @@ export function Header({
   userMenuTitle,
   logoutLabel,
   onLogout,
+  actions,
+  hideAccount,
   className,
 }: HeaderProps) {
   const { t } = useI18n();
@@ -167,14 +171,14 @@ export function Header({
               aria-expanded={langDropdownOpen}
               aria-controls="language-options"
             >
-              <Globe size={18} />
+              <LocaleFlag locale={locale} />
               <span className="lang-current">{locale.toUpperCase()}</span>
               <ChevronDown size={14} />
             </button>
 
             {langDropdownOpen && (
               <div id="language-options" className="dropdown-menu lang-menu">
-                {(["az", "ru", "en"] as const).map((l) => (
+                {LOCALE_CODES.map((l) => (
                   <button
                     type="button"
                     key={l}
@@ -185,12 +189,15 @@ export function Header({
                       setLangDropdownOpen(false);
                     }}
                   >
-                    {LANGUAGE_NAMES[l]}
+                    <LocaleFlag locale={l} />
+                    <span>{LOCALE_NAMES[l]}</span>
                   </button>
                 ))}
               </div>
             )}
           </div>
+
+          {actions}
 
           {/* Müqayisə — siyahıda məhsul olduqda görünür */}
           {onOpenCompare && compareCount > 0 && (
@@ -209,6 +216,7 @@ export function Header({
           )}
 
           {/* İstifadəçi menyusu və ya giriş düyməsi */}
+          {!hideAccount && (
           <div className="lang-switcher" ref={userRef}>
             <button
               type="button"
@@ -240,6 +248,7 @@ export function Header({
               </div>
             )}
           </div>
+          )}
 
           {/* Mobil menyu düyməsi */}
           <button
@@ -284,7 +293,7 @@ export function Header({
                   </button>
                 )}
               </>
-            ) : (
+            ) : hideAccount ? null : (
               <a className="mobile-nav-link" {...link(user ? "/account" : "/login")}>
                 <UserRound size={18} />
                 <span>{accountLabel}</span>

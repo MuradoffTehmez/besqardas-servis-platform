@@ -1,0 +1,60 @@
+name: Lighthouse
+on:
+  workflow_dispatch:
+  schedule:
+    # Hər bazar ertəsi 06:00 (Bakı 10:00)
+    - cron: "0 6 * * 1"
+  push:
+    branches: [main]
+    paths:
+      - "apps/web/**"
+      - "packages/ui/**"
+      - "packages/i18n/**"
+      - "lighthouserc.json"
+permissions:
+  contents: read
+concurrency:
+  group: lighthouse-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEXT_PUBLIC_HIDE_MOCK_PANEL: "1"
+      MOCK_AUTOSTART: "0"
+    steps:
+      - name: Kodu götür
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: pnpm quraşdır
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 10.34.5
+      - name: Node.js quraşdır
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - name: Asılılıqları quraşdır
+        run: pnpm install --frozen-lockfile
+      - name: Web production build
+        run: pnpm turbo run build --filter=@sp/web
+      - name: Mock API və web serverini qaldır
+        run: |
+          PORT=4000 pnpm --filter @sp/mocks start > mock.log 2>&1 &
+          pnpm --filter @sp/web start > web.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -fs http://127.0.0.1:4000/api/health > /dev/null && curl -fs http://localhost:3000/az > /dev/null; then exit 0; fi
+            sleep 2
+          done
+          cat mock.log web.log
+          exit 1
+      - name: Lighthouse CI (Core Web Vitals büdcələri)
+        run: npx -y @lhci/cli@0.15.1 autorun
+      - name: Hesabatları saxla
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: lighthouse-reports
+          path: .lighthouseci
+          retention-days: 14

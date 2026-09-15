@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
-import { Platform } from "@sp/ui";
+import { WebApp } from "@sp/ui/web";
 import { SITE_URL, languageAlternates, pageRequest, preparePage } from "@sp/ui/server";
 
 /**
@@ -50,7 +50,7 @@ export default async function Page(props: Props) {
       {page.jsonLd.map((data, i) => (
         <script key={i} type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/</g, "\\u003c") }} />
       ))}
-      <Platform initial={{ locale: req.locale, path: req.path, search: req.search }} state={page.state} />
+      <WebApp initial={{ locale: req.locale, path: req.path, search: req.search }} state={page.state} />
     </>
   );
 }

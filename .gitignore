@@ -16,3 +16,8 @@ test-results
 .env.*
 !.env.example
 .claude/launch.json
+
+# Storybook statik kataloqu və Lighthouse hesabatları
+storybook-static
+.lighthouseci
+

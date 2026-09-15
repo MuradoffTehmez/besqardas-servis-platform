@@ -9,7 +9,7 @@
 ## Buraxılış addımları
 
 1. Release-ə daxil olan issue və PR-ları yoxlayın.
-2. `pnpm check` və `pnpm test:e2e` yoxlamalarını tamamlayın; CI, CodeQL və dependency review statuslarını yoxlayın.
+2. `pnpm check`, `pnpm test:e2e` və `pnpm test:visual` yoxlamalarını tamamlayın; CI, Lighthouse, CodeQL və dependency review statuslarını yoxlayın. Əl ilə yoxlama [brauzer qəbul protokolu](ACCEPTANCE.md) üzrə aparılır.
 3. `CHANGELOG.md` və `docs/DEMO.md` daxilində real əhatəni yeniləyin.
 4. GitHub-da konkret commit SHA üzərindən draft release yaradın. Demo versiyasında prerelease işarəsini saxlayın.
 5. Release qeydində dəyişikliklər, yoxlamalar, məlum məhdudiyyətlər və demo giriş təlimatını yazın.

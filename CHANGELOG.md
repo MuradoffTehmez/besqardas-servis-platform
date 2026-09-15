@@ -2,6 +2,42 @@
 
 ## [Unreleased]
 
+## [v0.3.3] - 2026-09-15
+
+### Əlavə edildi (Added)
+
+#### Keyfiyyət və test
+- Storybook 10 komponent kataloqu (`@sp/ui`): UI kit (düymələr, statuslar, forma sahələri, tablar, kartlar, modal, zaman xətti) və domen kartları, AZ/RU/EN keçiricisi.
+- E2E: usta təklifi qəbul edir → yola çıxır → checklist və foto ilə icra → imza və ödənişlə təhvil; Esc ilə dialoq bağlanması və fokus qayıdışı.
+- Core Web Vitals E2E testi (LCP, CLS, TTFB büdcələri) və Lighthouse CI workflow-u (`lighthouserc.json`, həftəlik, main-ə push, əl ilə).
+- Vizual reqressiya: login, qeydiyyat, planlar, FAQ və 404 üçün desktop/mobil etalonlar (`pnpm test:visual`).
+- Brauzer qəbul protokolu (`docs/ACCEPTANCE.md`).
+
+#### Panellər və header
+- Usta paneli, korporativ/partnyor/topdan kabinetləri və kuryer interfeysi üçün bildirişlər bölməsi.
+- Daxil olmuş istifadəçi üçün sayt header-ində bildiriş zəngi (sayğac və açılan siyahı).
+- Dil seçimində ölkə bayraqları (AZ, RU, GB) — sayt header-i, admin panel üst zolağı və CRM girişi.
+
+### Dəyişdirildi (Changed)
+
+#### Dizayn
+- Usta paneli dashboard-u: hero, növbəti iş, təklif xəbərdarlığı, limit göstəriciləri, iş kartları (marşrut, zəng), təklif kartları; mobildə iş siyahısı kartlarla.
+- B2B dashboard-u: hero, KPI-lar, xərc qrafiki, kredit limiti halqası, SLA, müqavilə və kampaniya kartları.
+- Müştəri, usta, B2B və kuryer kabinetləri, ödəniş səhifəsi, giriş və qeydiyyat səhifələri sayt qabığında (header/footer) açılır; giriş səhifələrində header-dəki "Daxil ol" düyməsi gizlədilir.
+
+#### Performans
+- Web tətbiqi admin CRM kodunu artıq yükləmir (`@sp/ui/web` və `@sp/ui/admin` giriş nöqtələri).
+- Kabinet səhifələri (müştəri, usta, B2B, kuryer) və recharts qrafikləri gecikmiş yüklənən ayrıca chunk-lardadır; public səhifələr tam SSR HTML ilə gəlir.
+- Şriftlər render-bloklayan Google Fonts sorğusu əvəzinə `next/font` ilə self-host olunur.
+- Lighthouse (mobil emulyasiya, production): JS 758 KB → 565 KB, FCP 3.3 s → 1.1–1.5 s, performans 0.45–0.49 → 0.58–0.82, CLS 0.
+
+### Düzəldildi (Fixed)
+- B2B dashboard-unda sifariş keçidləri seqmentə görə düzgün səhifəyə aparır.
+
+### Məlum məhdudiyyətlər
+- Backend (#14), bank ödəniş şlüzü (#15) və SMS/WhatsApp, canlı xəritə (#16) backend fazasına köçürülüb; mock davam edir.
+- Vizual etalonlar hazırda yalnız Windows üçündür; Linux etalonları Playwright Docker imicində yaradılmalıdır.
+
 ## [v0.3.2] - 2026-09-15
 
 ### Əlavə edildi (Added)

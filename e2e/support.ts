@@ -51,7 +51,7 @@ export async function loginWithEmail(
     await emailInput.waitFor({ state: "visible" });
     await emailInput.fill(email);
     await page.getByLabel(t("password")).fill(PASSWORD);
-    await page.getByRole("button", { name: t("auth.signIn") }).click();
+    await page.locator("#main-content").getByRole("button", { name: t("auth.signIn") }).click();
     const left = await page
       .waitForURL((u) => !u.pathname.endsWith("/login"), { timeout: 15_000 })
       .then(() => true)

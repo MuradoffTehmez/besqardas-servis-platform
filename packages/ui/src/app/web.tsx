@@ -1,37 +1,33 @@
 "use client";
 import React from "react";
-import { Bell, CreditCard, FileText, Heart, HardDrive, LayoutDashboard, Lock, LogOut, MapPin, Package, RotateCcw, ShieldCheck, Star, User, Users, Wrench, Crown } from "lucide-react";
-import { cn } from "@sp/utils";
+import { Bell, CreditCard, FileText, Heart, HardDrive, LayoutDashboard, Lock, MapPin, Package, RotateCcw, ShieldCheck, Star, User, Users, Wrench, Crown } from "lucide-react";
 import { useI18n } from "./core/i18n";
 import { useSession } from "./core/session";
 import { AppProviders, RoutedApp, SystemPage, defaultShells, type InitialAppState, type ShellRender } from "./core/app";
-import { PublicShell, type NavGroup } from "./core/shells";
-import { Link, useRouter } from "./core/router";
-import { Avatar } from "./kit/base";
+import { SiteWorkspace, type NavGroup } from "./core/shells";
 import type { RouteDef } from "./core/router";
 import { BecomeTechnicianPage, BusinessPage, ForgotPasswordPage, LoginPage, RegisterPage, ResetPasswordPage, SelectModePage, TwoFactorPage, VerifyPage } from "./pages/auth";
 import { BookingPage, ContentPage, HomePage, ServiceDetailPage, ServicesPage, WarrantyVerifyPage } from "./pages/public";
 import { BranchesPage, ContactPage, FaqPage, PricingPage, TechnicianProfilePage, TechniciansPage } from "./pages/info";
 import { CartPage, CheckoutPage, CheckoutResultPage, PayPage, ProductPage, SearchPage, ShopPage } from "./pages/shop";
 import { ComparePage } from "./pages/compare";
-import { AccountDashboardPage, AddressesPage, DeviceDetailPage, DevicesPage, DocumentsPage, FamilyPage, FavoritesPage, MyReviewsPage, NotificationsPage, PaymentsPage, ProfilePage, ReturnsPage, SalesOrderDetailPage, SalesOrdersPage, SecurityPage, ServiceOrderDetailPage, ServiceOrdersPage, SubscriptionPage, WarrantiesPage } from "./pages/account";
-import { technicianRoutes, TechnicianShell } from "./pages/technician";
-import { courierRoutes } from "./pages/courier";
-import { b2bRoutes, B2BShell } from "./pages/b2b";
+import { lazyPages } from "./core/lazy";
+import { technicianRoutes, TechnicianShell } from "./pages/technician-routes";
+import { CourierShell, courierRoutes } from "./pages/courier-routes";
+import { b2bRoutes, B2BShell } from "./pages/b2b-routes";
 import { DemoMapPage } from "./pages/demo";
+
+// Müştəri kabineti səhifələri ayrıca chunk-dır — public səhifələrin JS yükünə düşmür
+const Account = lazyPages(() => import("./pages/account"));
 
 /**
  * Müştəri saytı (apps/web): public sayt, auth, kabinet, usta paneli, B2B kabinetləri və kuryer interfeysi (PRD §60).
  */
 
-/**
- * Müştəri kabineti sayt qabığının (header/footer) içində açılır: solda istifadəçi kartı və bölmələr,
- * sağda səhifə məzmunu. Mobildə bölmələr yuxarıda üfüqi sürüşən zolaq olur.
- */
+/** Müştəri kabineti — sayt qabığında (SiteWorkspace). */
 function AccountShell({ children }: { children: React.ReactNode }) {
-  const { t, enumLabel } = useI18n();
-  const { session, ent, user, logout } = useSession();
-  const { path, navigate } = useRouter();
+  const { t } = useI18n();
+  const { session, ent } = useSession();
   const nav: NavGroup[] = [
     {
       items: [
@@ -64,48 +60,8 @@ function AccountShell({ children }: { children: React.ReactNode }) {
       ],
     },
   ];
-  const groups = nav.map((g) => ({ ...g, items: g.items.filter((i) => !i.hidden) }));
-  const items = groups.flatMap((g) => g.items);
-  const active = items.filter((i) => path === i.to || (!i.exact && path.startsWith(`${i.to}/`))).sort((a, b) => b.to.length - a.to.length)[0];
   const plan = session?.plan?.name as string | undefined;
-  return (
-    <PublicShell>
-      <div className="acc-shell">
-        <div className="container acc-grid">
-          <aside className="acc-side" aria-label={t("acc.title")}>
-            {user && (
-              <div className="acc-user">
-                <Avatar name={user.fullName} tone={user.avatarTone} src={user.avatarUrl} size={52} />
-                <div className="acc-user-copy">
-                  <strong>{user.fullName}</strong>
-                  <small>{user.email ?? user.phone ?? enumLabel("Role", user.activeRole)}</small>
-                  {plan && <Link to="/account/subscription" className="acc-plan"><Crown size={12} aria-hidden /> {plan}</Link>}
-                </div>
-              </div>
-            )}
-            <nav className="acc-nav">
-              {groups.map((g, gi) => (
-                <div key={g.label ?? gi} className="acc-nav-group">
-                  {g.label && <span className="acc-nav-label">{g.label}</span>}
-                  {g.items.map((i) => (
-                    <Link key={i.to} to={i.to} className={cn("acc-nav-link", active === i && "active")} aria-current={active === i ? "page" : undefined}>
-                      <i.icon size={17} />
-                      <span>{i.label}</span>
-                      {i.badge ? <b className="acc-badge">{i.badge}</b> : null}
-                    </Link>
-                  ))}
-                </div>
-              ))}
-            </nav>
-            <button type="button" className="acc-logout" onClick={async () => { await logout(); navigate("/"); }}>
-              <LogOut size={17} aria-hidden /> {t("logout")}
-            </button>
-          </aside>
-          <div className="acc-content">{children}</div>
-        </div>
-      </div>
-    </PublicShell>
-  );
+  return <SiteWorkspace nav={nav} title={t("acc.title")} badge={plan ? { label: plan, to: "/account/subscription", icon: Crown } : null}>{children}</SiteWorkspace>;
 }
 
 const CUSTOMER = ["CUSTOMER"];
@@ -123,7 +79,7 @@ export const webRoutes: RouteDef[] = [
   { pattern: "/compare", render: () => <ComparePage />, titleKey: "compare.title" },
   { pattern: "/cart", render: () => <CartPage />, titleKey: "cart.title" },
   { pattern: "/checkout", render: () => <CheckoutPage />, titleKey: "checkout.title" },
-  { pattern: "/checkout/pay", render: () => <PayPage />, shell: "bare", titleKey: "pay.title" },
+  { pattern: "/checkout/pay", render: () => <PayPage />, titleKey: "pay.title" },
   { pattern: "/checkout/result", render: () => <CheckoutResultPage />, titleKey: "result.title" },
   { pattern: "/technicians", render: () => <TechniciansPage />, titleKey: "technicians" },
   { pattern: "/technicians/:id", render: (p) => <TechnicianProfilePage id={p.id!} /> },
@@ -141,34 +97,34 @@ export const webRoutes: RouteDef[] = [
   { pattern: "/demo", render: () => <DemoMapPage />, titleKey: "demo.title" },
 
   // Auth (§60.2)
-  { pattern: "/login", render: () => <LoginPage />, shell: "bare", titleKey: "auth.loginTitle" },
-  { pattern: "/register", render: () => <RegisterPage />, shell: "bare", titleKey: "auth.registerTitle" },
-  { pattern: "/forgot-password", render: () => <ForgotPasswordPage />, shell: "bare", titleKey: "auth.forgotTitle" },
-  { pattern: "/reset-password", render: () => <ResetPasswordPage />, shell: "bare", titleKey: "auth.resetTitle" },
-  { pattern: "/verify", render: () => <VerifyPage />, shell: "bare", titleKey: "auth.verifyTitle" },
-  { pattern: "/2fa", render: () => <TwoFactorPage />, shell: "bare", titleKey: "auth.twoFactorTitle" },
-  { pattern: "/select-mode", render: () => <SelectModePage />, shell: "bare", titleKey: "auth.selectModeTitle" },
+  { pattern: "/login", render: () => <LoginPage />, titleKey: "auth.loginTitle" },
+  { pattern: "/register", render: () => <RegisterPage />, titleKey: "auth.registerTitle" },
+  { pattern: "/forgot-password", render: () => <ForgotPasswordPage />, titleKey: "auth.forgotTitle" },
+  { pattern: "/reset-password", render: () => <ResetPasswordPage />, titleKey: "auth.resetTitle" },
+  { pattern: "/verify", render: () => <VerifyPage />, titleKey: "auth.verifyTitle" },
+  { pattern: "/2fa", render: () => <TwoFactorPage />, titleKey: "auth.twoFactorTitle" },
+  { pattern: "/select-mode", render: () => <SelectModePage />, titleKey: "auth.selectModeTitle" },
 
   // Müştəri kabineti (§60.3)
-  { pattern: "/account", render: () => <AccountDashboardPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.dashboard" },
-  { pattern: "/account/profile", render: () => <ProfilePage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.profile" },
-  { pattern: "/account/addresses", render: () => <AddressesPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.addresses" },
-  { pattern: "/account/devices", render: () => <DevicesPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.devices" },
-  { pattern: "/account/devices/:id", render: (p) => <DeviceDetailPage id={p.id!} />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.devices" },
-  { pattern: "/account/services", render: () => <ServiceOrdersPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.services" },
-  { pattern: "/account/services/:id", render: (p) => <ServiceOrderDetailPage id={p.id!} />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.services" },
-  { pattern: "/account/orders", render: () => <SalesOrdersPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.orders" },
-  { pattern: "/account/orders/:id", render: (p) => <SalesOrderDetailPage id={p.id!} />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.orders" },
-  { pattern: "/account/returns", render: () => <ReturnsPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.returns" },
-  { pattern: "/account/subscription", render: () => <SubscriptionPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.subscription" },
-  { pattern: "/account/payments", render: () => <PaymentsPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.payments" },
-  { pattern: "/account/warranties", render: () => <WarrantiesPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.warranties" },
-  { pattern: "/account/documents", render: () => <DocumentsPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.documents" },
-  { pattern: "/account/favorites", render: () => <FavoritesPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.favorites" },
-  { pattern: "/account/notifications", render: () => <NotificationsPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.notifications" },
-  { pattern: "/account/reviews", render: () => <MyReviewsPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.reviews" },
-  { pattern: "/account/family", render: () => <FamilyPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.family" },
-  { pattern: "/account/security", render: () => <SecurityPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.security" },
+  { pattern: "/account", render: () => <Account.AccountDashboardPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.dashboard" },
+  { pattern: "/account/profile", render: () => <Account.ProfilePage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.profile" },
+  { pattern: "/account/addresses", render: () => <Account.AddressesPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.addresses" },
+  { pattern: "/account/devices", render: () => <Account.DevicesPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.devices" },
+  { pattern: "/account/devices/:id", render: (p) => <Account.DeviceDetailPage id={p.id!} />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.devices" },
+  { pattern: "/account/services", render: () => <Account.ServiceOrdersPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.services" },
+  { pattern: "/account/services/:id", render: (p) => <Account.ServiceOrderDetailPage id={p.id!} />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.services" },
+  { pattern: "/account/orders", render: () => <Account.SalesOrdersPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.orders" },
+  { pattern: "/account/orders/:id", render: (p) => <Account.SalesOrderDetailPage id={p.id!} />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.orders" },
+  { pattern: "/account/returns", render: () => <Account.ReturnsPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.returns" },
+  { pattern: "/account/subscription", render: () => <Account.SubscriptionPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.subscription" },
+  { pattern: "/account/payments", render: () => <Account.PaymentsPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.payments" },
+  { pattern: "/account/warranties", render: () => <Account.WarrantiesPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.warranties" },
+  { pattern: "/account/documents", render: () => <Account.DocumentsPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.documents" },
+  { pattern: "/account/favorites", render: () => <Account.FavoritesPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.favorites" },
+  { pattern: "/account/notifications", render: () => <Account.NotificationsPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.notifications" },
+  { pattern: "/account/reviews", render: () => <Account.MyReviewsPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.reviews" },
+  { pattern: "/account/family", render: () => <Account.FamilyPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.family" },
+  { pattern: "/account/security", render: () => <Account.SecurityPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.security" },
 
   ...technicianRoutes,
   ...b2bRoutes,
@@ -185,6 +141,7 @@ const webShells: Record<string, ShellRender> = {
   account: (c) => <AccountShell>{c}</AccountShell>,
   technician: (c) => <TechnicianShell>{c}</TechnicianShell>,
   b2b: (c) => <B2BShell>{c}</B2BShell>,
+  courier: (c) => <CourierShell>{c}</CourierShell>,
 };
 
 export function WebApp(ssr: InitialAppState) {
