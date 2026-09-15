@@ -7,6 +7,7 @@ import { findVariant, reserve, releaseReservation } from "../engine/stock";
 import { issueDocument, notify, onPaymentPaid, recordPayment } from "../engine/effects";
 import { createServiceOrder } from "../engine/orders";
 import { orderAmounts, recomputeStatus } from "../engine/workflow";
+import { installmentCents, installmentPlans } from "../engine/pricing";
 import { find, json, localize, parse, requireAuth, route, setCookie, validationError } from "../lib/http";
 import { apiError } from "../lib/errors";
 import { L, t } from "../lib/i18n";
@@ -122,7 +123,7 @@ export const commerceHandlers = [
         { method: "BANK_TRANSFER", label: t("pay.transfer", ctx.locale), available: b2b, note: b2b ? null : t("pay.b2bOnly", ctx.locale) },
         { method: "BALANCE", label: t("pay.balance", ctx.locale), available: b2b && ctx.company!.paymentTerms === "DEFERRED", note: b2b ? null : t("pay.b2bOnly", ctx.locale) },
       ],
-      installmentOffers: totalCents >= 30000 ? [3, 6, 12].map((m) => ({ provider: m === 12 ? "BirKart" : "Bolkart", months: m, monthly: money(Math.ceil(totalCents / m)) })) : [],
+      installmentOffers: b2b ? [] : installmentPlans(totalCents),
       installationSlots: needsInstallation
         ? [1, 2, 3, 4, 5].map((d) => ({ date: bakuAt(d, 0).slice(0, 10), slots: [10, 13, 16].map((h) => ({ start: bakuAt(d, h), end: bakuAt(d, h + 3), available: (d + h) % 4 !== 0 })) }))
         : [],
@@ -167,7 +168,9 @@ export const commerceHandlers = [
     if (data.paymentMethod === "INSTALLMENT" && c._raw.total < 30000) throw validationError({ paymentMethod: ["validation.installmentMin"] });
 
     const delivery = deliveryPrice(c._raw.subtotal, data.deliveryMethod);
-    const totalCents = b2b ? Math.round((c._raw.total + delivery) * 1.18) : c._raw.total + delivery;
+    const cashCents = b2b ? Math.round((c._raw.total + delivery) * 1.18) : c._raw.total + delivery;
+    // Kredit ilə alışda seçilmiş müddətin faizi yekun məbləğə əlavə olunur
+    const totalCents = data.paymentMethod === "INSTALLMENT" ? installmentCents(cashCents, data.installmentMonths ?? 12) : cashCents;
     const number = nextNumber(db.settings.orderNumberPrefix.sales, 5100);
     const so: SalesOrderRec = {
       id: newId("so-sales"),
@@ -185,7 +188,7 @@ export const commerceHandlers = [
       discountCents: c._raw.promoCents,
       deliveryCents: delivery,
       installationCents: c._raw.installation,
-      vatCents: b2b ? totalCents - (c._raw.total + delivery) : Math.round(totalCents - totalCents / 1.18),
+      vatCents: b2b ? cashCents - (c._raw.total + delivery) : Math.round(totalCents - totalCents / 1.18),
       totalCents,
       vatIncluded: !b2b,
       deliveryMethod: data.deliveryMethod,
