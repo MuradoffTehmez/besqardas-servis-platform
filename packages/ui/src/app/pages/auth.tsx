@@ -12,6 +12,7 @@ import { adminUrl, homeFor, webUrl } from "../core/shells";
 import { Check, FormError, Loading, Radios, SelectField, TextField, errorText, useFormState } from "../kit/base";
 import { FileDrop, OtpInput, PhoneField, type PickedFile } from "../kit/media";
 import { InfoHero } from "./info";
+import { LocaleFlag } from "../../components/domain/locale-flag";
 
 /* ------------------------------------------------------------------ */
 /* Ümumi auth layout                                                   */
@@ -93,7 +94,7 @@ export function AuthLayout({ title, subtitle, children, wide, icon: Icon }: { ti
           <a href={webUrl()} className="auth-back"><ArrowLeft size={16} aria-hidden /> {t("auth.backToSite")}</a>
           <div className="auth-langs" role="group" aria-label={t("common.language")}>
             {AUTH_LOCALES.map(([code, label]) => (
-              <button key={code} type="button" className={cn(locale === code && "active")} aria-pressed={locale === code} onClick={() => setLocale(code)}>{label}</button>
+              <button key={code} type="button" className={cn(locale === code && "active")} aria-pressed={locale === code} onClick={() => setLocale(code)}><LocaleFlag locale={code} width={18} />{label}</button>
             ))}
           </div>
         </div>

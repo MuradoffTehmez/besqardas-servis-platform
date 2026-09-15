@@ -3096,3 +3096,23 @@ a.bz-order:hover { border-color: var(--line-focus); background: var(--surface-su
   .auth-site { padding: 14px 0 32px; background: var(--surface-subtle); }
   .auth-site .auth-card { padding: 22px 18px; border-radius: 18px; box-shadow: none; }
 }
+
+/* ==========================================================================
+   Bayraqlı dil seçimi və header bildiriş zəngi
+   ========================================================================== */
+.locale-flag { display: block; flex-shrink: 0; border-radius: 3px; box-shadow: 0 0 0 1px rgba(15, 23, 42, .12); overflow: hidden; }
+.site-header .lang-toggle { gap: 7px; }
+.dropdown-menu.lang-menu .dropdown-item { display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+.header-actions .panel-bell { position: relative; }
+.header-actions .panel-bell .cart-badge { top: -5px; right: -5px; }
+.panel-locale { cursor: pointer; font: inherit; font-size: 13px; font-weight: 700; color: var(--ink); gap: 7px; padding: 0 10px; }
+.panel-locale:hover { border-color: var(--brand); }
+.panel-locale svg:last-child { color: var(--muted); }
+.kit-dropdown-menu.locale-menu { min-width: 170px; padding: 6px; }
+.locale-menu .dropdown-item { display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+.auth-langs button { display: inline-flex; align-items: center; gap: 6px; }
+@media (max-width: 767px) {
+  .site-header .header-actions .kit-dropdown-menu.wide { position: fixed; left: 8px; right: 8px; width: auto; top: 72px; }
+  .panel-locale svg:last-child { display: none; }
+  .panel-locale { padding: 0 8px; }
+}

@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { Bell, Heart, Scale, CalendarDays, ChevronDown, ChevronRight, Compass, Globe, HardDrive, Home, LayoutDashboard, LayoutGrid, Package, Truck, Wallet, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Search, Settings2, ShoppingBag, UserRound, Wrench, X } from "lucide-react";
+import { Bell, Heart, Scale, CalendarDays, ChevronDown, ChevronRight, Compass, HardDrive, Home, LayoutDashboard, LayoutGrid, Package, Truck, Wallet, LogOut, Menu, PanelLeftClose, PanelLeftOpen, Search, Settings2, ShoppingBag, UserRound, Wrench, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@sp/utils";
 import { post, put, useApi, useApiMutation, useQueryClient } from "@sp/api-client";
@@ -11,11 +11,15 @@ import { Link, useRouter } from "./router";
 import { INTERNAL_ROLES, useSession } from "./session";
 import { Avatar, EmptyState, Loading } from "../kit/base";
 import { notificationMeta } from "../../components/domain/notification-meta";
+import { LOCALE_CODES, LOCALE_NAMES, LocaleFlag } from "../../components/domain/locale-flag";
 import { CommandPalette, UserMenu, fold, useCurrentRoute, useMedia, usePaletteHotkey, type Command, type MenuLink } from "./nav";
 
 /* ------------------------------------------------------------------ */
 /* Public shell                                                        */
 /* ------------------------------------------------------------------ */
+
+/** Header-də hesab düyməsi göstərilməyən giriş axını səhifələri */
+const AUTH_PATHS = ["/login", "/register", "/forgot-password", "/reset-password", "/verify", "/2fa", "/select-mode"];
 
 export function PublicShell({ children }: { children: React.ReactNode }) {
   const { t, enumLabel } = useI18n();
@@ -50,6 +54,8 @@ export function PublicShell({ children }: { children: React.ReactNode }) {
         onOpenCompare={() => navigate("/compare")}
         onOpenSearch={() => navigate("/search")}
         userMenu={userMenu}
+        actions={user ? <NotificationBell count={session?.unreadNotifications ?? 0} /> : null}
+        hideAccount={AUTH_PATHS.includes(path)}
         userMenuTitle={user ? user.companyName ?? enumLabel("Role", user.activeRole) : undefined}
         logoutLabel={t("logout")}
         onLogout={async () => { await logout(); navigate("/"); }}
@@ -320,14 +326,7 @@ export function PanelShell({ nav, title, children, homeLink = true, app = homeLi
             <span>{t("panel.searchShort")}</span>
             <kbd>Ctrl K</kbd>
           </button>
-          <label className="panel-locale">
-            <Globe size={15} aria-hidden />
-            <select value={locale} onChange={(e) => setLocale(e.target.value as "az")} aria-label={t("common.language")}>
-              <option value="az">AZ</option>
-              <option value="ru">RU</option>
-              <option value="en">EN</option>
-            </select>
-          </label>
+          <LocaleMenu locale={locale} onChange={setLocale} />
           <NotificationBell count={session?.unreadNotifications ?? 0} />
           <UserMenu links={menuLinks} onAdmin={toAdmin} />
         </div>
@@ -418,6 +417,40 @@ export function webUrl(path = "") {
   u.pathname = `/${window.location.pathname.split("/")[1] || "az"}${path}`;
   u.search = "";
   return u.toString();
+}
+
+/** Panel üst zolağında bayraqlı dil seçimi */
+function LocaleMenu({ locale, onChange }: { locale: "az" | "ru" | "en"; onChange: (l: "az" | "ru" | "en") => void }) {
+  const { t } = useI18n();
+  const [open, setOpen] = useState(false);
+  const ref = React.useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey); };
+  }, [open]);
+  return (
+    <div className="kit-dropdown" ref={ref}>
+      <button type="button" className="panel-locale" onClick={() => setOpen((o) => !o)} aria-label={t("common.language")} aria-expanded={open} aria-haspopup="menu">
+        <LocaleFlag locale={locale} />
+        <span>{locale.toUpperCase()}</span>
+        <ChevronDown size={14} aria-hidden />
+      </button>
+      {open && (
+        <div className="kit-dropdown-menu locale-menu" role="menu">
+          {LOCALE_CODES.map((l) => (
+            <button key={l} type="button" role="menuitemradio" aria-checked={locale === l} lang={l} className={cn("dropdown-item", locale === l && "active")} onClick={() => { setOpen(false); onChange(l); }}>
+              <LocaleFlag locale={l} />
+              <span>{LOCALE_NAMES[l]}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function NotificationBell({ count }: { count: number }) {
