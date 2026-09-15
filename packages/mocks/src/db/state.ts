@@ -138,6 +138,10 @@ function baseState() {
     ticketCategories: [] as import("./types").TicketCategoryRec[],
     cannedResponses: [] as import("./types").CannedResponseRec[],
     tickets: [] as import("./types").TicketRec[],
+    loyaltyProgram: {} as import("./types").LoyaltyProgramRec,
+    loyaltyAccounts: [] as import("./types").LoyaltyAccountRec[],
+    loyaltyTxns: [] as import("./types").LoyaltyTxnRec[],
+    referrals: [] as import("./types").ReferralRec[],
     counters: {} as Record<string, number>,
     mockConfig: { delayMs: 250, errorRate: 0, forceError: null, emptyLists: false } as MockConfig,
   };

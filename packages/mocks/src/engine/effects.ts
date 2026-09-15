@@ -6,6 +6,7 @@ import { idFor, newId } from "../lib/rng";
 import { addMinutes, nowIso } from "../lib/time";
 import type { Ctx } from "./context";
 import { fullName } from "./context";
+import { earnForPayment } from "./loyalty";
 
 /** Yan təsirlər: bildiriş, audit, sənəd, ödəniş, zəmanət, kassa (PRD §49, §50, §58). */
 
@@ -123,9 +124,10 @@ export function recordPayment(input: {
   return payment;
 }
 
-/** Ödəniş uğurlu olduqda: fiskal çek (nağd/kart), nağd kassası balansı. */
+/** Ödəniş uğurlu olduqda: fiskal çek (nağd/kart), nağd kassası balansı, loyallıq xalı və keşbek. */
 export function onPaymentPaid(payment: PaymentRec) {
   payment.paidAt ??= nowIso();
+  earnForPayment(payment);
   if (["CASH", "CARD_ONLINE", "CARD_POS", "INSTALLMENT"].includes(payment.method)) {
     const fiscal = `NKA${String(700000 + db.documents.length).padStart(8, "0")}`;
     payment.fiscalNumber = fiscal;

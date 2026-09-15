@@ -86,6 +86,8 @@ const dict: Record<string, LocalizedText> = {
   "notif.ticketReopened": L("Müraciət yenidən açıldı", "Обращение переоткрыто", "Ticket reopened"),
   "notif.ticketResolved": L("Müraciətiniz həll olundu", "Обращение решено", "Your request is resolved"),
   "notif.ticketEscalated": L("Müraciət eskalasiya olundu", "Эскалация обращения", "Ticket escalated"),
+  "notif.loyaltyTierUp": L("Loyallıq səviyyəniz yüksəldi", "Ваш уровень повышен", "Your loyalty tier increased"),
+  "notif.loyaltyReferral": L("Dəvət proqramı", "Программа приглашений", "Referral programme"),
   "notif.ticketSlaBreach": L("Müraciətin SLA-sı pozuldu", "Нарушен SLA обращения", "Ticket SLA breached"),
 };
 

@@ -203,6 +203,19 @@ export type TicketReplyRequest = I<typeof S.TicketReplyRequest>;
 export type TicketActionRequest = I<typeof S.TicketActionRequest>;
 export type TicketStats = I<typeof S.TicketStats>;
 
+export type LoyaltyTier = I<typeof S.LoyaltyTier>;
+export type LoyaltyTxnType = I<typeof S.LoyaltyTxnType>;
+export type ReferralStatus = I<typeof S.ReferralStatus>;
+export type LoyaltyProgram = I<typeof S.LoyaltyProgram>;
+export type LoyaltyTierRule = I<typeof S.LoyaltyTierRule>;
+export type LoyaltyTransaction = I<typeof S.LoyaltyTransaction>;
+export type LoyaltyAccount = I<typeof S.LoyaltyAccount>;
+export type LoyaltyOverview = I<typeof S.LoyaltyOverview>;
+export type LoyaltyCheckout = I<typeof S.LoyaltyCheckout>;
+export type LoyaltyMember = I<typeof S.LoyaltyMember>;
+export type LoyaltyStats = I<typeof S.LoyaltyStats>;
+export type ReferralEntry = I<typeof S.ReferralEntry>;
+
 /** Usta paneli cavabları */
 export interface TechnicianDashboard {
   employmentType: EmploymentType;

@@ -8,6 +8,7 @@ import { issueDocument, notify, onPaymentPaid, recordPayment } from "../engine/e
 import { createServiceOrder } from "../engine/orders";
 import { orderAmounts, recomputeStatus } from "../engine/workflow";
 import { installmentCents, installmentPlans } from "../engine/pricing";
+import { accountOf, ensureAccount, expirePoints, loyaltyEligible, program, redeem, redeemLimits, spendWallet, tierRule } from "../engine/loyalty";
 import { find, json, localize, parse, requireAuth, route, setCookie, validationError } from "../lib/http";
 import { apiError } from "../lib/errors";
 import { L, t } from "../lib/i18n";
@@ -32,6 +33,30 @@ function ensureGuestKey(ctx: Ctx): [string, string][] {
   const cid = newId("guest");
   ctx.guestKey = cid;
   return [["Set-Cookie", setCookie("cid", cid, 60 * 60 * 24 * 30)]];
+}
+
+/** Checkout-da xal və keşbekin mövcud limitləri (hesablama backend-dədir, §64). */
+function loyaltyBlock(ctx: Ctx, totalCents: number) {
+  const p = program();
+  if (!p.active || !loyaltyEligible(ctx.user) || !!ctx.company) return { available: false, points: 0, pointValue: money(p.pointValueCents ?? 0), minRedeemPoints: 0, maxRedeemPoints: 0, maxRedeemAmount: money(0), walletBalance: money(0), maxWalletAmount: money(0), earnPoints: 0, cashbackAmount: money(0) };
+  expirePoints();
+  const account = ensureAccount(ctx.user!.id)!;
+  const limits = redeemLimits(ctx.user!.id, totalCents);
+  const rule = tierRule(account.tier);
+  const afterPoints = Math.max(0, totalCents - limits.maxRedeemCents);
+  const wallet = Math.min(account.walletCents, afterPoints);
+  return {
+    available: true,
+    points: account.points,
+    pointValue: money(p.pointValueCents),
+    minRedeemPoints: p.minRedeemPoints,
+    maxRedeemPoints: limits.maxRedeemPoints,
+    maxRedeemAmount: money(limits.maxRedeemCents),
+    walletBalance: money(account.walletCents),
+    maxWalletAmount: money(wallet),
+    earnPoints: Math.floor((totalCents / 100) * p.pointsPerAznProduct * rule.multiplier),
+    cashbackAmount: money(Math.round((totalCents * rule.cashbackPercent) / 100)),
+  };
 }
 
 function deliveryPrice(subtotalCents: number, method: string) {
@@ -129,6 +154,7 @@ export const commerceHandlers = [
         : [],
       requiresInvoiceDetails: b2b,
       needsInstallation,
+      loyalty: loyaltyBlock(ctx, totalCents),
       company: ctx.company ? { name: ctx.company.legalName, voen: ctx.company.voen, creditAvailable: money(ctx.company.creditLimitCents - ctx.company.debtCents) } : null,
       summary: (({ _raw, ...rest }) => rest)({ ...c, totals: { ...c.totals, deliveryTotal: money(deliveryPrice(c._raw.subtotal, method)), total: money(totalCents) } }),
     };
@@ -167,15 +193,31 @@ export const commerceHandlers = [
     }
     if (data.paymentMethod === "INSTALLMENT" && c._raw.total < 30000) throw validationError({ paymentMethod: ["validation.installmentMin"] });
 
+    // Loyallıq: xal endirimi və keşbek pul kisəsi yalnız fərdi müştəri üçün (§A2)
+    const loyaltyOn = program().active && !b2b && loyaltyEligible(user);
+    const grossCents = c._raw.total + deliveryPrice(c._raw.subtotal, data.deliveryMethod);
+    let redeemCents = 0;
+    let walletCents = 0;
+    if (loyaltyOn && data.redeemPoints) {
+      expirePoints();
+      const limits = redeemLimits(user.id, grossCents);
+      if (data.redeemPoints < limits.minRedeemPoints || data.redeemPoints > limits.maxRedeemPoints) throw validationError({ redeemPoints: ["validation.pointsRange"] });
+      redeemCents = data.redeemPoints * limits.pointValueCents;
+    }
+    if (loyaltyOn && data.useWallet) {
+      walletCents = Math.min(accountOf(user.id)?.walletCents ?? 0, Math.max(0, grossCents - redeemCents));
+    }
+
     const delivery = deliveryPrice(c._raw.subtotal, data.deliveryMethod);
-    const cashCents = b2b ? Math.round((c._raw.total + delivery) * 1.18) : c._raw.total + delivery;
+    const loyaltyCents = redeemCents + walletCents;
+    const cashCents = b2b ? Math.round((c._raw.total + delivery) * 1.18) : Math.max(0, c._raw.total + delivery - loyaltyCents);
     // Kredit ilə alışda seçilmiş müddətin faizi yekun məbləğə əlavə olunur
     const totalCents = data.paymentMethod === "INSTALLMENT" ? installmentCents(cashCents, data.installmentMonths ?? 12) : cashCents;
     const number = nextNumber(db.settings.orderNumberPrefix.sales, 5100);
     const so: SalesOrderRec = {
       id: newId("so-sales"),
       number,
-      status: ["CARD_ONLINE", "INSTALLMENT"].includes(data.paymentMethod) ? "PENDING_PAYMENT" : "CONFIRMED",
+      status: totalCents > 0 && ["CARD_ONLINE", "INSTALLMENT"].includes(data.paymentMethod) ? "PENDING_PAYMENT" : "CONFIRMED",
       customerId: user.id,
       companyId: user.companyId,
       lines: cart.items.map((item) => {
@@ -185,7 +227,7 @@ export const commerceHandlers = [
         return { id: newId("sol"), productId: found.product.id, variantId: item.variantId, name: found.product.name, sku: found.variant.sku, quantity: item.quantity, unit: item.unit, baseQuantity: String(Number(item.quantity) * (conv?.factor ?? 1)), unitCents: Math.round(Number(line.unitPriceForUnit.amount) * 100), totalCents: Math.round(Number(line.lineTotal.amount) * 100), returnedQuantity: "0" };
       }),
       subtotalCents: c._raw.subtotal,
-      discountCents: c._raw.promoCents,
+      discountCents: c._raw.promoCents + loyaltyCents,
       deliveryCents: delivery,
       installationCents: c._raw.installation,
       vatCents: b2b ? cashCents - (c._raw.total + delivery) : Math.round(totalCents - totalCents / 1.18),
@@ -201,13 +243,19 @@ export const commerceHandlers = [
       branchId: db.branches[0]!.id,
       createdAt: nowIso(),
       idempotencyKey: data.idempotencyKey,
-      appliedDiscounts: c.totals.appliedDiscounts.filter((d) => d.applied).map((d) => ({ code: d.code, label: L(d.label), cents: Math.round(Number(d.amount.amount) * 100) })),
+      appliedDiscounts: [
+        ...c.totals.appliedDiscounts.filter((d) => d.applied).map((d) => ({ code: d.code, label: L(d.label), cents: Math.round(Number(d.amount.amount) * 100) })),
+        ...(redeemCents ? [{ code: "LOYALTY_POINTS", label: L(`${data.redeemPoints} xal`, `${data.redeemPoints} баллов`, `${data.redeemPoints} points`), cents: redeemCents }] : []),
+        ...(walletCents ? [{ code: "LOYALTY_WALLET", label: L("Keşbek pul kisəsi", "Кэшбэк-кошелёк", "Cashback wallet"), cents: walletCents }] : []),
+      ],
     };
     // Rezervasiya (§39) — ikiqat satışın qarşısı
     for (const line of so.lines) {
       reserve({ source: "SALES_ORDER", sourceId: so.id, sourceNumber: so.number, variantId: line.variantId, warehouseId: db.warehouses[0]!.id, quantity: Number(line.baseQuantity), purpose: "SALES", reservedForId: user.id, reservedForName: fullName(user), ttlHours: 72, enforce: false });
     }
     db.salesOrders.unshift(so);
+    if (redeemCents) redeem(user.id, data.redeemPoints!, { id: so.id, number: so.number });
+    if (walletCents) spendWallet(user.id, walletCents, { id: so.id, number: so.number });
     if (b2b && data.paymentMethod === "BALANCE" && ctx.company) ctx.company.debtCents += totalCents;
 
     // Məhsul + quraşdırma → əlaqəli servis sifarişi (§31.4)
@@ -225,7 +273,7 @@ export const commerceHandlers = [
 
     let paymentId: string | null = null;
     let redirectUrl: string | null = null;
-    if (["CARD_ONLINE", "INSTALLMENT"].includes(data.paymentMethod)) {
+    if (totalCents > 0 && ["CARD_ONLINE", "INSTALLMENT"].includes(data.paymentMethod)) {
       const p = recordPayment({ payerId: b2b ? user.companyId! : user.id, payerName: ctx.company?.legalName ?? fullName(user), orderType: "SALES", orderId: so.id, orderNumber: so.number, method: data.paymentMethod, amountCents: totalCents, status: "INITIATED", installmentMonths: data.installmentMonths ?? null, idempotencyKey: `${data.idempotencyKey}:pay` });
       paymentId = p.id;
       redirectUrl = `/checkout/pay?paymentId=${p.id}`;
