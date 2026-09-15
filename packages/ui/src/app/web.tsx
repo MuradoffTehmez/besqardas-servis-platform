@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { Bell, CreditCard, FileText, Heart, HardDrive, LayoutDashboard, Lock, MapPin, Package, RotateCcw, ShieldCheck, Star, User, Users, Wrench, Crown } from "lucide-react";
+import { Bell, CreditCard, FileText, Heart, HardDrive, LayoutDashboard, LifeBuoy, Lock, MapPin, Package, RotateCcw, ShieldCheck, Star, User, Users, Wrench, Crown } from "lucide-react";
 import { useI18n } from "./core/i18n";
 import { useSession } from "./core/session";
 import { AppProviders, RoutedApp, SystemPage, defaultShells, type InitialAppState, type ShellRender } from "./core/app";
@@ -19,6 +19,7 @@ import { DemoMapPage } from "./pages/demo";
 
 // Müştəri kabineti səhifələri ayrıca chunk-dır — public səhifələrin JS yükünə düşmür
 const Account = lazyPages(() => import("./pages/account"));
+const Support = lazyPages(() => import("./pages/support"));
 
 /**
  * Müştəri saytı (apps/web): public sayt, auth, kabinet, usta paneli, B2B kabinetləri və kuryer interfeysi (PRD §60).
@@ -51,6 +52,7 @@ function AccountShell({ children }: { children: React.ReactNode }) {
     {
       label: t("acc.nav.more"),
       items: [
+        { to: "/account/support", label: t("support.nav"), icon: LifeBuoy },
         { to: "/account/favorites", label: t("acc.nav.favorites"), icon: Heart },
         { to: "/account/reviews", label: t("acc.nav.reviews"), icon: Star },
         { to: "/account/notifications", label: t("acc.nav.notifications"), icon: Bell, badge: session?.unreadNotifications || null },
@@ -125,6 +127,8 @@ export const webRoutes: RouteDef[] = [
   { pattern: "/account/reviews", render: () => <Account.MyReviewsPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.reviews" },
   { pattern: "/account/family", render: () => <Account.FamilyPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.family" },
   { pattern: "/account/security", render: () => <Account.SecurityPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.security" },
+  { pattern: "/account/support", render: () => <Support.SupportTicketsPage base="/account/support" />, shell: "account", roles: CUSTOMER, titleKey: "support.nav" },
+  { pattern: "/account/support/:id", render: (p) => <Support.SupportTicketDetailPage id={p.id!} base="/account/support" />, shell: "account", roles: CUSTOMER, titleKey: "support.nav" },
 
   ...technicianRoutes,
   ...b2bRoutes,

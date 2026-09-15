@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { BadgeCheck, BarChart3, Bell, Boxes, CalendarDays, ClipboardList, Clock, Crown, FileBadge, LayoutDashboard, Settings, Star, UserRound, Users, Wallet } from "lucide-react";
+import { BadgeCheck, BarChart3, Bell, Boxes, CalendarDays, ClipboardList, Clock, Crown, FileBadge, LayoutDashboard, LifeBuoy, Settings, Star, UserRound, Users, Wallet } from "lucide-react";
 import { useApi } from "@sp/api-client";
 import { useI18n } from "../core/i18n";
 import { useSession } from "../core/session";
@@ -11,6 +11,7 @@ import type { RouteDef } from "../core/router";
 // Usta paneli səhifələri ayrıca chunk-dır — route cədvəli və qabıq yüngül qalır
 const Technician = lazyPages(() => import("./technician"));
 const Account = lazyPages(() => import("./account"));
+const Support = lazyPages(() => import("./support"));
 
 /* ------------------------------------------------------------------ */
 /* Shell və route-lar (PRD §60.4)                                       */
@@ -48,6 +49,7 @@ export function TechnicianShell({ children }: { children: React.ReactNode }) {
         { to: "/technician/reviews", label: t("tech.nav.reviews"), icon: Star },
         { to: "/technician/documents", label: t("tech.nav.documents"), icon: FileBadge },
         { to: "/technician/subscription", label: staff ? t("tech.nav.license") : t("tech.nav.subscription"), icon: Crown },
+        { to: "/technician/support", label: t("support.nav"), icon: LifeBuoy },
         { to: "/technician/settings", label: t("tech.nav.settings"), icon: Settings },
       ],
     },
@@ -77,4 +79,6 @@ export const technicianRoutes: RouteDef[] = [
   r("/technician/settings", () => <Technician.TechSettingsPage />, "tech.nav.settings"),
   r("/technician/profile", () => <Account.ProfilePage />, "acc.nav.profile"),
   r("/technician/notifications", () => <Account.NotificationsPage />, "acc.nav.notifications"),
+  r("/technician/support", () => <Support.SupportTicketsPage base="/technician/support" />, "support.nav"),
+  r("/technician/support/:id", (p) => <Support.SupportTicketDetailPage id={p.id!} base="/technician/support" />, "support.nav"),
 ];
