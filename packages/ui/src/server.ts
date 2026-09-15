@@ -237,7 +237,8 @@ async function prepare(locale: AppLocale, path: string, search: string, cookie: 
     // İndekslənməyən səhifələrdə yalnız brauzer sekmesi üçün başlıq (kabinet, auth, səbət və s.)
     const titled = PRIVATE_TITLES.find(([p]) => path === p || path.startsWith(`${p}/`));
     if (titled) page.title = t(titled[1]);
-    page.description = null;
+    // Giriş səhifələri indekslənmir, amma paylaşım önizləməsi və meta description üçün qısa təsvir saxlanılır
+    page.description = ["/login", "/register", "/forgot-password"].includes(path) ? t("seo.authDescription") : null;
   }
   if (page.status === 404) page.noindex = true;
   return { ...page, state: dehydrate(qc) };
