@@ -4,6 +4,7 @@ import { seedStock } from "./stock";
 import { seedServiceOrders } from "./orders";
 import { seedCommerce } from "./commerce";
 import { seedMisc } from "./misc";
+import { seedSupport } from "./support";
 
 function seedAll() {
   seedConfig();
@@ -11,6 +12,7 @@ function seedAll() {
   seedServiceOrders();
   seedCommerce();
   seedMisc();
+  seedSupport();
   db.auditLogs.sort((a, b) => b.at.localeCompare(a.at));
   db.notifications.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   db.payments.sort((a, b) => b.createdAt.localeCompare(a.createdAt));

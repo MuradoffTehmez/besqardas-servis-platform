@@ -135,6 +135,9 @@ function baseState() {
     periodicVisits: [] as { id: string; companyId: string; siteId: string; deviceId: string; serviceId: string; plannedAt: string; status: "PLANNED" | "ORDER_CREATED" | "DONE" | "MISSED"; orderId: string | null }[],
     b2bApplications: [] as { id: string; payload: Record<string, unknown>; createdAt: string }[],
     technicianApplications: [] as { id: string; userId: string; createdAt: string }[],
+    ticketCategories: [] as import("./types").TicketCategoryRec[],
+    cannedResponses: [] as import("./types").CannedResponseRec[],
+    tickets: [] as import("./types").TicketRec[],
     counters: {} as Record<string, number>,
     mockConfig: { delayMs: 250, errorRate: 0, forceError: null, emptyLists: false } as MockConfig,
   };

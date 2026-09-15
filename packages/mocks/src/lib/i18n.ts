@@ -78,6 +78,15 @@ const dict: Record<string, LocalizedText> = {
   "notif.lowRating": L("Aşağı reytinqli rəy", "Отзыв с низкой оценкой", "Low-rated review"),
   "notif.documentExpiring": L("Sənədin müddəti bitib", "Истёк срок документа", "Document expired"),
   "notif.warrantyApproved": L("Zəmanət müraciəti təsdiqləndi", "Гарантийное обращение одобрено", "Warranty claim approved"),
+  "notif.ticketCreated": L("Müraciətiniz qəbul edildi", "Обращение принято", "Request received"),
+  "notif.ticketNew": L("Yeni müraciət", "Новое обращение", "New ticket"),
+  "notif.ticketAssigned": L("Müraciət sizə təyin olundu", "Вам назначено обращение", "Ticket assigned to you"),
+  "notif.ticketReply": L("Dəstək xidmətindən cavab", "Ответ службы поддержки", "Reply from support"),
+  "notif.ticketCustomerReply": L("Müştəri cavab yazdı", "Клиент ответил", "Customer replied"),
+  "notif.ticketReopened": L("Müraciət yenidən açıldı", "Обращение переоткрыто", "Ticket reopened"),
+  "notif.ticketResolved": L("Müraciətiniz həll olundu", "Обращение решено", "Your request is resolved"),
+  "notif.ticketEscalated": L("Müraciət eskalasiya olundu", "Эскалация обращения", "Ticket escalated"),
+  "notif.ticketSlaBreach": L("Müraciətin SLA-sı pozuldu", "Нарушен SLA обращения", "Ticket SLA breached"),
 };
 
 export function t(key: string, locale: Locale, vars?: Record<string, string | number>): string {

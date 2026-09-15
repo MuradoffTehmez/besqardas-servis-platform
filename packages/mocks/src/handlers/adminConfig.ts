@@ -1126,6 +1126,7 @@ export const adminConfigHandlers = [
       reasonCodes: db.reasonCodes.filter((r) => r.active).map((r) => ({ code: r.code, category: r.category, label: r.label })),
       attributes: db.attributes.map((a) => ({ code: a.code, name: a.name, type: a.type })),
       promotions: db.promotions.map((p) => ({ code: p.code, name: p.name })),
+      ticketCategories: db.ticketCategories.map((c) => ({ id: c.id, name: c.name })),
       hiddenProducts: db.products.filter((p) => !productVisible(p, { ...ctx, priceType: "RETAIL" })).length,
       attributeOptions: db.attributes.map((a) => ({ code: a.code, options: a.options.map((o) => ({ value: o.value, label: attributeDisplay(a.code, o.value) })) })),
     };

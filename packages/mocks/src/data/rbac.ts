@@ -35,6 +35,7 @@ export const RESOURCES = [
   "kpi_targets",
   "settings",
   "branches",
+  "tickets",
 ] as const;
 
 export type Resource = (typeof RESOURCES)[number];
@@ -48,28 +49,28 @@ type Matrix = Partial<Record<Resource, string[]>>;
 const matrix: Record<string, Matrix> = {
   OPERATOR: {
     service_orders: E, assignments: V, estimates: E, workflow_templates: V, reason_codes: V, catalog: V, inventory: V,
-    sales_orders: E, payments: V, logistics_tasks: E, users: V, customers: E, technicians: V, reviews: V, fee_rules: V, branches: V,
+    sales_orders: E, payments: V, logistics_tasks: E, users: V, customers: E, technicians: V, reviews: V, fee_rules: V, branches: V, tickets: [...E, "assign"],
   },
   DISPATCHER: {
     service_orders: E, assignments: M, estimates: V, workflow_templates: V, reason_codes: V, catalog: V, inventory: V,
-    logistics_tasks: M, users: V, customers: V, technicians: V, fee_rules: V, branches: V,
+    logistics_tasks: M, users: V, customers: V, technicians: V, fee_rules: V, branches: V, tickets: E,
   },
   WAREHOUSE_EMPLOYEE: {
-    service_orders: V, catalog: V, inventory: M, purchases: E, sales_orders: V, logistics_tasks: E, branches: V,
+    service_orders: V, catalog: V, inventory: M, purchases: E, sales_orders: V, logistics_tasks: E, branches: V, tickets: V,
   },
   SALES_EMPLOYEE: {
     service_orders: V, catalog: V, price_rules: V, inventory: V, sales_orders: M, payments: V, subscription_plans: V,
-    b2b_accounts: M, partner_commissions: V, logistics_tasks: V, users: V, customers: E, branches: V,
+    b2b_accounts: M, partner_commissions: V, logistics_tasks: V, users: V, customers: E, branches: V, tickets: E,
   },
   ACCOUNTANT: {
     service_orders: V, catalog: V, price_rules: V, inventory: V, purchases: V, sales_orders: V, payments: M, finance_reports: M,
-    subscription_plans: V, b2b_accounts: V, partner_commissions: M, technician_settlements: M, audit_logs: V, customers: V, branches: V,
+    subscription_plans: V, b2b_accounts: V, partner_commissions: M, technician_settlements: M, audit_logs: V, customers: V, branches: V, tickets: E,
   },
   MANAGER: {
     service_orders: M, assignments: M, estimates: M, workflow_templates: V, fee_rules: [...V, "approve"], reason_codes: V, catalog: V, price_rules: V,
     inventory: M, purchases: M, sales_orders: M, payments: V, finance_reports: V, subscription_plans: V, b2b_accounts: M,
     partner_commissions: V, technician_settlements: V, logistics_tasks: M, users: V, audit_logs: V, customers: M, technicians: M,
-    reviews: M, kpi_targets: V, content: V, branches: V,
+    reviews: M, kpi_targets: V, content: V, branches: V, tickets: M,
   },
   ADMIN: Object.fromEntries(RESOURCES.map((r) => [r, r === "roles" ? V : r === "audit_logs" ? V : M])) as Matrix,
   TECHNICIAN: {

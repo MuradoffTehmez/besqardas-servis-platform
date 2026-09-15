@@ -556,3 +556,75 @@ export interface GoodsReceiptRec {
   postedBy: string | null;
   cancelReason: string | null;
 }
+
+/* ---------------- Help Desk ---------------- */
+
+export type TicketPriorityCode = "LOW" | "NORMAL" | "HIGH" | "URGENT";
+
+export interface TicketCategoryRec {
+  id: string;
+  code: string;
+  name: import("@sp/types").LocalizedText;
+  description: import("@sp/types").LocalizedText;
+  queue: "GENERAL" | "SERVICE" | "SALES" | "BILLING" | "WARRANTY" | "TECHNICAL";
+  defaultPriority: TicketPriorityCode;
+  sla: Record<TicketPriorityCode, { firstResponseMinutes: number; resolutionMinutes: number }>;
+  customerVisible: boolean;
+  order: number;
+  active: boolean;
+}
+
+export interface CannedResponseRec {
+  id: string;
+  shortcut: string;
+  title: import("@sp/types").LocalizedText;
+  body: import("@sp/types").LocalizedText;
+  categoryId: string | null;
+  usageCount: number;
+  active: boolean;
+}
+
+export interface TicketMessageRec {
+  id: string;
+  kind: "PUBLIC" | "INTERNAL" | "SYSTEM";
+  authorId: string | null;
+  authorName: string;
+  authorRole: string;
+  fromCustomer: boolean;
+  body: string;
+  attachments: { name: string; url: string | null }[];
+  createdAt: string;
+}
+
+export interface TicketRec {
+  id: string;
+  number: string;
+  subject: string;
+  status: "NEW" | "OPEN" | "PENDING_CUSTOMER" | "ON_HOLD" | "RESOLVED" | "CLOSED";
+  priority: TicketPriorityCode;
+  channel: "WEB_FORM" | "PORTAL" | "PHONE" | "EMAIL" | "WHATSAPP" | "INTERNAL";
+  categoryId: string;
+  requesterId: string | null;
+  requesterName: string;
+  requesterPhone: string | null;
+  requesterEmail: string | null;
+  companyId: string | null;
+  assigneeId: string | null;
+  related: { type: "SERVICE_ORDER" | "SALES_ORDER" | "WARRANTY" | "PAYMENT" | "RETURN"; id: string } | null;
+  serviceOrderId: string | null;
+  tags: string[];
+  messages: TicketMessageRec[];
+  history: import("@sp/types").HistoryEntry[];
+  firstResponseDueAt: string;
+  resolutionDueAt: string;
+  firstRespondedAt: string | null;
+  /** SLA saatının dayandığı an (müştəri cavabı və ya gözləmə). */
+  slaPausedAt: string | null;
+  escalationLevel: number;
+  breachNotified: boolean;
+  csat: { rating: number; comment: string | null; at: string } | null;
+  resolvedAt: string | null;
+  closedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
