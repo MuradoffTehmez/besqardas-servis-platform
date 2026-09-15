@@ -17,6 +17,7 @@
 #### Bildirişlər mərkəzi
 - Hadisəyə görə ikon, rəng və kateqoriya; günlərə görə qruplar, oxunmamış vurğusu, kanal nişanı, kateqoriya filtrləri; panel zəng menyusunda ikonlar.
 
+#### Layihə infrastrukturu və sənədlər
 - Ətraflı layihə/səhifə auditi və ayrıca GitHub Wiki sənədlər dəsti.
 - `SUPPORT.md`, `CODE_OF_CONDUCT.md`, `CODEOWNERS` və sənədləşmə issue forması.
 - npm və GitHub Actions üçün Dependabot qrupları.
@@ -41,6 +42,7 @@
 - Müştəri kabineti sayt qabığına keçirildi: istifadəçi kartı, plan nişanı, qruplaşdırılmış bölmələr; mobildə üfüqi zolaq.
 - Admin dashboard: ikonlu KPI kartları, lokal formatlanmış məbləğlər; panel sidebar-ında istifadəçi kartı.
 
+#### Sənədlər və CI
 - README, contribution, security, issue və pull request sənədləri tam yeniləndi.
 - CI-a Playwright E2E/SEO/a11y mərhələsi əlavə edildi və bütün action-lar immutable commit SHA-larına pin edildi.
 - `.env.example` faktiki runtime dəyişənləri və Playwright override-ları ilə genişləndirildi.
@@ -51,7 +53,6 @@
 - Nisbi vaxt formatı sabit cədvəllə ("2 saat əvvəl", "dünən"); brauzerdə "-21 h" görünürdü.
 - Admin cədvəllərində sütunların hərf enində sıxılması (ad və telefonların qırılması) düzəldildi.
 - Mock bildiriş başlıqları hadisəyə uyğunlaşdırıldı; köhnə bildirişlər oxunmuş kimi seed olunur.
-
 - Checkout E2E radio seçimi lokalizasiya copy-sindən asılı olmayan semantik locator-a keçirildi; uğursuz gözləməni gizlədən `.catch()` silindi.
 - E2E browser context-də cookie seçimi deterministik edildi.
 - Geniş rol/endpoint inteqrasiya testinin CI yükündə 5 saniyəlik timeout riski aradan qaldırıldı.
