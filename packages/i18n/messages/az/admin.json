@@ -427,6 +427,7 @@
       "link": "besqardasservis.az/s/abc"
     },
     "dash": {
+      "roleScoped": "Göstəricilər aktiv rolunuza görə",
       "ordersByDay": "Son 7 gün",
       "created": "Yaradılıb",
       "completed": "Tamamlanıb",

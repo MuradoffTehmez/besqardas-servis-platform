@@ -26,8 +26,8 @@ import { AdminProfilePage, BrandingPage, CashDesksPage, FinancePage, Integration
 
 function AdminShell({ children }: { children: React.ReactNode }) {
   const { t } = useI18n();
-  const { session, can } = useSession();
-  const { navigate } = useRouter();
+  const { session, can, loading } = useSession();
+  const { navigate, path } = useRouter();
   const n = (k: string) => t(`adm.nav.${k}`);
   const nav: NavGroup[] = [
     { items: [{ to: "/", label: n("dashboard"), icon: LayoutDashboard, exact: true }, { to: "/notifications", label: n("notifications"), icon: Bell, badge: session?.unreadNotifications || null }] },
@@ -133,7 +133,11 @@ function AdminShell({ children }: { children: React.ReactNode }) {
     ...(can("catalog:create") ? [{ id: "a:new-product", label: t("adm.products.create"), group: quick, icon: Package, run: () => navigate("/products/new") }] : []),
     ...(can("technicians:view") ? [{ id: "a:verification", label: n("verification"), group: quick, icon: ShieldCheck, run: () => navigate("/technicians/verification") }] : []),
   ];
-  return <PanelShell nav={nav} title="CRM" app="admin" homeLink={false} commands={commands}>{children}</PanelShell>;
+  // Rol əsaslı giriş: menyuda icazəsi olmayan bölmə URL ilə açılsa da 403 göstərilir (əsas qoruma backend-dədir, §70)
+  const allowed = (p?: string | string[]) => !p || (Array.isArray(p) ? p.some(can) : can(p));
+  const section = nav.flatMap((g) => g.items).filter((i) => path === i.to || (i.to !== "/" && path.startsWith(`${i.to}/`))).sort((a, b) => b.to.length - a.to.length)[0];
+  const denied = !loading && !!session?.authenticated && !!section && !allowed(section.permission);
+  return <PanelShell nav={nav} title="CRM" app="admin" homeLink={false} commands={commands}>{denied ? <SystemPage code="403" /> : children}</PanelShell>;
 }
 
 const R = (pattern: string, render: RouteDef["render"], titleKey: string): RouteDef => ({ pattern, render, shell: "admin", roles: INTERNAL_ROLES, titleKey });

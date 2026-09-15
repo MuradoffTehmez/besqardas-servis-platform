@@ -158,7 +158,7 @@ type NavItem = NavGroup["items"][number];
 const ACCORDION_FROM = 14;
 
 export function PanelShell({ nav, title, children, homeLink = true, app = homeLink ? "web" : "admin", commands: extraCommands = [] }: { nav: NavGroup[]; title: string; children: React.ReactNode; homeLink?: boolean; app?: "web" | "admin"; commands?: Command[] }) {
-  const { t, locale } = useI18n();
+  const { t, locale, enumLabel } = useI18n();
   const { path, navigate, setLocale } = useRouter();
   const { user, session, can } = useSession();
   const route = useCurrentRoute();
@@ -284,6 +284,15 @@ export function PanelShell({ nav, title, children, homeLink = true, app = homeLi
                 );
               })}
         </nav>
+        {user && !rail && (
+          <div className="panel-user">
+            <Avatar name={user.fullName} tone={user.avatarTone} src={user.avatarUrl} size={34} />
+            <div>
+              <strong>{user.fullName}</strong>
+              <small>{user.companyName ?? enumLabel("Role", user.activeRole)}</small>
+            </div>
+          </div>
+        )}
         {!mobile && !tablet && (
           <div className="sidebar-footer">
             <button className="sidebar-link" type="button" onClick={toggleRail} title={rail ? t("panel.expand") : undefined}>

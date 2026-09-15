@@ -296,6 +296,7 @@ export default {
     },
 
     dash: {
+      roleScoped: ["Göstəricilər aktiv rolunuza görə", "Показатели по активной роли", "Metrics for your active role"],
       ordersByDay: ["Son 7 gün", "Последние 7 дней", "Last 7 days"],
       created: ["Yaradılıb", "Создано", "Created"],
       completed: ["Tamamlanıb", "Завершено", "Completed"],

@@ -1,13 +1,13 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
-import { AlertTriangle, ArrowDown, ArrowUp, Copy, MapPin, Plus, Trash2, Truck, UserPlus, Wrench } from "lucide-react";
+import { AlertTriangle, ArrowDown, ArrowUp, Building2, CalendarDays, ClipboardList, Copy, Crown, Gauge, MapPin, PackagePlus, PackageX, Plus, ShieldCheck, ShoppingCart, Trash2, TrendingUp, Truck, UserPlus, UserX, Wallet, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@sp/utils";
 import { post, put, qs, useApi } from "@sp/api-client";
 import { useI18n } from "../core/i18n";
 import { Link, useRouter } from "../core/router";
 import { useSession } from "../core/session";
-import { Card, Check, EmptyState, EnumBadge, FormError, Grid, KeyValue, Loading, PageHeader, QueryView, SelectField, Stars, Stat, Tabs, TextArea, TextField, Toggle, errorText } from "../kit/base";
+import { Card, Check, EmptyState, EnumBadge, FormError, Grid, KeyValue, Loading, PageHeader, QueryView, SelectField, Stars, Tabs, TextArea, TextField, Toggle, errorText } from "../kit/base";
 import { ActionBar, Dialog, ResourceTable, type ApiAction } from "../kit/actions";
 import { EstimateView, StageTimeline } from "../kit/domain";
 import { BarsChart, DonutChart, MapView, PhoneField } from "../kit/media";
@@ -24,32 +24,72 @@ import { I18nInput, enumKeys, useLookups } from "./crud";
 /* Dashboard                                                            */
 /* ------------------------------------------------------------------ */
 
+const WIDGET_ICONS: Record<string, React.ComponentType<{ size?: number }>> = {
+  orders_today: ClipboardList, active_services: Wrench, unassigned: UserX, sla_breaches: AlertTriangle, revenue_month: TrendingUp, sales_open: ShoppingCart,
+  low_stock: PackageX, transfers_transit: Truck, b2b_debt: Building2, cash_on_hand: Wallet, new_customers: UserPlus, subscriptions: Crown,
+};
+
 export function AdminDashboardPage() {
-  const { t, text, enumLabel, dateTime } = useI18n();
+  const { t, text, enumLabel, dateTime, money, num, date } = useI18n();
+  const { can, user } = useSession();
   const q = useApi<any>("/admin/dashboard", { refetchInterval: 60_000 });
+  const orders = can("service_orders:view");
+  // Server dəyəri mətn kimi göndərir ("36913.53 ₼") — lokal formatla göstərilir
+  const value = (v: string) => {
+    const m = String(v).match(/^(-?\d+(?:\.\d+)?)\s*₼$/);
+    if (m) return money({ amount: m[1]!, currency: "AZN" });
+    return /^-?\d+(\.\d+)?$/.test(String(v)) ? num(Number(v)) : v;
+  };
   return (
     <QueryView query={q} rows={8}>
       {(d) => (
-        <>
-          <PageHeader title={t("acc.dash.hello", { name: d.user.name.split(" ")[0] })} subtitle={`${text(d.user.role)} · ${text(d.user.branchName) || "—"}`} actions={<Link to="/service-orders/new" className="btn primary"><Plus size={16} /> {t("adm.orders.create")}</Link>} />
-          <Grid cols={4}>
-            {d.widgets.map((w: any) => (
-              <Stat key={w.code} label={text(w.title)} value={w.value} tone={w.tone} to={w.href ?? undefined} hint={w.delta ? <span className={w.trend === "up" ? "text-success" : w.trend === "down" ? "text-danger" : ""}>{w.trend === "up" ? "▲" : w.trend === "down" ? "▼" : ""} {w.delta}</span> : undefined} />
-            ))}
-          </Grid>
-          <Grid cols={2}>
-            <Card title={t("adm.dash.ordersByDay")}><BarsChart data={d.ordersByDay} xKey="date" bars={[{ key: "created", label: t("adm.dash.created") }, { key: "completed", label: t("adm.dash.completed") }]} /></Card>
-            <Card title={t("adm.dash.byStatus")}><DonutChart data={d.ordersByStatus.filter((s: any) => s.count).map((s: any) => ({ name: enumLabel("OrderStatus", s.status), value: s.count }))} /></Card>
-          </Grid>
-          <div className="kit-split">
-            <div className="kit-stack">
+        <div className="adm-dash">
+          <header className="adm-hero">
+            <div>
+              <span className="adm-hero-date"><CalendarDays size={14} aria-hidden /> {date(new Date().toISOString())}</span>
+              <h1>{t("acc.dash.hello", { name: d.user.name.split(" ")[0] })}</h1>
+              <p>
+                <span className="adm-role"><ShieldCheck size={14} aria-hidden /> {text(d.user.role)}</span>
+                {text(d.user.branchName) && <span className="adm-branch"><MapPin size={14} aria-hidden /> {text(d.user.branchName)}</span>}
+                {user && user.roles.length > 1 && <span className="adm-branch">{t("adm.dash.roleScoped")}</span>}
+              </p>
+            </div>
+            <div className="adm-hero-actions">
+              {can("service_orders:create") && <Link to="/service-orders/new" className="btn primary"><Plus size={16} /> {t("adm.orders.create")}</Link>}
+              {can("inventory:create") && <Link to="/goods-receipts/new" className="btn outline"><PackagePlus size={16} /> {t("adm.grn.new")}</Link>}
+            </div>
+          </header>
+          {d.widgets.length > 0 && (
+            <div className="adm-kpis">
+              {d.widgets.map((w: any) => {
+                const Icon = WIDGET_ICONS[w.code] ?? Gauge;
+                const body = (
+                  <>
+                    <span className="adm-kpi-icon"><Icon size={20} /></span>
+                    <span className="adm-kpi-label">{text(w.title)}</span>
+                    <strong className="adm-kpi-value">{value(w.value)}</strong>
+                    {w.delta ? <span className={cn("adm-kpi-delta", w.trend)}>{w.trend === "up" ? <ArrowUp size={12} /> : w.trend === "down" ? <ArrowDown size={12} /> : null} {w.delta}</span> : <span className="adm-kpi-delta" />}
+                  </>
+                );
+                return w.href ? <Link key={w.code} to={w.href} className={cn("adm-kpi", `tone-${w.tone}`)}>{body}</Link> : <div key={w.code} className={cn("adm-kpi", `tone-${w.tone}`)}>{body}</div>;
+              })}
+            </div>
+          )}
+          {orders && (
+            <Grid cols={2}>
+              <Card title={t("adm.dash.ordersByDay")}><BarsChart data={d.ordersByDay.map((x: any) => ({ ...x, date: `${x.date.slice(8, 10)}.${x.date.slice(5, 7)}` }))} xKey="date" bars={[{ key: "created", label: t("adm.dash.created") }, { key: "completed", label: t("adm.dash.completed") }]} /></Card>
+              <Card title={t("adm.dash.byStatus")}><DonutChart data={d.ordersByStatus.filter((s: any) => s.count).map((s: any) => ({ name: enumLabel("OrderStatus", s.status), value: s.count }))} /></Card>
+            </Grid>
+          )}
+          <div className={cn(orders && (d.technicianLoad.length > 0 || d.lowStock.length > 0) ? "kit-split" : "kit-stack")}>
+            {orders && <div className="kit-stack">
               <Card title={t("adm.dash.sla")} actions={<Link to="/service-orders?slaBreached=true" className="btn ghost btn-sm">{t("common.viewAll")}</Link>}>
                 {d.slaBreaches.length ? <OrderMiniList items={d.slaBreaches} /> : <EmptyState title={t("adm.dash.noSla")} />}
               </Card>
               <Card title={t("adm.dash.new")} actions={<Link to="/service-orders?status=NEW" className="btn ghost btn-sm">{t("common.viewAll")}</Link>}>
                 {d.newOrders.length ? <OrderMiniList items={d.newOrders} /> : <EmptyState />}
               </Card>
-            </div>
+            </div>}
             <div className="kit-stack">
               {d.technicianLoad.length > 0 && (
                 <Card title={t("adm.dash.load")} actions={<Link to="/dispatch" className="btn ghost btn-sm">{t("adm.nav.dispatch")}</Link>}>
@@ -72,7 +112,7 @@ export function AdminDashboardPage() {
               <p className="text-sm text-muted">{t("adm.dash.updated", { at: dateTime(new Date().toISOString()) })}</p>
             </div>
           </div>
-        </>
+        </div>
       )}
     </QueryView>
   );
