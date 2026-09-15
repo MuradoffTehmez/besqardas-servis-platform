@@ -7,7 +7,8 @@ import { AppProviders, RoutedApp, SystemPage, defaultShells, type InitialAppStat
 import { PanelShell, type NavGroup } from "./core/shells";
 import type { RouteDef } from "./core/router";
 import { BecomeTechnicianPage, BusinessPage, ForgotPasswordPage, LoginPage, RegisterPage, ResetPasswordPage, SelectModePage, TwoFactorPage, VerifyPage } from "./pages/auth";
-import { BookingPage, BranchesPage, ContactPage, ContentPage, FaqPage, HomePage, PricingPage, ServiceDetailPage, ServicesPage, TechnicianProfilePage, TechniciansPage, WarrantyVerifyPage } from "./pages/public";
+import { BookingPage, ContentPage, HomePage, ServiceDetailPage, ServicesPage, WarrantyVerifyPage } from "./pages/public";
+import { BranchesPage, ContactPage, FaqPage, PricingPage, TechnicianProfilePage, TechniciansPage } from "./pages/info";
 import { CartPage, CheckoutPage, CheckoutResultPage, PayPage, ProductPage, SearchPage, ShopPage } from "./pages/shop";
 import { ComparePage } from "./pages/compare";
 import { AccountDashboardPage, AddressesPage, DeviceDetailPage, DevicesPage, DocumentsPage, FamilyPage, FavoritesPage, MyReviewsPage, NotificationsPage, PaymentsPage, ProfilePage, ReturnsPage, SalesOrderDetailPage, SalesOrdersPage, SecurityPage, ServiceOrderDetailPage, ServiceOrdersPage, SubscriptionPage, WarrantiesPage } from "./pages/account";

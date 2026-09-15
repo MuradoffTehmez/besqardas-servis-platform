@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { BadgeCheck, CalendarClock, CheckCircle2, Clock, Crown, Mail, MapPin, Megaphone, Phone, QrCode, ShieldCheck } from "lucide-react";
+import { CalendarClock, CheckCircle2, Clock, Crown, MapPin, Megaphone, QrCode } from "lucide-react";
 import { cn } from "@sp/utils";
 import { idempotencyKey, post, qs, useApi, useQueryClient } from "@sp/api-client";
 import { HomeView } from "../../views/public/home-view";
@@ -9,10 +9,10 @@ import { ServiceDetailView } from "../../views/public/service-detail-view";
 import { useI18n } from "../core/i18n";
 import { Link, useRouter } from "../core/router";
 import { useSession } from "../core/session";
-import { Avatar, Card, EmptyState, ErrorState, FormError, KeyValue, Loading, PageHeader, QueryView, Radios, SearchBox, SelectField, Stars, TextArea, TextField, useFormState, EnumBadge } from "../kit/base";
-import { PlanComparison, SlotPicker } from "../kit/domain";
-import { FileDrop, MapView, PhoneField, type PickedFile } from "../kit/media";
-import { ReportReviewButton, useCartActions } from "./shop";
+import { Avatar, Card, EmptyState, ErrorState, FormError, KeyValue, Loading, PageHeader, QueryView, Radios, SelectField, Stars, TextArea, TextField, useFormState, EnumBadge } from "../kit/base";
+import { SlotPicker } from "../kit/domain";
+import { FileDrop, type PickedFile } from "../kit/media";
+import { useCartActions } from "./shop";
 
 /* ------------------------------------------------------------------ */
 /* Ana səhifə, servislər                                               */
@@ -357,133 +357,8 @@ export function BookingPage({ slug }: { slug: string }) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Ustalar və profil (§15.4)                                            */
+/* Zəmanət yoxlaması                                                    */
 /* ------------------------------------------------------------------ */
-
-export function TechniciansPage() {
-  const { t } = useI18n();
-  const { query, setQuery, navigate } = useRouter();
-  const specs = useApi<any[]>("/specializations");
-  const list = useApi<any>(`/technicians${qs({ q: query.get("q"), pageSize: 30, sort: query.get("sort") })}`);
-  const spec = query.get("spec") ?? "";
-  const items = (list.data?.items ?? []).filter((x: any) => !spec || x.specializationDetails.some((s: any) => s.specializationId === spec && s.active));
-  return (
-    <div className="container py-6">
-      <PageHeader title={t("techniciansPage.title")} subtitle={t("techniciansPage.text")} />
-      <div className="flex gap-2 flex-wrap mb-4">
-        <SearchBox value={query.get("q") ?? ""} onChange={(v) => setQuery({ q: v })} placeholder={t("techniciansPage.search")} />
-        <SelectField ariaLabel={t("techniciansPage.specializations")} value={spec} onValue={(v) => setQuery({ spec: v })} placeholder={t("techniciansPage.allSpecs")} options={(specs.data ?? []).map((s) => ({ value: s.id, label: s.name }))} />
-        <SelectField ariaLabel={t("shop.sortLabel")} value={query.get("sort") ?? ""} onValue={(v) => setQuery({ sort: v })} placeholder={t("techniciansPage.sortRating")} options={[{ value: "-completedJobs", label: t("techniciansPage.sortJobs") }, { value: "-experienceYears", label: t("techniciansPage.sortExperience") }]} />
-      </div>
-      {list.isLoading ? <Loading rows={6} /> : list.error ? <ErrorState error={list.error} onRetry={() => list.refetch()} /> : !items.length ? <EmptyState /> : (
-        <div className="tech-grid">
-          {items.map((x: any) => (
-            <article key={x.id} className="kit-card tech-card">
-              <div className="kit-card-body">
-                <div className="flex gap-3 items-center">
-                  <Avatar name={x.fullName} tone={x.avatarTone} src={x.avatarUrl} size={52} />
-                  <div className="flex-1">
-                    <h3><Link to={`/technicians/${x.id}`}>{x.fullName}</Link></h3>
-                    <span className="flex gap-2 flex-wrap"><Stars value={x.rating} count={x.reviewCount} />{x.verified && <span className="badge badge-success"><BadgeCheck size={12} /> {t("verified")}</span>}{x.promoted && <span className="badge badge-warning">{t("booking.ad")}</span>}</span>
-                  </div>
-                </div>
-                <p className="text-sm mt-2">{x.bio}</p>
-                <div className="kit-chip-grid mt-2">{x.specializations.slice(0, 4).map((s: string) => <span key={s} className="chip">{s}</span>)}</div>
-                <p className="text-sm text-muted mt-2">{t("booking.jobs", { count: x.completedJobs })} · {t("techniciansPage.experience", { years: x.experienceYears })} · {x.city}</p>
-              </div>
-              <div className="kit-card-foot flex gap-2">
-                <Link to={`/technicians/${x.id}`} className="btn outline btn-sm">{t("details")}</Link>
-                <button type="button" className="btn primary btn-sm" onClick={() => navigate(`/technicians/${x.id}#book`)}>{t("techniciansPage.choose")}</button>
-              </div>
-            </article>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-export function TechnicianProfilePage({ id }: { id: string }) {
-  const { t, enumLabel, date } = useI18n();
-  const q = useApi<any>(`/technicians/${id}`);
-  const services = useApi<any>("/services?pageSize=100");
-  return (
-    <div className="container py-6">
-      <QueryView query={q}>
-        {(x) => {
-          const specIds = x.specializationDetails.filter((s: any) => s.active).map((s: any) => s.specializationId);
-          const canDo = (services.data?.items ?? []).filter((s: any) => s.requiredSpecializationIds.every((r: string) => specIds.includes(r)));
-          return (
-            <>
-              <div className="kit-card tech-profile-head">
-                <div className="kit-card-body flex gap-4 items-center flex-wrap">
-                  <Avatar name={x.fullName} tone={x.avatarTone} src={x.avatarUrl} size={84} />
-                  <div className="flex-1">
-                    <h1>{x.fullName}</h1>
-                    <div className="flex gap-2 flex-wrap items-center">
-                      <Stars value={x.rating} count={x.reviewCount} />
-                      {x.verified && <span className="badge badge-success"><ShieldCheck size={12} /> {t("verified")}</span>}
-                      <span className="badge">{enumLabel("EmploymentType", x.employmentType)}</span>
-                      {x.promoted && <span className="badge badge-warning">{t("booking.ad")}</span>}
-                    </div>
-                    <p className="mt-2">{x.bio}</p>
-                    <p className="text-sm text-muted">{t("booking.jobs", { count: x.completedJobs })} · {t("techniciansPage.experience", { years: x.experienceYears })} · {x.zoneNames.join(", ")} · {x.languages.map((l: string) => l.toUpperCase()).join(" / ")}</p>
-                    <p className="text-sm text-muted">{t("techniciansPage.phoneHidden")}</p>
-                  </div>
-                </div>
-              </div>
-              <div className="kit-grid cols-2 mt-4">
-                <Card title={t("techniciansPage.specializations")}>
-                  <ul className="kit-list">{x.specializationDetails.filter((s: any) => s.active).map((s: any) => <li key={s.id} className="flex justify-between"><span>{s.name}</span><EnumBadge group="ExperienceLevel" code={s.level} tone="info" /></li>)}</ul>
-                  {x.skills.length > 0 && <div className="kit-chip-grid mt-3">{x.skills.map((s: string) => <span key={s} className="chip">{s}</span>)}</div>}
-                </Card>
-                <Card title={t("techniciansPage.bookWith")}>
-                  <ul className="kit-list">{canDo.map((s: any) => <li key={s.id} className="flex justify-between items-center"><span>{s.name}</span><Link to={`/services/${s.slug}/book?technicianId=${x.id}`} className="btn btn-sm outline">{t("book")}</Link></li>)}</ul>
-                </Card>
-              </div>
-              <Card title={t("techniciansPage.reviews")} className="mt-4">
-                {!x.reviews.length ? <EmptyState title={t("shop.noReviews")} /> : (
-                  <ul className="kit-reviews">{x.reviews.map((r: any) => <li key={r.id}><div className="flex justify-between"><strong>{r.authorName}</strong><Stars value={r.rating} /></div><p>{r.comment}</p>{r.reply && <p className="kit-note text-sm">{r.reply}</p>}<div className="flex justify-between items-center gap-2"><small className="text-muted">{date(r.createdAt)}</small><ReportReviewButton reviewId={r.id} reported={r.reported} /></div></li>)}</ul>
-                )}
-              </Card>
-            </>
-          );
-        }}
-      </QueryView>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------------ */
-/* Planlar, zəmanət yoxlaması                                           */
-/* ------------------------------------------------------------------ */
-
-export function PricingPage() {
-  const { t, enumLabel } = useI18n();
-  const { navigate, query, setQuery } = useRouter();
-  const { user } = useSession();
-  const group = query.get("group") ?? "CUSTOMER";
-  const [period, setPeriod] = useState("MONTH_1");
-  const plans = useApi<any[]>(`/plans?group=${group}`);
-  const defs = useApi<any[]>("/entitlement-definitions", { staleTime: Infinity });
-  return (
-    <div className="container py-6">
-      <PageHeader title={t("pricingPage.title")} subtitle={t("pricingPage.text")} />
-      <div className="flex gap-3 flex-wrap mb-4 items-center">
-        <div className="kit-segment">
-          {["CUSTOMER", "TECHNICIAN"].map((g) => <button key={g} type="button" className={cn(group === g && "active")} onClick={() => setQuery({ group: g })}>{enumLabel("PlanGroup", g)}</button>)}
-        </div>
-        <div className="kit-segment">
-          {["MONTH_1", "MONTH_3", "MONTH_6", "MONTH_12"].map((p) => <button key={p} type="button" className={cn(period === p && "active")} onClick={() => setPeriod(p)}>{enumLabel("BillingPeriod", p)}</button>)}
-        </div>
-      </div>
-      <QueryView query={plans}>
-        {(list) => <PlanComparison plans={list} definitions={(defs.data ?? []).filter((d) => d.group === group)} period={period} onSelect={() => navigate(!user ? `/login?next=${group === "TECHNICIAN" ? "/become-technician" : "/account/subscription"}` : group === "TECHNICIAN" ? (user.activeRole === "TECHNICIAN" ? "/technician/subscription" : "/become-technician") : "/account/subscription")} />}
-      </QueryView>
-      <p className="text-sm text-muted mt-4">{group === "TECHNICIAN" ? t("pricingPage.technicianNote") : t("pricingPage.customerNote")}</p>
-    </div>
-  );
-}
 
 export function WarrantyVerifyPage({ code: initial }: { code?: string }) {
   const { t, enumLabel, date } = useI18n();
@@ -511,43 +386,8 @@ export function WarrantyVerifyPage({ code: initial }: { code?: string }) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Filiallar, məzmun, FAQ, əlaqə                                        */
+/* Məzmun səhifələri                                                    */
 /* ------------------------------------------------------------------ */
-
-export function BranchesPage() {
-  const { t } = useI18n();
-  const q = useApi<any>("/branches");
-  const [focus, setFocus] = useState<string | null>(null);
-  return (
-    <div className="container py-6">
-      <PageHeader title={t("branchesPage.title")} subtitle={t("branchesPage.text")} />
-      <QueryView query={q}>
-        {(d) => {
-          const f = d.items.find((b: any) => b.id === focus);
-          return (
-            <div className="branches-layout">
-              <MapView height={420} zoom={f ? 13 : 8} center={f?.location} points={d.items.map((b: any) => ({ id: b.id, lat: b.location.lat, lng: b.location.lng, label: b.name, onClick: () => setFocus(b.id) }))} />
-              <ul className="branches-list">
-                {d.items.map((b: any) => (
-                  <li key={b.id} className={cn("kit-card", focus === b.id && "active")}>
-                    <button type="button" className="kit-card-body text-left w-full" onClick={() => setFocus(b.id)}>
-                      <h3>{b.name}</h3>
-                      <p><MapPin size={14} /> {b.city}, {b.address}</p>
-                      <p><Phone size={14} /> {b.phone} · <Mail size={14} /> {b.email}</p>
-                      <p className="text-sm">{b.workingHours.filter((h: any) => !h.closed).length ? b.workingHours.map((h: any) => (h.closed ? null : `${t(`days.${h.day}`).slice(0, 2)} ${h.from}–${h.to}`)).filter(Boolean).join(" · ") : ""}</p>
-                      {b.hasServiceCenter && <span className="badge badge-info">{t("branchesPage.serviceCenter")}</span>}
-                    </button>
-                    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "LocalBusiness", name: `besqardasServis.az — ${b.name}`, address: `${b.city}, ${b.address}`, telephone: b.phone, geo: { "@type": "GeoCoordinates", latitude: b.location.lat, longitude: b.location.lng } }) }} />
-                  </li>
-                ))}
-              </ul>
-            </div>
-          );
-        }}
-      </QueryView>
-    </div>
-  );
-}
 
 export function ContentPage({ slug }: { slug: "about" | "terms" | "privacy" }) {
   const q = useApi<any>(`/content/pages/${slug}`);
@@ -561,59 +401,6 @@ export function ContentPage({ slug }: { slug: "about" | "terms" | "privacy" }) {
           </article>
         )}
       </QueryView>
-    </div>
-  );
-}
-
-export function FaqPage() {
-  const { t } = useI18n();
-  const { query, setQuery } = useRouter();
-  const q = useApi<any>(`/faq${qs({ q: query.get("q"), pageSize: 100 })}`);
-  return (
-    <div className="container py-8 max-w-4xl mx-auto">
-      <PageHeader title={t("faqPage.title")} subtitle={t("faqPage.text")} />
-      <SearchBox value={query.get("q") ?? ""} onChange={(v) => setQuery({ q: v })} />
-      <div className="mt-4">
-        <QueryView query={q}>
-          {(d) => (
-            <>
-              <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: d.items.map((f: any) => ({ "@type": "Question", name: f.question, acceptedAnswer: { "@type": "Answer", text: f.answer } })) }) }} />
-              {d.items.map((f: any) => <details key={f.id} className="kit-faq kit-card"><summary>{f.question}</summary><p>{f.answer}</p></details>)}
-            </>
-          )}
-        </QueryView>
-      </div>
-    </div>
-  );
-}
-
-export function ContactPage() {
-  const { t } = useI18n();
-  const brand = useApi<any>("/branding");
-  const form = useFormState({ name: "", phone: "", message: "", consent: false });
-  const [sent, setSent] = useState(false);
-  const v = form.values;
-  return (
-    <div className="container py-8">
-      <PageHeader title={t("contactPage.title")} subtitle={t("contactPage.text")} />
-      <div className="kit-grid cols-2">
-        <Card title={t("contactPage.channels")}>
-          {brand.data && <KeyValue cols={1} items={[[t("contactPage.phone"), brand.data.contacts.phone], [t("contactPage.hotline"), brand.data.contacts.hotline], ["WhatsApp", brand.data.contacts.whatsapp], [t("email"), brand.data.contacts.email], [t("contactPage.address"), brand.data.contacts.address]]} />}
-          <Link to="/branches" className="btn outline mt-3">{t("nav.branches")}</Link>
-        </Card>
-        <Card title={t("contactPage.write")}>
-          {sent ? <div className="alert alert-success">{t("contactPage.sent")}</div> : (
-            <form onSubmit={(e) => { e.preventDefault(); if (!v.name || v.message.length < 10 || !v.consent) { form.setErrors({ ...(v.name ? {} : { name: ["validation.required"] }), ...(v.message.length < 10 ? { message: ["validation.commentMin"] } : {}), ...(v.consent ? {} : { consent: ["validation.acceptTerms"] }) }); return; } setSent(true); }}>
-              <TextField label={t("contactPage.name")} required value={v.name} onValue={(x) => form.set("name", x)} error={form.errors.name} />
-              <PhoneField label={t("auth.phone")} value={v.phone} onValue={(x) => form.set("phone", x)} />
-              <TextArea label={t("contactPage.message")} required rows={4} value={v.message} onValue={(x) => form.set("message", x)} error={form.errors.message} />
-              <label className="kit-check"><input type="checkbox" checked={v.consent} onChange={(e) => form.set("consent", e.target.checked)} /><span>{t("contactPage.consent")}</span></label>
-              {form.errors.consent && <p className="kit-field-error">{t("validation.acceptTerms")}</p>}
-              <button className="btn primary mt-3">{t("contactPage.send")}</button>
-            </form>
-          )}
-        </Card>
-      </div>
     </div>
   );
 }

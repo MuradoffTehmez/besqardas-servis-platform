@@ -188,7 +188,7 @@ async function prepare(locale: AppLocale, path: string, search: string, cookie: 
   } else if (path === "/technicians") {
     page.title = t("technicians");
     page.description = t("seo.techniciansDescription");
-    await Promise.all([load("/specializations"), load(`/technicians${qs({ q: query.get("q"), pageSize: 30, sort: query.get("sort") })}`)]);
+    await Promise.all([load("/specializations"), load("/equipment-categories"), load("/technicians?pageSize=30")]);
     if (query.has("q") || query.has("sort")) page.noindex = true;
   } else if ((params = match("/technicians/:id", path))) {
     const [tech] = await Promise.all([load<any>(`/technicians/${params.id}`), load("/services?pageSize=100")]);
@@ -203,7 +203,7 @@ async function prepare(locale: AppLocale, path: string, search: string, cookie: 
   } else if (path === "/pricing") {
     page.title = t("nav.pricing");
     page.description = t("seo.pricingDescription");
-    await Promise.all([load(`/plans?group=${query.get("group") ?? "CUSTOMER"}`), load("/entitlement-definitions")]);
+    await Promise.all([load(`/plans?group=${query.get("group") === "TECHNICIAN" ? "TECHNICIAN" : "CUSTOMER"}`), load("/entitlement-definitions"), load("/faq?pageSize=100")]);
   } else if (path === "/branches") {
     page.title = t("nav.branches");
     page.description = t("seo.branchesDescription");
@@ -216,11 +216,12 @@ async function prepare(locale: AppLocale, path: string, search: string, cookie: 
   } else if (path === "/faq") {
     page.title = t("faqPage.title");
     page.description = t("seo.faqDescription");
-    await load(`/faq${qs({ q: query.get("q"), pageSize: 100 })}`);
+    await load("/faq?pageSize=100");
     if (query.has("q")) page.noindex = true;
   } else if (path === "/contact") {
     page.title = t("contact");
     page.description = t("seo.contactDescription");
+    await load("/branches");
   } else if (path === "/become-technician") {
     page.title = t("techApply.title");
     page.description = t("seo.becomeTechnicianDescription");
