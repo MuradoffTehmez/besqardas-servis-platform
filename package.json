@@ -18,6 +18,10 @@
     "lint": "eslint . --max-warnings=0",
     "test": "turbo run test",
     "test:e2e": "playwright test",
+    "test:visual": "playwright test --project=visual-desktop --project=visual-mobile",
+    "perf:lighthouse": "npx -y @lhci/cli@0.15.1 autorun",
+    "storybook": "pnpm --filter @sp/ui storybook",
+    "build-storybook": "pnpm --filter @sp/ui build-storybook",
     "check": "pnpm lint && pnpm typecheck && node scripts/check-i18n.mjs && pnpm test && pnpm build",
     "format": "prettier --write \"**/*.{ts,tsx,json,css,md}\" --ignore-path .gitignore"
   },
