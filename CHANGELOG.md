@@ -2,8 +2,22 @@
 
 ## [Unreleased]
 
+## [v0.3.2] - 2026-09-15
+
 ### Əlavə edildi (Added)
 
+#### Nağd və kredit alış
+- Məhsul detalında ödəniş növü seçimi: **Nağd** və ya **Kredit**; kreditdə 3/6/12/18 ay müddət, aylıq ödəniş, kreditlə ümumi məbləğ və nağd qiymətdən fərq.
+- Qiymət mühərrikində kredit şərtləri (müddətə görə 3–18% əlavə) və `installmentPlans`; seçilmiş müddət checkout-da taksit kimi əvvəlcədən seçilir, yekun məbləğ kredit faizini nəzərə alır.
+
+#### Rol əsaslı admin paneli
+- Admin qabığında marşrut səviyyəsində icazə qoruması: icazəsi olmayan bölmə URL ilə açılanda panel daxilində 403.
+- Dashboard-da icazəyə görə sürətli əməliyyatlar və bölmələr, rol/filial nişanları.
+
+#### Bildirişlər mərkəzi
+- Hadisəyə görə ikon, rəng və kateqoriya; günlərə görə qruplar, oxunmamış vurğusu, kanal nişanı, kateqoriya filtrləri; panel zəng menyusunda ikonlar.
+
+#### Layihə infrastrukturu və sənədlər
 - Ətraflı layihə/səhifə auditi və ayrıca GitHub Wiki sənədlər dəsti.
 - `SUPPORT.md`, `CODE_OF_CONDUCT.md`, `CODEOWNERS` və sənədləşmə issue forması.
 - npm və GitHub Actions üçün Dependabot qrupları.
@@ -12,12 +26,33 @@
 
 ### Dəyişdirildi (Changed)
 
+#### Public sayt
+- Ana səhifə tam yenidən dizayn edildi: kampaniya keçidli hero və sifariş izləmə vizualı, statistika paneli, kateqoriyalar, proses, xidmətlər, aksiya zolağı, mağaza, "niyə biz" + zəmanət yoxlaması, ustalar, rəylər, qoşulma kartları.
+- Ustalar və usta profili, Planlar, Filiallar, FAQ, Əlaqə səhifələri yenidən dizayn edildi.
+- İstifadə şərtləri, Məxfilik siyasəti, Haqqımızda: nömrəli bölmələr, mündəricat, çap üslubu.
+- Zəmanət yoxlaması: vəziyyətə görə rəngli nəticə kartı, qalan gün sayı, "necə yoxlanılır" bloku.
+- Biznes və usta müraciəti səhifələri sayt qabığında (header/footer) açılır; addım göstəricisi, üstünlüklər və uğur ekranı.
+
+#### Məhsul kataloqu
+- Hero başlıq və etibar nişanları, ikonlu kateqoriya zolağı, yapışqan və yığıla bilən filtr paneli, aktiv filtr çipləri, nömrəli səhifələmə.
+- Kartlarda 4:3 şəkil və endirim faizi; iki sıradan sonra yığcam quraşdırma reklam zolağı; mobildə yapışqan alət paneli.
+
+#### Hesab və panellər
+- Giriş, qeydiyyat, şifrə bərpası, OTP/2FA və rejim seçimi: sayt və admin üçün fərqli hekayə paneli, AZ/RU/EN keçiricisi, ikonlu forma kartları, mobil düzülüş.
+- Müştəri kabineti sayt qabığına keçirildi: istifadəçi kartı, plan nişanı, qruplaşdırılmış bölmələr; mobildə üfüqi zolaq.
+- Admin dashboard: ikonlu KPI kartları, lokal formatlanmış məbləğlər; panel sidebar-ında istifadəçi kartı.
+
+#### Sənədlər və CI
 - README, contribution, security, issue və pull request sənədləri tam yeniləndi.
 - CI-a Playwright E2E/SEO/a11y mərhələsi əlavə edildi və bütün action-lar immutable commit SHA-larına pin edildi.
 - `.env.example` faktiki runtime dəyişənləri və Playwright override-ları ilə genişləndirildi.
 
 ### Düzəlişlər (Fixed)
 
+- Giriş sonrası sessiya keşə dərhal yazılır — qorunan səhifənin köhnə sessiya ilə yenidən girişə yönləndirməsi (E2E qeyri-sabitliyi) aradan qaldırıldı.
+- Nisbi vaxt formatı sabit cədvəllə ("2 saat əvvəl", "dünən"); brauzerdə "-21 h" görünürdü.
+- Admin cədvəllərində sütunların hərf enində sıxılması (ad və telefonların qırılması) düzəldildi.
+- Mock bildiriş başlıqları hadisəyə uyğunlaşdırıldı; köhnə bildirişlər oxunmuş kimi seed olunur.
 - Checkout E2E radio seçimi lokalizasiya copy-sindən asılı olmayan semantik locator-a keçirildi; uğursuz gözləməni gizlədən `.catch()` silindi.
 - E2E browser context-də cookie seçimi deterministik edildi.
 - Geniş rol/endpoint inteqrasiya testinin CI yükündə 5 saniyəlik timeout riski aradan qaldırıldı.

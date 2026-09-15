@@ -8,7 +8,6 @@ import { localeLabels, timeZone, type AppLocale } from "./config";
 type MoneyLike = { amount: string; currency?: string } | null | undefined;
 type QuantityLike = { value: string; unit: string } | null | undefined;
 
-const intl = (locale: string) => localeLabels[(locale as AppLocale) in localeLabels ? (locale as AppLocale) : "az"].intl;
 const loc = (locale: string): AppLocale => ((locale as AppLocale) in localeLabels ? (locale as AppLocale) : "az");
 
 /**
@@ -130,14 +129,22 @@ export function formatMonth(iso: string, locale = "az"): string {
 export function formatRelative(iso: string | null | undefined, locale = "az", now: Date = new Date()): string {
   if (!iso) return "—";
   const diffSec = Math.round((new Date(iso).getTime() - now.getTime()) / 1000);
-  const rtf = new Intl.RelativeTimeFormat(intl(locale), { numeric: "auto" });
   const abs = Math.abs(diffSec);
-  if (abs < 60) return rtf.format(diffSec, "second");
-  if (abs < 3600) return rtf.format(Math.round(diffSec / 60), "minute");
-  if (abs < 86400) return rtf.format(Math.round(diffSec / 3600), "hour");
-  if (abs < 86400 * 30) return rtf.format(Math.round(diffSec / 86400), "day");
-  return formatDate(iso, locale);
+  // Brauzerlərin Intl.RelativeTimeFormat məlumatında "az" yoxdur ("-21 h" çıxırdı) — sabit cədvəl istifadə olunur
+  const w = RELATIVE[(locale as AppLocale) in RELATIVE ? (locale as AppLocale) : "az"];
+  const past = diffSec < 0;
+  if (abs < 60) return w.now;
+  const [n, unit] = abs < 3600 ? [Math.round(abs / 60), w.min] : abs < 86400 ? [Math.round(abs / 3600), w.hour] : [Math.round(abs / 86400), w.day];
+  if (abs >= 86400 && n === 1) return past ? w.yesterday : w.tomorrow;
+  if (abs >= 86400 * 30) return formatDate(iso, locale);
+  return (past ? w.ago : w.in).replace("{n}", String(n)).replace("{u}", unit);
 }
+
+const RELATIVE: Record<AppLocale, { now: string; min: string; hour: string; day: string; ago: string; in: string; yesterday: string; tomorrow: string }> = {
+  az: { now: "indicə", min: "dəq", hour: "saat", day: "gün", ago: "{n} {u} əvvəl", in: "{n} {u} sonra", yesterday: "dünən", tomorrow: "sabah" },
+  ru: { now: "только что", min: "мин", hour: "ч", day: "дн.", ago: "{n} {u} назад", in: "через {n} {u}", yesterday: "вчера", tomorrow: "завтра" },
+  en: { now: "just now", min: "min", hour: "h", day: "d", ago: "{n} {u} ago", in: "in {n} {u}", yesterday: "yesterday", tomorrow: "tomorrow" },
+};
 
 /** Bakı vaxtı ilə "yyyy-MM-dd" — slotların və təqvim günlərinin qruplaşdırılması üçün */
 export function bakuDateKey(iso: string | Date): string {

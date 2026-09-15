@@ -7,7 +7,7 @@ test.describe("Kataloq, səbət və checkout (§28–§31, §48)", () => {
   test("filtr və axtarış nəticələri yeniləyir", async ({ page }) => {
     await open(page, "/az/shop/kondisionerler");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    const count = page.locator(".shop-head p");
+    const count = page.locator(".shop-hero-copy p strong");
     await expect(count).toHaveText(/\d+ məhsul/);
     const before = await count.textContent();
     // Marka filtri: birinci aktiv seçim
@@ -17,7 +17,7 @@ test.describe("Kataloq, səbət və checkout (§28–§31, §48)", () => {
       .click();
     await expect(page).toHaveURL(/\?.+=/);
     await expect(count).not.toHaveText(before ?? "");
-    await expect(page.locator(".shop-active .chip").first()).toBeVisible();
+    await expect(page.locator(".shop-active .shop-chip").first()).toBeVisible();
 
     await open(page, "/az/search?q=midea");
     await expect(page.getByRole("link", { name: /Midea/ }).first()).toBeVisible();

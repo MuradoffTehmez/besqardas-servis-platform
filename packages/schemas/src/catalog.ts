@@ -79,6 +79,8 @@ export const AppliedDiscount = z.object({
   skippedReason: z.string().nullable().optional(),
 });
 
+export const InstallmentPlan = z.object({ months: z.number(), provider: z.string(), markupPercent: z.number(), total: Money, monthly: Money, difference: Money });
+
 export const Price = z.object({
   basePrice: Money,
   effectivePrice: Money,
@@ -88,6 +90,8 @@ export const Price = z.object({
   tiers: z.array(z.object({ minQuantity: z.string(), price: Money })).optional(),
   unitPrices: z.array(z.object({ unit: z.string(), label: z.string(), factor: z.string(), price: Money })).optional(),
   installment: z.object({ months: z.number(), monthly: Money, provider: z.string() }).nullable().optional(),
+  /** Kredit şərtləri: müddət, əlavə faiz, ümumi məbləğ, aylıq ödəniş və nağd qiymətdən fərq. */
+  installmentPlans: z.array(InstallmentPlan).optional(),
 });
 
 export const BranchStock = z.object({

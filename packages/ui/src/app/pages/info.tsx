@@ -22,7 +22,7 @@ import { ReportReviewButton } from "./shop";
 type Crumb = { label: string; to?: string };
 
 /** İnformasiya səhifələrinin başlıq bölməsi: yol xətti, başlıq, mətn və əlavə məzmun. */
-function InfoHero({ eyebrow, title, text, crumbs, children, aside, center }: { eyebrow: string; title: string; text: string; crumbs?: Crumb[]; children?: React.ReactNode; aside?: React.ReactNode; center?: boolean }) {
+export function InfoHero({ eyebrow, title, text, crumbs, children, aside, center }: { eyebrow: string; title: string; text?: string; crumbs?: Crumb[]; children?: React.ReactNode; aside?: React.ReactNode; center?: boolean }) {
   const { t } = useI18n();
   const trail: Crumb[] = [{ label: t("home"), to: "/" }, ...(crumbs ?? [{ label: title }])];
   return (
@@ -40,7 +40,7 @@ function InfoHero({ eyebrow, title, text, crumbs, children, aside, center }: { e
           <div className="ih-copy">
             <span className="ih-eyebrow">{eyebrow}</span>
             <h1>{title}</h1>
-            <p className="ih-text">{text}</p>
+            {text && <p className="ih-text">{text}</p>}
             {children}
           </div>
           {aside}

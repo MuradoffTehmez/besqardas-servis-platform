@@ -138,9 +138,33 @@ export function variantPrice(product: ProductRec, variant: VariantRec, ctx: Ctx)
       ...product.conversions.map((c) => ({ unit: c.unit, label: String(c.factor), factor: String(c.factor), price: money(net(factorPrice(c.factor, c.packagePriceCents))) })),
     ];
   }
-  price.installment =
-    !b2b && effectiveCents >= 30000 ? { months: 12, monthly: money(Math.ceil(effectiveCents / 12)), provider: "BirKart" } : null;
+  const plans = !b2b ? installmentPlans(effectiveCents) : [];
+  price.installmentPlans = plans;
+  const yearly = plans.find((p) => p.months === 12);
+  price.installment = yearly ? { months: 12, monthly: yearly.monthly, provider: yearly.provider } : null;
   return price;
+}
+
+/** Kredit (taksit) şərtləri: müddət uzandıqca nağd qiymətə faiz əlavə olunur. */
+export const INSTALLMENT_TERMS = [
+  { months: 3, markupPercent: 3, provider: "Bolkart" },
+  { months: 6, markupPercent: 6, provider: "Bolkart" },
+  { months: 12, markupPercent: 12, provider: "BirKart" },
+  { months: 18, markupPercent: 18, provider: "BirKart" },
+] as const;
+export const INSTALLMENT_MIN_CENTS = 30000;
+
+export function installmentCents(cashCents: number, months: number) {
+  const term = INSTALLMENT_TERMS.find((x) => x.months === months);
+  return term ? cashCents + percentOf(cashCents, term.markupPercent) : cashCents;
+}
+
+export function installmentPlans(cashCents: number) {
+  if (cashCents < INSTALLMENT_MIN_CENTS) return [];
+  return INSTALLMENT_TERMS.map((term) => {
+    const total = installmentCents(cashCents, term.months);
+    return { months: term.months, provider: term.provider, markupPercent: term.markupPercent, total: money(total), monthly: money(Math.ceil(total / term.months)), difference: money(total - cashCents) };
+  });
 }
 
 /** Vahid çevirməsi: daxil edilən vahiddə miqdarı əsas vahidə çevirir (backend məntiqi). */

@@ -1,16 +1,17 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { BadgeCheck, ChevronDown, ChevronLeft, Flag, Heart, Scale, ShieldCheck, ShoppingCart, SlidersHorizontal, Star, Tag, Trash2, Truck, Wrench, X } from "lucide-react";
+import { BadgeCheck, Banknote, ChevronDown, ChevronLeft, ChevronRight, CreditCard, Flag, Heart, Scale, ShieldCheck, ShoppingCart, SlidersHorizontal, Star, Tag, Trash2, Truck, Wrench, X } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@sp/utils";
 import { ApiError, idempotencyKey, post, qs, useApi, useQueryClient, del, patch } from "@sp/api-client";
 import { useI18n } from "../core/i18n";
 import { Link, useRouter } from "../core/router";
 import { useSession } from "../core/session";
-import { Card, EmptyState, ErrorState, FormError, Loading, Pagination, Radios, SearchBox, SelectField, Stars, TextArea, TextField, errorText, useFormState } from "../kit/base";
+import { Card, EmptyState, ErrorState, FormError, Loading, Radios, SearchBox, SelectField, Stars, TextArea, TextField, errorText, useFormState } from "../kit/base";
 import { ConfirmDialog, Dialog } from "../kit/actions";
 import { StockPill } from "../kit/domain";
 import { ProductVisual, QuantityInput } from "../kit/media";
+import { ServiceIcon, productCategoryIcon } from "../../components/domain/service-icon";
 
 /* ------------------------------------------------------------------ */
 /* Səbət əməliyyatları                                                 */
@@ -85,6 +86,7 @@ export function ProductTile({ p, compatibleBadge }: { p: any; compatibleBadge?: 
   const { add } = useCartActions();
   const { toggleFavorite, toggleCompare } = useProductActions();
   const discounted = p.price && p.price.basePrice.amount !== p.price.effectivePrice.amount;
+  const pct = discounted ? Math.round((1 - Number(p.price.effectivePrice.amount) / Number(p.price.basePrice.amount)) * 100) : 0;
   const outOfStock = p.stockStatus === "OUT_OF_STOCK";
   return (
     <article className="shop-tile">
@@ -93,8 +95,9 @@ export function ProductTile({ p, compatibleBadge }: { p: any; compatibleBadge?: 
           <ProductVisual kind={p.imageUrl} tone={p.imageTone} label={p.name} />
         </Link>
         <div className="shop-tile-flags">
+          {pct > 0 && <span className="shop-tile-pct">{t("shop.discountPct", { pct })}</span>}
           {p.isNew && <span className="badge badge-info">{t("shop.new")}</span>}
-          {p.hasPromotion && <span className="badge badge-warning">{t("shop.sale")}</span>}
+          {p.hasPromotion && !pct && <span className="badge badge-warning">{t("shop.sale")}</span>}
           {compatibleBadge && <span className="badge badge-success"><BadgeCheck size={12} /> {t("shop.fits")}</span>}
         </div>
         <div className="shop-tile-tools">
@@ -210,7 +213,7 @@ function FacetOptions({ facet, isChecked, onToggle }: { facet: any; isChecked: (
  * istifadəçini kabinetdən çıxarmır.
  */
 export function ShopPage({ categoryPath, base = "/shop" }: { categoryPath?: string; base?: string }) {
-  const { t } = useI18n();
+  const { t, num } = useI18n();
   const { query, setQuery, navigate } = useRouter();
   const { user } = useSession();
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -233,90 +236,184 @@ export function ShopPage({ categoryPath, base = "/shop" }: { categoryPath?: stri
     if (code === "deviceId") return t("shop.fitsMyDevice");
     return `${f?.name ?? code}: ${opt?.label ?? value}`;
   };
-  const renderFacets = () => (
+  const selectedIn = (f: any) => (f.range ? f.range.selectedMin != null || f.range.selectedMax != null : f.options?.some((o: any) => o.selected) || !!query.get(f.code));
+  const renderFacets = (mobile = false) => (
     <div className="shop-facets">
       {devices.data?.items?.length > 0 && (
         <SelectField label={t("shop.fitsMyDevice")} value={query.get("deviceId") ?? ""} onValue={(v) => setQuery({ deviceId: v, page: null })} placeholder={t("shop.anyDevice")} options={devices.data.items.map((d: any) => ({ value: d.id, label: `${d.nickname ?? d.modelName}` }))} />
       )}
-      {data?.facets?.map((f: any) => (
-        <fieldset key={f.code} className="shop-facet">
-          <legend>{f.name}{f.unit && f.display !== "CHECKBOX" ? `, ${f.unit}` : ""}</legend>
-          {f.display === "CHECKBOX" ? (
-            <FacetOptions
-              facet={f}
-              isChecked={(o) => (f.code === "rating" || f.code.startsWith("in") || f.code === "promo" || f.code === "isNew" ? query.get(f.code) === o.value : o.selected)}
-              onToggle={(o) => (["inStock", "promo", "isNew", "rating"].includes(f.code) ? setQuery({ [f.code]: query.get(f.code) === o.value ? null : o.value, page: null }) : toggleOption(f.code, o.value))}
-            />
-          ) : f.range ? (
-            <RangeFacet facet={f} onApply={(min, max) => setQuery({ [f.code === "price" ? "priceMin" : `${f.code}_min`]: min, [f.code === "price" ? "priceMax" : `${f.code}_max`]: max, page: null })} />
-          ) : null}
-        </fieldset>
+      {data?.facets?.map((f: any, i: number) => (
+        <details key={f.code} className="shop-facet" open={mobile ? selectedIn(f) || i < 2 : i < 4 || selectedIn(f)}>
+          <summary>
+            <span>{f.name}{f.unit && f.display !== "CHECKBOX" ? `, ${f.unit}` : ""}</span>
+            {selectedIn(f) && <i className="shop-facet-dot" aria-hidden />}
+            <ChevronDown size={16} aria-hidden />
+          </summary>
+          <div className="shop-facet-body" role="group" aria-label={f.name}>
+            {f.display === "CHECKBOX" ? (
+              <FacetOptions
+                facet={f}
+                isChecked={(o) => (f.code === "rating" || f.code.startsWith("in") || f.code === "promo" || f.code === "isNew" ? query.get(f.code) === o.value : o.selected)}
+                onToggle={(o) => (["inStock", "promo", "isNew", "rating"].includes(f.code) ? setQuery({ [f.code]: query.get(f.code) === o.value ? null : o.value, page: null }) : toggleOption(f.code, o.value))}
+              />
+            ) : f.range ? (
+              <RangeFacet facet={f} onApply={(min, max) => setQuery({ [f.code === "price" ? "priceMin" : `${f.code}_min`]: min, [f.code === "price" ? "priceMax" : `${f.code}_max`]: max, page: null })} />
+            ) : null}
+          </div>
+        </details>
       ))}
     </div>
   );
+  const chips = activeChips.flatMap(([k, v]) => (k.startsWith("attr.") && !k.match(/_(min|max)$/) || k === "brand" || k === "country" ? v.split(",").map((x) => [k, x]) : [[k, v]]));
+  const isShop = base === "/shop";
+  const meta = data?.meta;
+  const from = meta ? (meta.page - 1) * meta.pageSize + 1 : 0;
+  const to = meta ? Math.min(meta.page * meta.pageSize, meta.total) : 0;
+  const rootCats = !categoryPath ? (categories.data ?? []) : [];
+  const subcats: any[] = categoryPath ? data?.children ?? [] : [];
+  const showPromo = isShop && !query.get("q") && !chips.length && (meta?.page ?? 1) === 1;
+
   return (
-    <div className="container py-6 shop-page">
-      <nav className="pg-crumbs mb-2" aria-label={t("common.breadcrumbs")}>
-        {base === "/shop" && <><Link to="/">{t("home")}</Link> › </>}<Link to={base}>{base === "/shop" ? t("nav.shop") : t("b2b.nav.catalog")}</Link>
-        {data?.breadcrumbs?.map((b: any) => <span key={b.slug}> › <Link to={b.href.replace(/^\/shop/, base)}>{b.name}</Link></span>)}
-      </nav>
-      <header className="shop-head">
-        <div>
-          <h1>{data?.category?.name ?? t("shop.title")}</h1>
-          <p className="text-muted">{data ? t("shop.resultCount", { count: data.meta.total }) : t("common.loading")}{data?.compatibleWith ? ` · ${t("shop.compatibleWith", { model: data.compatibleWith })}` : ""}</p>
-        </div>
-      </header>
-      {data?.children?.length > 0 && (
-        <nav className={cn("shop-subcats", !categoryPath && "is-root")} aria-label={t("shop.categories")}>
-          {data.children.map((c: any) => <Link key={c.id} to={`${base}/${c.path.join("/")}`} className="chip">{c.name} <small>{c.productCount}</small></Link>)}
-        </nav>
-      )}
-      {activeChips.length > 0 && (
-        <div className="shop-active mb-3" aria-label={t("shop.activeFilters")}>
-          {activeChips.flatMap(([k, v]) => (k.startsWith("attr.") && !k.match(/_(min|max)$/) || k === "brand" || k === "country" ? v.split(",").map((x) => [k, x]) : [[k, v]])).map(([k, v]) => (
-            <button key={`${k}-${v}`} type="button" className="chip active" onClick={() => (k.startsWith("attr.") && !k.match(/_(min|max)$/) || k === "brand" || k === "country" ? toggleOption(k!, v!) : setQuery({ [k!]: null }))}>
-              {labelFor(k!, v!)} <X size={12} />
-            </button>
-          ))}
-          <button type="button" className="btn ghost btn-sm" onClick={() => navigate(categoryPath ? `${base}/${categoryPath}` : base, { replace: true })}>{t("shop.resetAll")}</button>
-        </div>
-      )}
-      <div className="shop-grid-layout">
-        <aside className="shop-side" aria-label={t("shop.filters")}>
-          <Card title={t("shop.categories")}>{categories.isLoading ? <Loading /> : <CategoryNav nodes={categories.data ?? []} categoryPath={categoryPath} base={base} />}</Card>
-          {data?.facets?.length > 0 && <Card title={t("shop.filters")}>{renderFacets()}</Card>}
-        </aside>
-        <section className="shop-results" aria-live="polite">
-          <div className="shop-toolbar">
-            <SearchBox value={query.get("q") ?? ""} onChange={(v) => setQuery({ q: v, page: null })} placeholder={t("shop.searchInCatalog")} />
-            <label className="shop-sort">
-              <span>{t("shop.sortLabel")}</span>
-              <select className="form-input" value={query.get("sort") ?? ""} onChange={(e) => setQuery({ sort: e.target.value, page: null })}>
-                {[["", t("shop.sortPopular")], ["price", t("shop.sortPriceAsc")], ["-price", t("shop.sortPriceDesc")], ["rating", t("shop.sortRating")], ["new", t("shop.sortNew")]].map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-              </select>
-            </label>
-            <button type="button" className="btn outline shop-filter-btn" onClick={() => setFiltersOpen(true)}><SlidersHorizontal size={16} /> {t("shop.filters")}{activeChips.length > 0 && <span className="shop-count on">{activeChips.length}</span>}</button>
+    <div className="shop-page">
+      <section className="shop-hero">
+        <div className="container">
+          <nav className="pg-crumbs" aria-label={t("common.breadcrumbs")}>
+            {isShop && <><Link to="/">{t("home")}</Link> › </>}<Link to={base}>{isShop ? t("nav.shop") : t("b2b.nav.catalog")}</Link>
+            {data?.breadcrumbs?.map((b: any) => <span key={b.slug}> › <Link to={b.href.replace(/^\/shop/, base)}>{b.name}</Link></span>)}
+          </nav>
+          <div className="shop-hero-row">
+            <div className="shop-hero-copy">
+              <h1>{data?.category?.name ?? t("shop.title")}</h1>
+              <p>
+                {data ? <strong>{t("shop.resultCount", { count: num(data.meta.total) })}</strong> : t("common.loading")}
+                {data?.compatibleWith ? <span className="shop-compat"><BadgeCheck size={15} aria-hidden /> {t("shop.compatibleWith", { model: data.compatibleWith })}</span> : null}
+              </p>
+              {isShop && !categoryPath && <p className="shop-hero-lead">{t("shop.heroText")}</p>}
+            </div>
+            {isShop && (
+              <ul className="shop-trust">
+                <li><ShieldCheck size={17} aria-hidden /> {t("shop.trustOriginal")}</li>
+                <li><Truck size={17} aria-hidden /> {t("shop.trustDelivery")}</li>
+                <li><CreditCard size={17} aria-hidden /> {t("shop.trustInstallment")}</li>
+                <li><Wrench size={17} aria-hidden /> {t("shop.trustInstall")}</li>
+              </ul>
+            )}
           </div>
-          {list.isLoading ? <Loading rows={6} /> : list.error ? <ErrorState error={list.error} onRetry={() => list.refetch()} /> : !data.items.length ? (
-            <EmptyState title={t("shop.noProducts")} text={t("shop.noProductsText")} action={<button type="button" className="btn outline" onClick={() => navigate(base)}>{t("shop.resetAll")}</button>} />
-          ) : (
-            <>
-              <div className={cn("shop-grid", list.isFetching && "is-fetching")}>
-                {data.items.map((p: any) => <ProductTile key={p.id} p={p} compatibleBadge={!!query.get("deviceId")} />)}
-              </div>
-              <Pagination meta={data.meta} onPage={(page) => setQuery({ page }, { replace: false })} />
-            </>
+          {(rootCats.length > 0 || subcats.length > 0) && (
+            <nav className="shop-cats" aria-label={t("shop.browseCategories")}>
+              {(rootCats.length ? rootCats : subcats).map((c: any) => {
+                const slug = c.path?.[0] ?? c.slug;
+                return (
+                  <Link key={c.id} to={`${base}/${c.path.join("/")}`} className={cn("shop-cat", `svc-tone-${String(c.imageUrl ?? "illu:teal").replace("illu:", "")}`)}>
+                    <span className="shop-cat-icon"><ServiceIcon name={productCategoryIcon(slug)} size={20} /></span>
+                    <span className="shop-cat-name">{c.name}</span>
+                    <small>{c.productCount}</small>
+                  </Link>
+                );
+              })}
+            </nav>
           )}
-        </section>
+        </div>
+      </section>
+
+      <div className="container shop-main">
+        <div className="shop-grid-layout">
+          <aside className="shop-side" aria-label={t("shop.filters")}>
+            <section className="shop-panel">
+              <h2 className="shop-panel-title">{t("shop.categories")}</h2>
+              {categories.isLoading ? <Loading /> : <CategoryNav nodes={categories.data ?? []} categoryPath={categoryPath} base={base} />}
+            </section>
+            {data?.facets?.length > 0 && (
+              <section className="shop-panel">
+                <div className="shop-panel-head">
+                  <h2 className="shop-panel-title"><SlidersHorizontal size={16} aria-hidden /> {t("shop.filters")}</h2>
+                  {chips.length > 0 && <button type="button" className="shop-reset" onClick={() => navigate(categoryPath ? `${base}/${categoryPath}` : base, { replace: true })}>{t("shop.resetAll")}</button>}
+                </div>
+                {renderFacets()}
+              </section>
+            )}
+          </aside>
+
+          <section className="shop-results" aria-live="polite">
+            <div className="shop-toolbar">
+              <SearchBox value={query.get("q") ?? ""} onChange={(v) => setQuery({ q: v, page: null })} placeholder={t("shop.searchInCatalog")} />
+              <label className="shop-sort">
+                <span>{t("shop.sortLabel")}</span>
+                <select className="form-input" value={query.get("sort") ?? ""} onChange={(e) => setQuery({ sort: e.target.value, page: null })}>
+                  {[["", t("shop.sortPopular")], ["price", t("shop.sortPriceAsc")], ["-price", t("shop.sortPriceDesc")], ["rating", t("shop.sortRating")], ["new", t("shop.sortNew")]].map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                </select>
+              </label>
+              <button type="button" className="btn outline shop-filter-btn" onClick={() => setFiltersOpen(true)}><SlidersHorizontal size={16} /> {t("shop.filters")}{chips.length > 0 && <span className="shop-count on">{chips.length}</span>}</button>
+            </div>
+
+            <div className="shop-status">
+              {meta && meta.total > 0 && <span className="shop-showing">{t("shop.showing", { from, to, total: num(meta.total) })}</span>}
+              {chips.length > 0 && (
+                <div className="shop-active" aria-label={t("shop.activeFilters")}>
+                  {chips.map(([k, v]) => (
+                    <button key={`${k}-${v}`} type="button" className="shop-chip" onClick={() => (k!.startsWith("attr.") && !k!.match(/_(min|max)$/) || k === "brand" || k === "country" ? toggleOption(k!, v!) : setQuery({ [k!]: null }))}>
+                      {labelFor(k!, v!)} <X size={13} aria-hidden />
+                    </button>
+                  ))}
+                  <button type="button" className="shop-reset" onClick={() => navigate(categoryPath ? `${base}/${categoryPath}` : base, { replace: true })}>{t("shop.resetAll")}</button>
+                </div>
+              )}
+            </div>
+
+            {list.isLoading ? <Loading rows={6} /> : list.error ? <ErrorState error={list.error} onRetry={() => list.refetch()} /> : !data.items.length ? (
+              <EmptyState title={t("shop.noProducts")} text={t("shop.noProductsText")} action={<button type="button" className="btn outline" onClick={() => navigate(base)}>{t("shop.resetAll")}</button>} />
+            ) : (
+              <>
+                <div className={cn("shop-grid", list.isFetching && "is-fetching")}>
+                  {data.items.map((p: any, i: number) => (
+                    <React.Fragment key={p.id}>
+                      {showPromo && i === 8 && (
+                        <aside className="shop-promo">
+                          <span className="shop-promo-icon"><Wrench size={26} aria-hidden /></span>
+                          <div className="shop-promo-copy">
+                            <h2>{t("shop.promoTitle")}</h2>
+                            <p>{t("shop.promoText")}</p>
+                          </div>
+                          <Link to="/services" className="btn">{t("shop.promoCta")}</Link>
+                        </aside>
+                      )}
+                      <ProductTile p={p} compatibleBadge={!!query.get("deviceId")} />
+                    </React.Fragment>
+                  ))}
+                </div>
+                <ShopPager meta={data.meta} onPage={(page) => { setQuery({ page }, { replace: false }); if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" }); }} />
+              </>
+            )}
+          </section>
+        </div>
       </div>
       <Dialog open={filtersOpen} onClose={() => setFiltersOpen(false)} title={t("shop.filters")} footer={<button type="button" className="btn primary w-full" onClick={() => setFiltersOpen(false)}>{t("shop.showResults", { count: data?.meta?.total ?? 0 })}</button>}>
         <div className="shop-dialog-cats">
           <h3 className="h4">{t("shop.categories")}</h3>
           <CategoryNav nodes={categories.data ?? []} categoryPath={categoryPath} base={base} />
         </div>
-        {renderFacets()}
+        {renderFacets(true)}
       </Dialog>
     </div>
+  );
+}
+
+/** Nömrəli səhifələmə: ilk, son, cari və qonşu səhifələr; aralarda "…". */
+function ShopPager({ meta, onPage }: { meta: { page: number; totalPages: number; total: number; pageSize: number }; onPage: (page: number) => void }) {
+  const { t } = useI18n();
+  if (!meta || meta.totalPages <= 1) return null;
+  const { page, totalPages } = meta;
+  const nums = [...new Set([1, page - 1, page, page + 1, totalPages])].filter((n) => n >= 1 && n <= totalPages).sort((a, b) => a - b);
+  const items: (number | "gap")[] = [];
+  nums.forEach((n, i) => { if (i && n - nums[i - 1]! > 1) items.push("gap"); items.push(n); });
+  return (
+    <nav className="shop-pager" aria-label={t("common.pagination")}>
+      <button type="button" className="shop-pager-btn" disabled={page <= 1} onClick={() => onPage(page - 1)} aria-label={t("common.prev")}><ChevronLeft size={16} /></button>
+      {items.map((n, i) => n === "gap" ? <span key={`g${i}`} className="shop-pager-gap">…</span> : (
+        <button key={n} type="button" className={cn("shop-pager-btn", n === page && "active")} aria-current={n === page ? "page" : undefined} aria-label={t("shop.page", { page: n })} onClick={() => onPage(n)}>{n}</button>
+      ))}
+      <button type="button" className="shop-pager-btn" disabled={page >= totalPages} onClick={() => onPage(page + 1)} aria-label={t("common.next")}><ChevronRight size={16} /></button>
+    </nav>
   );
 }
 
@@ -370,6 +467,8 @@ export function ProductPage({ slug }: { slug: string }) {
   const [checkDevice, setCheckDevice] = useState("");
   const compat = useApi<any>(checkDevice && q.data ? `/products/${q.data.id}/compatibility?deviceId=${checkDevice}` : null);
   const [reviewOpen, setReviewOpen] = useState(false);
+  const [payMode, setPayMode] = useState<"cash" | "credit">("cash");
+  const [months, setMonths] = useState(12);
   if (q.isLoading) return <div className="container py-8"><Loading rows={8} /></div>;
   if (q.error) return <div className="container py-8"><ErrorState error={q.error} onRetry={() => q.refetch()} /></div>;
   const p = q.data;
@@ -390,7 +489,19 @@ export function ProductPage({ slug }: { slug: string }) {
   const saving = discounted ? { amount: (Number(price.basePrice.amount) - Number(price.effectivePrice.amount)).toFixed(2), currency: price.effectivePrice.currency } : null;
   const outOfStock = variant.stockStatus === "OUT_OF_STOCK";
   const canAdd = !outOfStock && Number(amount) > 0;
-  const addToCart = () => add(variant.id, amount, currentUnit, install);
+  const plans: any[] = price.installmentPlans ?? [];
+  const credit = payMode === "credit" ? plans.find((x) => x.months === months) ?? plans[plans.length - 1] : null;
+  const qtyFactor = currentUnit === p.baseUnit ? Math.max(Number(amount) || 1, 1) : 1;
+  const addToCart = async () => {
+    await add(variant.id, amount, currentUnit, install);
+    // Kredit seçimi checkout-da ödəniş üsulu kimi əvvəlcədən seçilir
+    try {
+      if (credit) sessionStorage.setItem(CREDIT_KEY, String(credit.months));
+      else sessionStorage.removeItem(CREDIT_KEY);
+    } catch {
+      /* brauzer yaddaşı bağlıdır */
+    }
+  };
   const branchesWithStock = p.branchStock.filter((b: any) => Number(b.available.value) > 0).length;
   const gallery = p.gallery.length ? p.gallery : [{ id: "main", url: p.imageUrl }];
   const jsonLd = { "@context": "https://schema.org", "@type": "Product", name: p.name, sku: variant.sku, brand: { "@type": "Brand", name: p.brandName }, aggregateRating: p.reviewCount ? { "@type": "AggregateRating", ratingValue: p.rating, reviewCount: p.reviewCount } : undefined, offers: { "@type": "Offer", priceCurrency: "AZN", price: price.effectivePrice.amount, availability: outOfStock ? "https://schema.org/OutOfStock" : "https://schema.org/InStock" } };
@@ -471,7 +582,6 @@ export function ProductPage({ slug }: { slug: string }) {
               {price.priceType !== "RETAIL" && <span className="badge badge-info">{t(`enum.PriceType.${price.priceType}`)}</span>}
             </div>
             <small className="text-muted">{price.vat.included ? t("price.vatIncluded", { rate: Number(price.vat.rate) }) : t("price.vatExcluded", { rate: Number(price.vat.rate) })}</small>
-            {price.installment && <div className="pdp-installment">{t("price.installment", { months: price.installment.months, monthly: money(price.installment.monthly), provider: price.installment.provider })}</div>}
             {price.appliedDiscounts?.some((d: any) => d.applied) && (
               <ul className="pdp-discounts">
                 {price.appliedDiscounts.filter((d: any) => d.applied).map((d: any) => <li key={d.code}><BadgeCheck size={14} aria-hidden /> {d.label} <strong>−{money(d.amount)}</strong></li>)}
@@ -484,6 +594,8 @@ export function ProductPage({ slug }: { slug: string }) {
             )}
             {price.tiers?.length > 0 && <p className="text-sm m-0">{t("shop.tiers")}: {price.tiers.map((tr: any) => `≥${tr.minQuantity}: ${money(tr.price)}`).join(" · ")}</p>}
           </div>
+
+          {price.priceType === "RETAIL" && <PaymentChooser price={price} quantity={qtyFactor} mode={payMode} months={credit?.months ?? months} onMode={setPayMode} onMonths={setMonths} />}
 
           {p.installationService && (
             <label className={cn("pdp-install", install && "active")}>
@@ -620,14 +732,71 @@ export function ProductPage({ slug }: { slug: string }) {
       {/* Mobil alış paneli — ekranın altında sabit */}
       <div className="pdp-buybar">
         <div className="pdp-buybar-price">
-          {discounted && <s>{money(price.basePrice)}</s>}
-          <strong className={cn(discounted && "is-sale")}>{money(price.effectivePrice)}</strong>
+          {credit ? (
+            <>
+              <small>{t("shop.payCredit")} · {t("shop.monthsShort", { months: credit.months })}</small>
+              <strong>{t("shop.installment", { amount: money(scaleMoney(credit.monthly, qtyFactor)) })}</strong>
+            </>
+          ) : (
+            <>
+              {discounted && <s>{money(price.basePrice)}</s>}
+              <strong className={cn(discounted && "is-sale")}>{money(price.effectivePrice)}</strong>
+            </>
+          )}
         </div>
         <button type="button" className={cn("pdp-icon-btn", p.isFavorite && "is-fav")} aria-label={t("shop.addFavorite")} onClick={() => toggleFavorite(p)}><Heart size={19} fill={p.isFavorite ? "currentColor" : "none"} /></button>
         <button type="button" className="btn primary pdp-buybar-add" disabled={!canAdd} onClick={addToCart}><ShoppingCart size={18} /> {t("add")}</button>
       </div>
 
       {reviewOpen && <ReviewDialog target="PRODUCT" targetId={p.id} onClose={() => setReviewOpen(false)} />}
+    </div>
+  );
+}
+
+/** Məhsul detalında seçilən kredit müddəti — checkout ödəniş üsulunu əvvəlcədən doldurur. */
+const CREDIT_KEY = "sp.credit.months";
+
+const scaleMoney = (m: { amount: string; currency: string }, factor: number) => ({ amount: (Number(m.amount) * factor).toFixed(2), currency: m.currency });
+
+/** Nağd və ya kredit alış: kredit seçiləndə müddət, aylıq ödəniş, ümumi məbləğ və nağd qiymətdən fərq göstərilir. */
+function PaymentChooser({ price, quantity, mode, months, onMode, onMonths }: { price: any; quantity: number; mode: "cash" | "credit"; months: number; onMode: (m: "cash" | "credit") => void; onMonths: (m: number) => void }) {
+  const { t, money } = useI18n();
+  const plans: any[] = price.installmentPlans ?? [];
+  const plan = plans.find((x) => x.months === months) ?? plans[plans.length - 1];
+  const lowest = plans.length ? plans.reduce((a, b) => (Number(a.monthly.amount) <= Number(b.monthly.amount) ? a : b)) : null;
+  const k = (m: { amount: string; currency: string }) => money(scaleMoney(m, quantity));
+  return (
+    <div className="pdp-pay">
+      <span className="pdp-label">{t("shop.paymentType")}</span>
+      <div className="pdp-pay-modes" role="radiogroup" aria-label={t("shop.paymentType")}>
+        <button type="button" role="radio" aria-checked={mode === "cash"} className={cn("pdp-pay-mode", mode === "cash" && "active")} onClick={() => onMode("cash")}>
+          <span className="pdp-pay-icon"><Banknote size={20} aria-hidden /></span>
+          <span className="pdp-pay-copy"><strong>{t("shop.payCash")}</strong><small>{k(price.effectivePrice)} · {t("shop.payCashHint")}</small></span>
+        </button>
+        <button type="button" role="radio" aria-checked={mode === "credit"} disabled={!plans.length} className={cn("pdp-pay-mode", mode === "credit" && "active")} onClick={() => onMode("credit")}>
+          <span className="pdp-pay-icon"><CreditCard size={20} aria-hidden /></span>
+          <span className="pdp-pay-copy"><strong>{t("shop.payCredit")}</strong><small>{lowest ? t("shop.payCreditHint", { amount: k(lowest.monthly) }) : t("shop.creditUnavailable", { amount: money({ amount: "300.00", currency: "AZN" }) })}</small></span>
+        </button>
+      </div>
+      {mode === "credit" && plan && (
+        <div className="pdp-credit">
+          <span className="pdp-label">{t("shop.creditTerm")}</span>
+          <div className="pdp-credit-terms" role="radiogroup" aria-label={t("shop.creditTerm")}>
+            {plans.map((x) => (
+              <button key={x.months} type="button" role="radio" aria-checked={plan.months === x.months} className={cn("pdp-credit-term", plan.months === x.months && "active")} onClick={() => onMonths(x.months)}>
+                <strong>{t("shop.monthsShort", { months: x.months })}</strong>
+                <small>+{x.markupPercent}%</small>
+              </button>
+            ))}
+          </div>
+          <dl className="pdp-credit-sum">
+            <div className="is-main"><dt>{t("shop.creditMonthly")}</dt><dd>{k(plan.monthly)} <small>× {plan.months}</small></dd></div>
+            <div><dt>{t("shop.creditTotal")}</dt><dd>{k(plan.total)}</dd></div>
+            <div><dt>{t("shop.creditDiff")}</dt><dd className="is-diff">+{k(plan.difference)}</dd></div>
+          </dl>
+          <p className="pdp-credit-note">{t("shop.creditProvider", { provider: plan.provider, pct: plan.markupPercent })}. {t("shop.creditNote")}</p>
+        </div>
+      )}
     </div>
   );
 }
@@ -911,11 +1080,28 @@ export function CheckoutPage() {
     const pm = opts.data.paymentMethods.find((m: any) => m.method === v.paymentMethod);
     if (pm && !pm.available) form.set("paymentMethod", opts.data.paymentMethods.find((m: any) => m.available)?.method ?? "CARD_ONLINE");
   }, [opts.data]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Məhsul səhifəsində kredit seçilibsə, taksit və müddət əvvəlcədən seçilir
+  const optsReady = !!opts.data;
+  useEffect(() => {
+    if (!opts.data) return;
+    let saved: string | null = null;
+    try {
+      saved = sessionStorage.getItem(CREDIT_KEY);
+    } catch {
+      /* yaddaş bağlıdır */
+    }
+    const months = Number(saved);
+    if (months && opts.data.paymentMethods.some((m: any) => m.method === "INSTALLMENT" && m.available) && opts.data.installmentOffers.some((i: any) => i.months === months)) {
+      form.set("paymentMethod", "INSTALLMENT");
+      form.set("installmentMonths", months);
+    }
+  }, [optsReady]); // eslint-disable-line react-hooks/exhaustive-deps
   if (opts.isLoading) return <div className="container py-8"><Loading rows={8} /></div>;
   if (opts.error instanceof ApiError && opts.error.code === "CART_EMPTY") return <div className="container py-8"><EmptyState icon={ShoppingCart} title={t("cart.empty")} action={<Link to="/shop" className="btn primary">{t("cart.goShopping")}</Link>} /></div>;
   if (opts.error) return <div className="container py-8"><ErrorState error={opts.error} onRetry={() => opts.refetch()} /></div>;
   const o = opts.data;
   const s = o.summary;
+  const creditOffer = v.paymentMethod === "INSTALLMENT" ? o.installmentOffers.find((i: any) => i.months === v.installmentMonths && i.total) : null;
   const submit = async () => {
     setBusy(true);
     setError(null);
@@ -992,7 +1178,7 @@ export function CheckoutPage() {
           <Card title={`${o.needsInstallation ? 4 : 3}. ${t("checkout.payment")}`}>
             <Radios name="payment" value={v.paymentMethod} onValue={(x) => form.set("paymentMethod", x)} columns={2} options={o.paymentMethods.map((m: any) => ({ value: m.method, label: m.label, hint: m.note, disabled: !m.available }))} />
             {v.paymentMethod === "INSTALLMENT" && o.installmentOffers.length > 0 && (
-              <div className="mt-3"><Radios name="months" value={String(v.installmentMonths)} onValue={(x) => form.set("installmentMonths", Number(x))} columns={3} options={o.installmentOffers.map((i: any) => ({ value: String(i.months), label: `${i.months} ${t("checkout.months")}`, hint: `${money(i.monthly)} / ${t("checkout.month")} · ${i.provider}` }))} /></div>
+              <div className="mt-3"><Radios name="months" value={String(v.installmentMonths)} onValue={(x) => form.set("installmentMonths", Number(x))} columns={3} options={o.installmentOffers.map((i: any) => ({ value: String(i.months), label: `${i.months} ${t("checkout.months")}`, hint: `${money(i.monthly)} / ${t("checkout.month")} · ${i.provider}${i.total ? ` · ${t("shop.creditTotal")}: ${money(i.total)} (+${i.markupPercent}%)` : ""}` }))} /></div>
             )}
             {o.company && <p className="text-sm mt-2">{t("checkout.creditAvailable", { amount: money(o.company.creditAvailable) })}</p>}
             <p className="text-sm text-muted mt-2">{t("checkout.cardSafety")}</p>
@@ -1017,7 +1203,8 @@ export function CheckoutPage() {
               {s.totals.appliedDiscounts.filter((d: any) => d.applied).map((d: any) => <div key={d.code} className="text-success"><dt>{d.label}</dt><dd>−{money(d.amount)}</dd></div>)}
               {Number(s.totals.installationTotal.amount) > 0 && <div><dt>{t("cart.installation")}</dt><dd>{money(s.totals.installationTotal)}</dd></div>}
               <div><dt>{t("checkout.deliveryFee")}</dt><dd>{Number(s.totals.deliveryTotal.amount) ? money(s.totals.deliveryTotal) : t("shop.free")}</dd></div>
-              <div className="grand"><dt>{t("common.total")}</dt><dd>{money(s.totals.total)}</dd></div>
+              {creditOffer && <div><dt>{t("shop.creditDiff")} ({t("shop.monthsShort", { months: creditOffer.months })})</dt><dd>+{money(creditOffer.difference)}</dd></div>}
+              <div className="grand"><dt>{t("common.total")}</dt><dd>{money(creditOffer ? creditOffer.total : s.totals.total)}</dd></div>
             </dl>
             <p className="text-sm text-muted">{t("checkout.agree")} <Link to="/terms" className="text-brand">{t("legal.terms")}</Link></p>
             <button type="button" className="btn primary btn-lg w-full mt-3" disabled={busy} onClick={submit}>{v.paymentMethod === "CARD_ONLINE" || v.paymentMethod === "INSTALLMENT" ? t("checkout.payNow") : t("checkout.placeOrder")}</button>

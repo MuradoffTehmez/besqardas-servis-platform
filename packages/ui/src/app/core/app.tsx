@@ -165,6 +165,10 @@ function SwitchRoleButton({ role }: { role: string }) {
   );
 }
 
+/** Hansı tətbiqdə olduğumuz (sayt və ya admin) — ortaq komponentlər görünüşü buna görə uyğunlaşdırır. */
+const AppKindCtx = React.createContext<"web" | "admin">("web");
+export const useAppKind = () => React.useContext(AppKindCtx);
+
 export function RoutedApp({ routes, shells, app }: { routes: RouteDef[]; shells: Record<string, ShellRender>; app: "web" | "admin" }) {
   const { path, locale } = useRouter();
   const { t } = useI18n();
@@ -190,9 +194,11 @@ export function RoutedApp({ routes, shells, app }: { routes: RouteDef[]; shells:
   );
   const fakeRoute = match?.route ?? { pattern: "*", render: () => null };
   return (
-    <ErrorBoundary resetKey={path} fallback={() => (shells.public ?? ((c: React.ReactNode) => c))(<SystemPage code="500" />, fakeRoute)}>
-      <CurrentRouteProvider value={match?.route ?? null}>{shell(content, fakeRoute)}</CurrentRouteProvider>
-    </ErrorBoundary>
+    <AppKindCtx.Provider value={app}>
+      <ErrorBoundary resetKey={path} fallback={() => (shells.public ?? ((c: React.ReactNode) => c))(<SystemPage code="500" />, fakeRoute)}>
+        <CurrentRouteProvider value={match?.route ?? null}>{shell(content, fakeRoute)}</CurrentRouteProvider>
+      </ErrorBoundary>
+    </AppKindCtx.Provider>
   );
 }
 

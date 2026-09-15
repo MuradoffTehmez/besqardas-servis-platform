@@ -63,19 +63,23 @@ export function seedMisc() {
   });
 
   // --- Bildirişlər ---
+  // Sifariş axınından yaranan köhnə bildirişlər oxunmuş sayılır — real kabinetdə yalnız son yeniliklər oxunmamış olur
+  for (const x of db.notifications) if (Date.now() - new Date(x.createdAt).getTime() > 24 * 3600_000) x.read = true;
   const n = (user: string, event: string, title: string, body: ReturnType<typeof L>, link: string | null, hoursAgo: number, read = false) => {
     notify(uid(user), event, title, body, link);
     db.notifications[0]!.createdAt = hoursFromNow(-hoursAgo);
     db.notifications[0]!.read = read;
   };
-  n("aysel", "SUBSCRIPTION_EXPIRING", "notif.orderConfirmed", L("Premium abunəliyiniz 65 gün sonra yenilənəcək", "Подписка Premium продлится через 65 дней", "Your Premium renews in 65 days"), "/account/subscription", 72, true);
-  n("aysel", "WARRANTY_EXPIRING", "notif.orderConfirmed", L("LG DualCool X123 cihazının periodik servis vaxtı yaxınlaşır", "Скоро плановое обслуживание LG DualCool X123", "Periodic service for LG DualCool X123 is due soon"), "/account/devices", 30, false);
-  n("elvin", "SETTLEMENT_APPROVED", "notif.paymentOk", L("Hesablaşma təsdiqləndi", "Выплата одобрена", "Settlement approved"), "/technician/earnings", 50, false);
-  n("warehouse", "LOW_STOCK", "notif.orderConfirmed", L("LG kompressor 18000 BTU minimum qalıqdan aşağıdır", "Компрессор LG 18000 BTU ниже минимума", "LG compressor 18000 BTU is below minimum"), "/inventory", 5, false);
-  n("dispatcher", "SLA_BREACH", "notif.orderConfirmed", L("SV-1080: operator yoxlamasının SLA-sı aşıldı", "SV-1080: нарушен SLA проверки", "SV-1080: operator check SLA breached"), "/service-orders", 3, false);
-  n("manager", "LOW_RATING", "notif.orderConfirmed", L("Aşağı reytinqli rəy: 3 ulduz", "Отзыв с низкой оценкой: 3 звезды", "Low-rated review: 3 stars"), "/reviews", 20, false);
+  n("aysel", "SUBSCRIPTION_EXPIRING", "notif.subscriptionRenewal", L("Premium abunəliyiniz 65 gün sonra yenilənəcək", "Подписка Premium продлится через 65 дней", "Your Premium renews in 65 days"), "/account/subscription", 72, true);
+  n("aysel", "WARRANTY_EXPIRING", "notif.serviceDue", L("LG DualCool X123 cihazının periodik servis vaxtı yaxınlaşır", "Скоро плановое обслуживание LG DualCool X123", "Periodic service for LG DualCool X123 is due soon"), "/account/devices", 30, false);
+  n("aysel", "ESTIMATE_READY", "notif.estimateReady", L("SV-1052: smeta hazırdır — 227,32 ₼, təsdiqinizi gözləyir", "SV-1052: смета готова — 227,32 ₼, ждёт вашего одобрения", "SV-1052: estimate ready — 227.32 ₼, awaiting your approval"), "/account/services", 2, false);
+  n("aysel", "PAYMENT_OK", "notif.paymentOk", L("Onlayn ödənişiniz qəbul edildi, fiskal çek kabinetdə", "Онлайн-оплата принята, чек в кабинете", "Your online payment was received, receipt is in your account"), "/account/payments", 6, false);
+  n("elvin", "SETTLEMENT_APPROVED", "notif.settlementApproved", L("Hesablaşma təsdiqləndi", "Выплата одобрена", "Settlement approved"), "/technician/earnings", 50, false);
+  n("warehouse", "LOW_STOCK", "notif.lowStock", L("LG kompressor 18000 BTU minimum qalıqdan aşağıdır", "Компрессор LG 18000 BTU ниже минимума", "LG compressor 18000 BTU is below minimum"), "/inventory", 5, false);
+  n("dispatcher", "SLA_BREACH", "notif.slaBreach", L("SV-1080: operator yoxlamasının SLA-sı aşıldı", "SV-1080: нарушен SLA проверки", "SV-1080: operator check SLA breached"), "/service-orders", 3, false);
+  n("manager", "LOW_RATING", "notif.lowRating", L("Aşağı reytinqli rəy: 3 ulduz", "Отзыв с низкой оценкой: 3 звезды", "Low-rated review: 3 stars"), "/reviews", 20, false);
   n("tural-t", "SUBSCRIPTION_PAST_DUE", "notif.paymentFail", L("Abunə ödənişi alınmadı — güzəşt müddəti 5 gün", "Оплата подписки не прошла — льготный период 5 дней", "Subscription payment failed — 5-day grace period"), "/technician/subscription", 30, false);
-  n("admin", "DOCUMENT_EXPIRING", "notif.orderConfirmed", L("Fərid Nağıyev: qaz işləri sertifikatının müddəti bitib", "Фарид Нагиев: истёк сертификат на газовые работы", "Farid Naghiyev: gas certificate expired"), "/technicians/verification", 240, false);
+  n("admin", "DOCUMENT_EXPIRING", "notif.documentExpiring", L("Fərid Nağıyev: qaz işləri sertifikatının müddəti bitib", "Фарид Нагиев: истёк сертификат на газовые работы", "Farid Naghiyev: gas certificate expired"), "/technicians/verification", 240, false);
 
   for (const u of db.users) {
     db.notificationPrefs.set(u.id, {

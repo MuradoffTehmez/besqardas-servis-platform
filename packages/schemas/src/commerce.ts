@@ -59,7 +59,7 @@ export const CheckoutOptions = z.object({
   addresses: z.array(Address),
   addressRules: z.object({ oneTimeAllowed: z.boolean(), maxAddresses: z.number(), source: z.enum(["PLAN", "B2B_CONTRACT"]) }),
   paymentMethods: z.array(z.object({ method: PaymentMethod, label: z.string(), available: z.boolean(), note: z.string().nullable() })),
-  installmentOffers: z.array(z.object({ provider: z.string(), months: z.number(), monthly: Money })),
+  installmentOffers: z.array(z.object({ provider: z.string(), months: z.number(), monthly: Money, markupPercent: z.number().optional(), total: Money.optional(), difference: Money.optional() })),
   installationSlots: z.array(z.object({ date: z.string(), slots: z.array(z.object({ start: IsoDateTime, end: IsoDateTime, available: z.boolean() })) })),
   requiresInvoiceDetails: z.boolean(),
   needsInstallation: z.boolean(),

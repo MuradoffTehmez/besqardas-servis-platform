@@ -427,6 +427,7 @@
       "link": "besqardasservis.az/s/abc"
     },
     "dash": {
+      "roleScoped": "Metrics for your active role",
       "ordersByDay": "Last 7 days",
       "created": "Created",
       "completed": "Completed",

@@ -1,12 +1,14 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { AlertCircle, Bell, Building2, CalendarClock, CheckCircle2, CreditCard, Crown, FileText, Heart, HardDrive, Lock, MapPin, Plus, QrCode, ShieldCheck, ShoppingBag, Star, Trash2, Truck, Users, Wrench } from "lucide-react";
+import { AlertCircle, Bell, BellOff, BellRing, Building2, CalendarClock, Check as CheckIcon, CheckCheck, CheckCircle2, ChevronLeft, ChevronRight, Inbox, Settings2, CreditCard, Crown, FileText, Heart, HardDrive, Lock, MapPin, Plus, QrCode, ShieldCheck, ShoppingBag, Star, Trash2, Truck, Users, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@sp/utils";
 import { del, patch, post, put, qs, useApi } from "@sp/api-client";
 import { useI18n } from "../core/i18n";
 import { Link, useRouter } from "../core/router";
 import { useSession } from "../core/session";
+import { bakuDateKey } from "@sp/i18n";
+import { CHANNEL_ICONS, categoryMeta, notificationMeta, type NotificationCategory } from "../../components/domain/notification-meta";
 import { Card, Check, EmptyState, EnumBadge, FormError, Grid, KeyValue, Loading, PageHeader, QueryView, Radios, SelectField, Stars, Stat, Tabs, TextArea, TextField, Toggle, errorText, useFormState } from "../kit/base";
 import { AvatarUploader } from "../kit/upload";
 import { ActionBar, ConfirmDialog, Dialog, ReasonDialog, ResourceTable } from "../kit/actions";
@@ -1242,49 +1244,139 @@ export function FavoritesPage() {
 const PREF_GROUPS = ["ORDER_STATUS", "ESTIMATE", "PAYMENT", "REMINDERS", "MARKETING"];
 const CHANNELS = ["IN_APP", "PUSH", "EMAIL", "SMS", "WHATSAPP"];
 
+const NOTIF_CATEGORIES: NotificationCategory[] = ["orders", "estimates", "payments", "care", "alerts", "work", "other"];
+
+/** Bildirişlər (§50): kateqoriya ikonları və rəngləri, günlərə görə qruplar, oxunmamış vurğusu, filtr və ayarlar. */
 export function NotificationsPage() {
-  const { t, relative } = useI18n();
+  const { t, relative, date, enumLabel } = useI18n();
   const { query, setQuery, navigate } = useRouter();
   const tab = query.get("tab") ?? "all";
+  const cat = query.get("cat") ?? "";
   const page = Number(query.get("page") ?? 1);
-  const q = useApi<any>(`/notifications${qs({ page, pageSize: 20, read: tab === "unread" ? "false" : undefined })}`);
+  const q = useApi<any>(`/notifications${qs({ page, pageSize: 30, read: tab === "unread" ? "false" : undefined })}`);
   const refresh = useRefresh();
+  const k = (key: string, vars?: Record<string, string | number>) => t(`acc.notif.${key}`, vars);
+  const unread = Number(q.data?.unread ?? 0);
+  const today = bakuDateKey(new Date());
+  const yesterday = bakuDateKey(new Date(Date.now() - 86_400_000));
+
+  const open = async (n: any) => {
+    if (!n.read) await post(`/notifications/${n.id}/read`);
+    await refresh();
+    if (n.link?.startsWith("/")) navigate(n.link);
+  };
+  const markRead = async (n: any) => {
+    await post(`/notifications/${n.id}/read`);
+    await refresh();
+  };
+
   return (
-    <>
-      <PageHeader title={t("panel.notificationsTitle")} actions={<button type="button" className="btn outline" onClick={async () => { await post("/notifications/read-all"); await refresh(); }}>{t("panel.markAllRead")}</button>} />
-      <Tabs value={tab} onChange={(v) => setQuery({ tab: v, page: null })} tabs={[{ id: "all", label: t("common.all") }, { id: "unread", label: t("acc.notif.unread"), badge: q.data?.unread }, { id: "settings", label: t("acc.notif.settings") }]} />
+    <div className="ntf">
+      <header className="ntf-head">
+        <div>
+          <h1>{t("panel.notificationsTitle")}</h1>
+          <p>{unread ? k("subtitle", { count: unread }) : k("allRead")}</p>
+        </div>
+        {tab !== "settings" && (
+          <button type="button" className="btn outline" disabled={!unread} onClick={async () => { await post("/notifications/read-all"); await refresh(); }}>
+            <CheckCheck size={17} aria-hidden /> {t("panel.markAllRead")}
+          </button>
+        )}
+      </header>
+
+      <div className="ntf-tabs" role="tablist" aria-label={t("panel.notificationsTitle")}>
+        {[["all", k("inbox"), Inbox], ["unread", k("unread"), BellRing], ["settings", k("settings"), Settings2]].map(([id, label, Icon]: any) => (
+          <button key={id} type="button" role="tab" aria-selected={tab === id} className={cn(tab === id && "active")} onClick={() => setQuery({ tab: id === "all" ? null : id, page: null })}>
+            <Icon size={16} aria-hidden /> {label}
+            {id === "unread" && unread > 0 && <b>{unread}</b>}
+          </button>
+        ))}
+      </div>
+
       {tab === "settings" ? <NotificationPreferences /> : (
-        <QueryView query={q} empty={<EmptyState title={t("panel.noNotifications")} />}>
-          {(d) => (
-            <Card flush>
-              <ul className="kit-list">
-                {(tab === "unread" ? d.items.filter((n: any) => !n.read) : d.items).map((n: any) => (
-                  <li key={n.id} className={cn("px-4", !n.read && "bg-soft")}>
-                    <button type="button" className="grow text-left" onClick={async () => { await post(`/notifications/${n.id}/read`); await refresh(); if (n.link?.startsWith("/")) navigate(n.link); }}>
-                      <strong>{n.title}</strong>
-                      <span className="block text-sm">{n.body}</span>
-                      <small className="text-muted">{relative(n.createdAt)} · {n.channel}</small>
-                    </button>
-                    {!n.read && <span className="badge badge-info">{t("acc.notif.new")}</span>}
-                  </li>
-                ))}
-              </ul>
-              <div className="px-4">
-                <div className="kit-pagination">
-                  <span className="text-sm text-muted">{t("common.pageOf", { page: d.meta.page, pages: d.meta.totalPages, total: d.meta.total })}</span>
-                  <div className="flex gap-2">
-                    <button type="button" className="btn outline btn-sm" disabled={page <= 1} onClick={() => setQuery({ page: page - 1 })}>{t("common.prev")}</button>
-                    <button type="button" className="btn outline btn-sm" disabled={page >= d.meta.totalPages} onClick={() => setQuery({ page: page + 1 })}>{t("common.next")}</button>
+        <QueryView query={q}>
+          {(d) => {
+            const base: any[] = tab === "unread" ? d.items.filter((n: any) => !n.read) : d.items;
+            const counts = NOTIF_CATEGORIES.map((c) => [c, base.filter((n) => notificationMeta(n.event).category === c).length] as const).filter(([, n]) => n > 0);
+            const list = base.filter((n) => !cat || notificationMeta(n.event).category === cat);
+            const groups: { key: string; label: string; items: any[] }[] = [];
+            for (const n of list) {
+              const key = bakuDateKey(n.createdAt);
+              const label = key === today ? k("today") : key === yesterday ? k("yesterday") : date(n.createdAt);
+              const g = groups[groups.length - 1];
+              if (g && g.key === key) g.items.push(n);
+              else groups.push({ key, label, items: [n] });
+            }
+            return (
+              <>
+                {counts.length > 1 && (
+                  <div className="ntf-cats" aria-label={t("common.filter")}>
+                    <button type="button" className={cn("ntf-cat", !cat && "active")} aria-pressed={!cat} onClick={() => setQuery({ cat: null })}>{t("common.all")} <small>{base.length}</small></button>
+                    {counts.map(([c, n]) => {
+                      const m = categoryMeta(c);
+                      return (
+                        <button key={c} type="button" className={cn("ntf-cat", `tone-${m.tone}`, cat === c && "active")} aria-pressed={cat === c} onClick={() => setQuery({ cat: c })}>
+                          <m.icon size={14} aria-hidden /> {k(`cat_${c}`)} <small>{n}</small>
+                        </button>
+                      );
+                    })}
                   </div>
-                </div>
-              </div>
-            </Card>
-          )}
+                )}
+                {!list.length ? (
+                  <div className="ntf-empty">
+                    <span><BellOff size={30} aria-hidden /></span>
+                    <h2>{tab === "unread" ? k("emptyUnread") : k("emptyTitle")}</h2>
+                    <p>{k("emptyText")}</p>
+                  </div>
+                ) : (
+                  <div className="ntf-groups">
+                    {groups.map((g) => (
+                      <section key={g.key} className="ntf-group">
+                        <h2>{g.label}</h2>
+                        <ul className="ntf-list">
+                          {g.items.map((n) => {
+                            const m = notificationMeta(n.event);
+                            const Ch = CHANNEL_ICONS[n.channel] ?? Bell;
+                            return (
+                              <li key={n.id} className={cn("ntf-item", `tone-${m.tone}`, !n.read && "is-unread")}>
+                                <span className="ntf-icon"><m.icon size={20} aria-hidden /></span>
+                                <button type="button" className="ntf-body" onClick={() => open(n)}>
+                                  <span className="ntf-title">{n.title}{!n.read && <i className="ntf-dot" aria-label={k("new")} />}</span>
+                                  <span className="ntf-text">{n.body}</span>
+                                  <span className="ntf-meta">
+                                    <span className="ntf-cat-label">{k(`cat_${m.category}`)}</span>
+                                    <span>{relative(n.createdAt)}</span>
+                                    {n.channel && <span className="ntf-channel"><Ch size={12} aria-hidden /> {enumLabel("NotificationChannel", n.channel)}</span>}
+                                  </span>
+                                </button>
+                                <div className="ntf-actions">
+                                  {!n.read && <button type="button" className="ntf-action" onClick={() => markRead(n)} aria-label={k("markRead")} title={k("markRead")}><CheckIcon size={16} /></button>}
+                                  {n.link && <ChevronRight size={18} className="ntf-chevron" aria-hidden />}
+                                </div>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </section>
+                    ))}
+                  </div>
+                )}
+                {d.meta.totalPages > 1 && (
+                  <div className="ntf-pager">
+                    <button type="button" className="btn outline btn-sm" disabled={page <= 1} onClick={() => setQuery({ page: page - 1 })}><ChevronLeft size={15} aria-hidden /> {t("common.prev")}</button>
+                    <span>{t("common.pageOf", { page: d.meta.page, pages: d.meta.totalPages, total: d.meta.total })}</span>
+                    <button type="button" className="btn outline btn-sm" disabled={page >= d.meta.totalPages} onClick={() => setQuery({ page: page + 1 })}>{t("common.next")} <ChevronRight size={15} aria-hidden /></button>
+                  </div>
+                )}
+              </>
+            );
+          }}
         </QueryView>
       )}
-    </>
+    </div>
   );
 }
+
 
 function NotificationPreferences() {
   const { t, enumLabel } = useI18n();
