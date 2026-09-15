@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { CalendarClock, CheckCircle2, Clock, Crown, MapPin, Megaphone, QrCode } from "lucide-react";
+import { CalendarClock, CheckCircle2, Clock, Crown, MapPin, QrCode } from "lucide-react";
 import { cn } from "@sp/utils";
 import { idempotencyKey, post, qs, useApi, useQueryClient } from "@sp/api-client";
 import { HomeView } from "../../views/public/home-view";
@@ -9,17 +9,17 @@ import { ServiceDetailView } from "../../views/public/service-detail-view";
 import { useI18n } from "../core/i18n";
 import { Link, useRouter } from "../core/router";
 import { useSession } from "../core/session";
-import { Avatar, Card, EmptyState, ErrorState, FormError, KeyValue, Loading, PageHeader, QueryView, Radios, SelectField, Stars, TextArea, TextField, useFormState, EnumBadge } from "../kit/base";
+import { Avatar, EmptyState, ErrorState, FormError, KeyValue, Loading, PageHeader, QueryView, Radios, SelectField, Stars, TextArea, TextField, useFormState, EnumBadge } from "../kit/base";
 import { SlotPicker } from "../kit/domain";
 import { FileDrop, type PickedFile } from "../kit/media";
-import { useCartActions } from "./shop";
+import { ProductTile, useCartActions } from "./shop";
 
 /* ------------------------------------------------------------------ */
 /* Ana səhifə, servislər                                               */
 /* ------------------------------------------------------------------ */
 
 export function HomePage() {
-  const { locale, t, num } = useI18n();
+  const { locale } = useI18n();
   const { navigate } = useRouter();
   const home = useApi<any>("/home");
   const cats = useApi<any[]>("/equipment-categories", { staleTime: 300_000 });
@@ -27,40 +27,22 @@ export function HomePage() {
   if (home.isLoading || cats.isLoading) return <div className="container py-12"><Loading rows={6} /></div>;
   if (home.error) return <div className="container py-12"><ErrorState error={home.error} onRetry={() => home.refetch()} /></div>;
   const d = home.data;
-  const hero = d.banners.find((b: any) => b.placement === "HOME_HERO");
   return (
     <>
-      {hero && (
-        <div className={cn("pub-banner", `tone-${hero.tone}`)}>
-          <div className="container flex justify-between items-center gap-3 flex-wrap">
-            <span><Megaphone size={16} /> <strong>{hero.title}</strong> — {hero.subtitle}</span>
-            <Link to={hero.ctaHref} className="btn btn-sm outline">{hero.ctaLabel}</Link>
-          </div>
-        </div>
-      )}
-      <HomeView services={d.popularServices} products={d.featuredProducts} technicians={d.topTechnicians} categories={cats.data ?? []} locale={locale} onNavigate={navigate} onBookService={(s) => navigate(s?.slug ? `/services/${s.slug}/book` : "/services")} onAddToCart={(p: any) => add(p.defaultVariantId, "1", p.baseUnit)} />
-      <section className="container section">
-        <div className="kit-grid cols-4">
-          <div className="kit-stat"><span className="kit-stat-label">{t("homeExtra.completed")}</span><strong className="kit-stat-value">{num(d.stats.completedServices)}</strong></div>
-          <div className="kit-stat"><span className="kit-stat-label">{t("homeExtra.technicians")}</span><strong className="kit-stat-value">{d.stats.technicians}</strong></div>
-          <div className="kit-stat"><span className="kit-stat-label">{t("homeExtra.branches")}</span><strong className="kit-stat-value">{d.stats.branches}</strong></div>
-          <div className="kit-stat"><span className="kit-stat-label">{t("homeExtra.rating")}</span><strong className="kit-stat-value">{d.stats.rating} / 5</strong></div>
-        </div>
-        {d.reviews.length > 0 && (
-          <div className="mt-8">
-            <h2>{t("homeExtra.reviewsTitle")}</h2>
-            <div className="kit-grid cols-3">
-              {d.reviews.slice(0, 3).map((r: any) => (
-                <blockquote key={r.id} className="kit-card home-review"><Stars value={r.rating} /><p>“{r.comment}”</p><cite>{r.authorName}</cite></blockquote>
-              ))}
-            </div>
-          </div>
-        )}
-        <div className="kit-grid cols-2 mt-8">
-          <Card title={t("homeExtra.joinTitle")}><p>{t("homeExtra.joinText")}</p><Link to="/become-technician" className="btn primary mt-3">{t("auth.technicianApply")}</Link></Card>
-          <Card title={t("homeExtra.b2bTitle")}><p>{t("homeExtra.b2bText")}</p><Link to="/business" className="btn outline mt-3">{t("auth.b2bApply")}</Link></Card>
-        </div>
-      </section>
+      <HomeView
+        services={d.popularServices}
+        products={d.featuredProducts}
+        technicians={d.topTechnicians}
+        categories={cats.data ?? []}
+        stats={d.stats}
+        reviews={d.reviews}
+        banners={d.banners}
+        locale={locale}
+        onNavigate={navigate}
+        onBookService={(s) => navigate(s?.slug ? `/services/${s.slug}/book` : "/services")}
+        onAddToCart={(p: any) => add(p.defaultVariantId, "1", p.baseUnit)}
+        renderProduct={(p) => <ProductTile p={p} />}
+      />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "Organization", name: "besqardasServis.az", url: "https://besqardasservis.az" }) }} />
     </>
   );
