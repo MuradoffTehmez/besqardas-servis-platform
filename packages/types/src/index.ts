@@ -184,6 +184,25 @@ export type ServiceContract = I<typeof S.ServiceContract>;
 export type PeriodicVisit = I<typeof S.PeriodicVisit>;
 export type LogisticsTask = I<typeof S.LogisticsTask>;
 
+export type TicketStatus = I<typeof S.TicketStatus>;
+export type TicketPriority = I<typeof S.TicketPriority>;
+export type TicketChannel = I<typeof S.TicketChannel>;
+export type TicketQueue = I<typeof S.TicketQueue>;
+export type TicketSlaState = I<typeof S.TicketSlaState>;
+export type TicketRelatedType = I<typeof S.TicketRelatedType>;
+export type TicketCategory = I<typeof S.TicketCategory>;
+export type CannedResponse = I<typeof S.CannedResponse>;
+export type TicketMessage = I<typeof S.TicketMessage>;
+export type TicketSla = I<typeof S.TicketSla>;
+export type TicketSummary = I<typeof S.TicketSummary>;
+export type Ticket = I<typeof S.Ticket>;
+export type CreateTicketRequest = I<typeof S.CreateTicketRequest>;
+export type ContactTicketRequest = I<typeof S.ContactTicketRequest>;
+export type AdminCreateTicketRequest = I<typeof S.AdminCreateTicketRequest>;
+export type TicketReplyRequest = I<typeof S.TicketReplyRequest>;
+export type TicketActionRequest = I<typeof S.TicketActionRequest>;
+export type TicketStats = I<typeof S.TicketStats>;
+
 /** Usta paneli cavabları */
 export interface TechnicianDashboard {
   employmentType: EmploymentType;

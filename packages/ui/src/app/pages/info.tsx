@@ -5,13 +5,13 @@ import {
   LocateFixed, Mail, MapPin, MessageCircle, Minus, Navigation, Phone, RotateCcw, Search, Send, ShieldCheck, Sparkles, Star, Store, Timer, Truck, Users, Wrench, X,
 } from "lucide-react";
 import { cn } from "@sp/utils";
-import { useApi } from "@sp/api-client";
+import { post, useApi } from "@sp/api-client";
 import { ServiceIcon } from "../../components/domain/service-icon";
 import { useI18n } from "../core/i18n";
 import { useMedia } from "../core/nav";
 import { Link, useRouter } from "../core/router";
 import { useSession } from "../core/session";
-import { Avatar, ErrorState, Loading, QueryView, TextArea, TextField, useFormState } from "../kit/base";
+import { Avatar, ErrorState, FormError, Loading, QueryView, TextArea, TextField, useFormState } from "../kit/base";
 import { MapView, PhoneField } from "../kit/media";
 import { ReportReviewButton } from "./shop";
 
@@ -861,8 +861,11 @@ export function ContactPage() {
   const { t } = useI18n();
   const brand = useApi<any>("/branding");
   const branches = useApi<any>("/branches");
-  const form = useFormState({ name: "", phone: "", email: "", topic: "General", orderNumber: "", message: "", consent: false });
-  const [sent, setSent] = useState(false);
+  const { user } = useSession();
+  const form = useFormState({ name: user ? `${user.firstName} ${user.lastName}` : "", phone: "", email: "", topic: "General", orderNumber: "", message: "", consent: false });
+  const [sent, setSent] = useState<{ number: string; trackLink: string | null } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<unknown>(null);
   const v = form.values;
   const k = (key: string, vars?: Record<string, string | number>) => t(`contactPage.${key}`, vars);
   const c = brand.data?.contacts;
@@ -875,15 +878,27 @@ export function ContactPage() {
     { key: "email", icon: Mail, title: t("email"), value: c.email, desc: k("emailDesc"), href: `mailto:${c.email}`, action: k("emailAction") },
   ].filter((x) => x.value) : [];
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const errors = {
       ...(v.name.trim() ? {} : { name: ["validation.required"] }),
       ...(v.message.trim().length < 10 ? { message: ["validation.commentMin"] } : {}),
       ...(v.consent ? {} : { consent: ["validation.acceptTerms"] }),
+      ...(!user && !v.phone.trim() && !v.email.trim() ? { phone: ["validation.contactRequired"] } : {}),
     };
     if (Object.keys(errors).length) { form.setErrors(errors); return; }
-    setSent(true);
+    setBusy(true);
+    setError(null);
+    try {
+      // Müraciət Help Desk növbəsinə düşür (kanal: sayt forması)
+      const r = await post<{ number: string; trackLink: string | null }>("/support/contact", { topic: v.topic, name: v.name, phone: v.phone, email: v.email, orderNumber: v.topic === "Order" || v.topic === "Warranty" ? v.orderNumber : "", message: v.message });
+      setSent(r);
+    } catch (err) {
+      setError(err);
+      form.fromError(err);
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -913,11 +928,14 @@ export function ContactPage() {
                 <span className="cnt-sent-icon"><CheckCircle2 size={36} aria-hidden /></span>
                 <h3>{k("sentTitle")}</h3>
                 <p>{k("sent")}</p>
-                <button type="button" className="btn outline" onClick={() => { form.reset(); setSent(false); }}>{k("sendAnother")}</button>
+                <p><strong>{k("ticketNumber", { number: sent.number })}</strong></p>
+                {sent.trackLink ? <Link to={sent.trackLink} className="btn primary">{k("track")}</Link> : <p className="text-sm text-muted">{k("trackHint")}</p>}
+                <button type="button" className="btn outline" onClick={() => { form.reset(); setSent(null); }}>{k("sendAnother")}</button>
               </div>
             ) : (
               <form onSubmit={submit} noValidate>
                 <p className="cnt-form-text">{k("formText")}</p>
+                <FormError error={error} />
                 <fieldset className="cnt-topics">
                   <legend>{k("topic")}</legend>
                   {TOPICS.map((tp) => (
@@ -929,7 +947,7 @@ export function ContactPage() {
                 </fieldset>
                 <div className="cnt-row">
                   <TextField label={k("name")} required value={v.name} onValue={(x) => form.set("name", x)} error={form.errors.name} autoComplete="name" />
-                  <PhoneField label={t("auth.phone")} value={v.phone} onValue={(x) => form.set("phone", x)} />
+                  <PhoneField label={t("auth.phone")} value={v.phone} onValue={(x) => form.set("phone", x)} error={form.errors.phone} />
                 </div>
                 <div className="cnt-row">
                   <TextField label={<>{t("email")} <small className="text-muted">({k("optional")})</small></>} type="email" value={v.email} onValue={(x) => form.set("email", x)} autoComplete="email" />
@@ -940,7 +958,7 @@ export function ContactPage() {
                 <TextArea label={k("message")} required rows={5} value={v.message} onValue={(x) => form.set("message", x)} error={form.errors.message} />
                 <label className="kit-check"><input type="checkbox" checked={v.consent} onChange={(e) => form.set("consent", e.target.checked)} /><span>{k("consent")}</span></label>
                 {form.errors.consent && <p className="kit-field-error">{t("validation.acceptTerms")}</p>}
-                <button className="btn primary btn-lg cnt-submit"><Send size={18} aria-hidden /> {k("send")}</button>
+                <button className="btn primary btn-lg cnt-submit" disabled={busy}><Send size={18} aria-hidden /> {k("send")}</button>
               </form>
             )}
           </section>

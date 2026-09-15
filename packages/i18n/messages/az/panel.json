@@ -929,5 +929,68 @@
     "form": {
       "hint": "Cari forma: {current}. Yeni forma üçün workflow şablonu yenidən tətbiq olunacaq."
     }
+  },
+  "support": {
+    "nav": "Dəstək",
+    "title": "Dəstək müraciətləri",
+    "subtitle": "Sualınızı yazın — cavabları və müraciətin gedişini burada izləyin.",
+    "new": "Yeni müraciət",
+    "empty": "Hələ müraciətiniz yoxdur",
+    "emptyText": "Sifariş, ödəniş və ya zəmanət barədə sualınız varsa, bizə yazın.",
+    "tabActive": "Aktiv",
+    "tabResolved": "Həll olunmuş",
+    "category": "Mövzu",
+    "replyWithin": "Adətən {time} ərzində cavab veririk",
+    "subject": "Qısa başlıq",
+    "subjectHint": "Məsələn: Usta təyin olunan vaxtda gəlmədi",
+    "body": "Ətraflı təsvir",
+    "bodyHint": "Nə baş verdi, nə vaxt və hansı həlli gözləyirsiniz?",
+    "related": "Aid olduğu sifariş və ya zəmanət",
+    "relatedNone": "Bağlı deyil",
+    "attachments": "Şəkil və ya sənəd əlavə edin",
+    "created": "{number} nömrəli müraciət yaradıldı",
+    "awaitingYou": "Cavabınız gözlənilir",
+    "updated": "Yeniləndi: {time}",
+    "messages": "{count} mesaj",
+    "conversation": "Yazışma",
+    "replyPlaceholder": "Cavabınızı yazın…",
+    "send": "Göndər",
+    "sent": "Mesaj göndərildi",
+    "closedNote": "Müraciət bağlanıb. Yeni sualınız varsa, yeni müraciət yaradın.",
+    "resolvedNote": "Müraciət həll olunub. Cavab yazsanız, yenidən açılacaq.",
+    "pendingNote": "Dəstək xidməti sizdən əlavə məlumat gözləyir.",
+    "details": "Məlumat",
+    "number": "Nömrə",
+    "status": "Status",
+    "priority": "Prioritet",
+    "channel": "Kanal",
+    "createdAt": "Yaradılıb",
+    "expectedReply": "İlk cavab gözlənilir",
+    "repliedAt": "İlk cavab verilib",
+    "relatedTo": "Aid olduğu",
+    "serviceOrder": "Servis sifarişi",
+    "assignee": "Məsul əməkdaş",
+    "you": "Siz",
+    "rateTitle": "Dəstək xidmətini qiymətləndirin",
+    "rateText": "Məsələniz necə həll olundu? Rəyiniz xidməti yaxşılaşdırmağa kömək edir.",
+    "rateComment": "Şərh (istəyə bağlı)",
+    "rateThanks": "Qiymətləndirmə üçün təşəkkür edirik!",
+    "yourRating": "Sizin qiymətiniz",
+    "confirmResolve": "Məsələ həll olundumu? Müraciət həll olunmuş kimi qeyd ediləcək.",
+    "reopenLabel": "Nə həll olunmayıb?",
+    "actions": {
+      "mark_resolved": "Məsələ həll olundu",
+      "reopen": "Yenidən aç",
+      "rate": "Qiymətləndir"
+    },
+    "system": {
+      "auto_closed": "Müraciət həll olunduqdan {hours} saat sonra avtomatik bağlandı",
+      "service_order_created": "{number} nömrəli servis sifarişi yaradıldı"
+    },
+    "help": {
+      "title": "Tez cavab lazımdır?",
+      "text": "Tez-tez verilən suallara baxın və ya qısa nömrəyə zəng edin.",
+      "faq": "Tez-tez verilən suallar"
+    }
   }
 }

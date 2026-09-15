@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { BarChart3, Bell, Building2, CalendarClock, ClipboardList, FileSignature, FileText, HardDrive, LayoutDashboard, Package, Percent, ShoppingBag, UserRound, Users, Wallet, Wrench, Zap } from "lucide-react";
+import { BarChart3, Bell, Building2, CalendarClock, ClipboardList, FileSignature, FileText, HardDrive, LayoutDashboard, LifeBuoy, Package, Percent, ShoppingBag, UserRound, Users, Wallet, Wrench, Zap } from "lucide-react";
 import { useI18n } from "../core/i18n";
 import { useSession } from "../core/session";
 import { SiteWorkspace, type NavGroup } from "../core/shells";
@@ -11,6 +11,7 @@ import { ShopPage } from "./shop";
 // B2B kabinet səhifələri ayrıca chunk-dır — route cədvəli və qabıq yüngül qalır
 const B2B = lazyPages(() => import("./b2b"));
 const Account = lazyPages(() => import("./account"));
+const Support = lazyPages(() => import("./support"));
 
 type Segment = "corporate" | "partner" | "wholesale";
 
@@ -25,6 +26,7 @@ export function B2BShell({ children }: { children: React.ReactNode }) {
   const base = `/${seg}`;
   const common = [
     { to: `${base}/notifications`, label: t("acc.nav.notifications"), icon: Bell, badge: session?.unreadNotifications || null },
+    { to: `${base}/support`, label: t("support.nav"), icon: LifeBuoy },
     { to: `${base}/documents`, label: t("b2b.nav.documents"), icon: FileText },
     { to: `${base}/users`, label: t("b2b.nav.users"), icon: Users },
     { to: `${base}/company`, label: t("b2b.nav.companyProfile"), icon: Building2 },
@@ -66,6 +68,8 @@ export const b2bRoutes: RouteDef[] = [
   route(CORP, "/corporate/company", () => <B2B.CompanyProfilePage />, "b2b.nav.companyProfile"),
   route(CORP, "/corporate/profile", () => <Account.ProfilePage />, "acc.nav.profile"),
   route(CORP, "/corporate/notifications", () => <Account.NotificationsPage />, "acc.nav.notifications"),
+  route(CORP, "/corporate/support", () => <Support.SupportTicketsPage base="/corporate/support" />, "support.nav"),
+  route(CORP, "/corporate/support/:id", (p) => <Support.SupportTicketDetailPage id={p.id!} base="/corporate/support" />, "support.nav"),
 
   route(PART, "/partner", () => <B2B.B2BDashboardPage />, "b2b.nav.dashboard"),
   route(PART, "/partner/catalog", () => <ShopPage base="/partner/catalog" />, "b2b.nav.catalog"),
@@ -81,6 +85,8 @@ export const b2bRoutes: RouteDef[] = [
   route(PART, "/partner/company", () => <B2B.CompanyProfilePage />, "b2b.nav.companyProfile"),
   route(PART, "/partner/profile", () => <Account.ProfilePage />, "acc.nav.profile"),
   route(PART, "/partner/notifications", () => <Account.NotificationsPage />, "acc.nav.notifications"),
+  route(PART, "/partner/support", () => <Support.SupportTicketsPage base="/partner/support" />, "support.nav"),
+  route(PART, "/partner/support/:id", (p) => <Support.SupportTicketDetailPage id={p.id!} base="/partner/support" />, "support.nav"),
 
   route(WHOLE, "/wholesale", () => <B2B.B2BDashboardPage />, "b2b.nav.dashboard"),
   route(WHOLE, "/wholesale/catalog", () => <ShopPage base="/wholesale/catalog" />, "b2b.nav.catalog"),
@@ -95,4 +101,6 @@ export const b2bRoutes: RouteDef[] = [
   route(WHOLE, "/wholesale/company", () => <B2B.CompanyProfilePage />, "b2b.nav.companyProfile"),
   route(WHOLE, "/wholesale/profile", () => <Account.ProfilePage />, "acc.nav.profile"),
   route(WHOLE, "/wholesale/notifications", () => <Account.NotificationsPage />, "acc.nav.notifications"),
+  route(WHOLE, "/wholesale/support", () => <Support.SupportTicketsPage base="/wholesale/support" />, "support.nav"),
+  route(WHOLE, "/wholesale/support/:id", (p) => <Support.SupportTicketDetailPage id={p.id!} base="/wholesale/support" />, "support.nav"),
 ];

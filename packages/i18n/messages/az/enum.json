@@ -543,7 +543,52 @@
       "integrations": "İnteqrasiyalar",
       "kpi_targets": "KPI hədəfləri",
       "settings": "Ayarlar",
-      "branches": "Filiallar"
+      "branches": "Filiallar",
+      "tickets": "Müraciətlər (Help Desk)"
+    },
+    "TicketStatus": {
+      "NEW": "Yeni",
+      "OPEN": "İşlənir",
+      "PENDING_CUSTOMER": "Müştərinin cavabı gözlənilir",
+      "ON_HOLD": "Gözləmədə",
+      "RESOLVED": "Həll olunub",
+      "CLOSED": "Bağlanıb"
+    },
+    "TicketPriority": {
+      "LOW": "Aşağı",
+      "NORMAL": "Normal",
+      "HIGH": "Yüksək",
+      "URGENT": "Təcili"
+    },
+    "TicketChannel": {
+      "WEB_FORM": "Sayt forması",
+      "PORTAL": "Kabinet",
+      "PHONE": "Telefon",
+      "EMAIL": "E-poçt",
+      "WHATSAPP": "WhatsApp",
+      "INTERNAL": "Daxili"
+    },
+    "TicketQueue": {
+      "GENERAL": "Ümumi dəstək",
+      "SERVICE": "Servis",
+      "SALES": "Satış",
+      "BILLING": "Maliyyə",
+      "WARRANTY": "Zəmanət",
+      "TECHNICAL": "Texniki"
+    },
+    "TicketSlaState": {
+      "ON_TRACK": "Vaxtında",
+      "AT_RISK": "Risk altında",
+      "BREACHED": "Pozulub",
+      "PAUSED": "Dayandırılıb",
+      "MET": "Yerinə yetirilib"
+    },
+    "TicketRelatedType": {
+      "SERVICE_ORDER": "Servis sifarişi",
+      "SALES_ORDER": "Məhsul sifarişi",
+      "WARRANTY": "Zəmanət",
+      "PAYMENT": "Ödəniş",
+      "RETURN": "Qaytarma"
     },
     "EmploymentType": {
       "STAFF": "Şirkət əməkdaşı",

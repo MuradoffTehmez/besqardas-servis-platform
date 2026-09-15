@@ -1,5 +1,5 @@
 import {
-  AlertTriangle, BadgeCheck, Bell, Briefcase, CalendarClock, CheckCircle2, ClipboardList, CreditCard, Crown, FileText, Mail, MessageCircle, MessageSquare, PackageCheck,
+  AlertTriangle, BadgeCheck, Bell, Briefcase, LifeBuoy, CalendarClock, CheckCircle2, ClipboardList, CreditCard, Crown, FileText, Mail, MessageCircle, MessageSquare, PackageCheck,
   Receipt, RotateCcw, ShieldCheck, Smartphone, Star, Truck, Wallet, Wrench, XCircle, type LucideIcon,
 } from "lucide-react";
 
@@ -49,6 +49,12 @@ const EVENTS: Record<string, NotificationMeta> = {
   NEW_TASK: { icon: Briefcase, tone: "indigo", category: "work" },
   VERIFICATION: { icon: BadgeCheck, tone: "teal", category: "work" },
   LIMIT_REQUEST: { icon: Wallet, tone: "amber", category: "work" },
+  TICKET_CREATED: { icon: LifeBuoy, tone: "blue", category: "care" },
+  TICKET_REPLY: { icon: MessageSquare, tone: "teal", category: "care" },
+  TICKET_RESOLVED: { icon: CheckCircle2, tone: "green", category: "care" },
+  TICKET_ASSIGNED: { icon: LifeBuoy, tone: "indigo", category: "work" },
+  TICKET_ESCALATED: { icon: AlertTriangle, tone: "orange", category: "alerts" },
+  TICKET_SLA_BREACH: { icon: AlertTriangle, tone: "red", category: "alerts" },
 };
 
 export function notificationMeta(event?: string | null): NotificationMeta {

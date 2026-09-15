@@ -929,5 +929,68 @@
     "form": {
       "hint": "Current format: {current}. The new format's workflow template will be applied."
     }
+  },
+  "support": {
+    "nav": "Support",
+    "title": "Support requests",
+    "subtitle": "Ask a question — follow replies and progress here.",
+    "new": "New request",
+    "empty": "No requests yet",
+    "emptyText": "Questions about an order, payment or warranty? Write to us.",
+    "tabActive": "Active",
+    "tabResolved": "Resolved",
+    "category": "Topic",
+    "replyWithin": "We usually reply within {time}",
+    "subject": "Short summary",
+    "subjectHint": "E.g.: The technician didn't arrive on time",
+    "body": "Details",
+    "bodyHint": "What happened, when, and what outcome do you expect?",
+    "related": "Related order or warranty",
+    "relatedNone": "Not related",
+    "attachments": "Attach a photo or document",
+    "created": "Request {number} created",
+    "awaitingYou": "Waiting for your reply",
+    "updated": "Updated {time}",
+    "messages": "{count} messages",
+    "conversation": "Conversation",
+    "replyPlaceholder": "Write your reply…",
+    "send": "Send",
+    "sent": "Message sent",
+    "closedNote": "This request is closed. For a new question, create a new request.",
+    "resolvedNote": "This request is resolved. Replying will reopen it.",
+    "pendingNote": "Support is waiting for more information from you.",
+    "details": "Details",
+    "number": "Number",
+    "status": "Status",
+    "priority": "Priority",
+    "channel": "Channel",
+    "createdAt": "Created",
+    "expectedReply": "First reply expected",
+    "repliedAt": "First replied",
+    "relatedTo": "Related to",
+    "serviceOrder": "Service order",
+    "assignee": "Handled by",
+    "you": "You",
+    "rateTitle": "Rate our support",
+    "rateText": "How was your issue handled? Your feedback helps us improve.",
+    "rateComment": "Comment (optional)",
+    "rateThanks": "Thanks for your rating!",
+    "yourRating": "Your rating",
+    "confirmResolve": "Is your issue solved? The request will be marked as resolved.",
+    "reopenLabel": "What is still unresolved?",
+    "actions": {
+      "mark_resolved": "Issue solved",
+      "reopen": "Reopen",
+      "rate": "Rate"
+    },
+    "system": {
+      "auto_closed": "Closed automatically {hours} hours after being resolved",
+      "service_order_created": "Service order {number} was created"
+    },
+    "help": {
+      "title": "Need a quick answer?",
+      "text": "Check the FAQ or call our hotline.",
+      "faq": "FAQ"
+    }
   }
 }

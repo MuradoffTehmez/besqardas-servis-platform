@@ -90,6 +90,8 @@
   },
   "validation": {
     "emailRequired": "Bu seçim üçün e-poçt ünvanı lazımdır",
+    "subjectMin": "Mövzu ən azı 5 simvol olmalıdır",
+    "contactRequired": "Telefon və ya e-poçt göstərin",
     "linesRequired": "Ən azı bir məhsul əlavə edin",
     "fileInvalid": "Fayl oxunmadı",
     "tooManyFiles": "Çox sayda fayl",
@@ -1081,7 +1083,10 @@
     "message": "Mesaj",
     "consent": "Fərdi məlumatlarımın müraciətin cavablandırılması üçün emalına razıyam",
     "send": "Göndər",
-    "sent": "Mesajınız göndərildi. Tezliklə cavab verəcəyik."
+    "sent": "Mesajınız göndərildi. Tezliklə cavab verəcəyik.",
+    "ticketNumber": "Müraciət nömrəniz: {number}",
+    "track": "Müraciəti kabinetdə izlə",
+    "trackHint": "Hesabınıza daxil olsanız, bütün müraciətlərinizi və cavabları kabinetdə görə bilərsiniz."
   },
   "panel": {
     "toSite": "Sayta keç",

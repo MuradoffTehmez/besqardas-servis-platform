@@ -9,6 +9,7 @@ import { b2bHandlers } from "./b2b";
 import { adminOpsHandlers } from "./adminOps";
 import { adminConfigHandlers } from "./adminConfig";
 import { warehouseHandlers } from "./warehouse";
+import { supportHandlers } from "./support";
 
 /** Bütün MSW handler-ləri — mock server və testlər eyni siyahıdan istifadə edir (PRD §65.3). */
 export const handlers = [
@@ -22,5 +23,6 @@ export const handlers = [
   ...b2bHandlers,
   ...adminOpsHandlers,
   ...warehouseHandlers,
+  ...supportHandlers,
   ...adminConfigHandlers,
 ];

@@ -90,6 +90,8 @@
   },
   "validation": {
     "emailRequired": "An email address is required for this",
+    "subjectMin": "Subject must be at least 5 characters",
+    "contactRequired": "Enter a phone number or email",
     "linesRequired": "Add at least one item",
     "fileInvalid": "The file couldn't be read",
     "tooManyFiles": "Too many files",
@@ -1081,7 +1083,10 @@
     "message": "Message",
     "consent": "I consent to processing my data to answer my request",
     "send": "Send",
-    "sent": "Message sent. We'll reply soon."
+    "sent": "Message sent. We'll reply soon.",
+    "ticketNumber": "Your request number: {number}",
+    "track": "Track it in your account",
+    "trackHint": "Sign in to see all your requests and replies in your account."
   },
   "panel": {
     "toSite": "Go to website",

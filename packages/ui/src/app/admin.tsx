@@ -3,7 +3,7 @@ import React from "react";
 import {
   Award, BadgePercent, BarChart3, Bell, Boxes, Building2, CalendarDays, ClipboardCheck, ClipboardList, Coins, CreditCard, FileSpreadsheet, FileText, FolderTree, Gauge, GitBranch, Globe, HandCoins, KeyRound,
   LayoutDashboard, ListChecks, Map, MessageSquare, Package, PackageSearch, Palette, Plug, Receipt, RotateCcw, ScrollText, Settings, ShieldAlert, ShieldCheck, ShoppingCart, Star, Tag, Tags, Truck, Undo2, User,
-  UserCog, Users, Wallet, Warehouse, Wrench, Workflow, Ruler, Link2, Layers, Percent, Image, HelpCircle, Timer, Plus, FileBadge, PackagePlus, Handshake, ArrowLeftRight,
+  UserCog, Users, Wallet, Warehouse, Wrench, Workflow, Ruler, Link2, Layers, Percent, Image, HelpCircle, Timer, Plus, FileBadge, PackagePlus, Handshake, ArrowLeftRight, LifeBuoy, MessageSquareText,
 } from "lucide-react";
 import { useI18n } from "./core/i18n";
 import { useSession, INTERNAL_ROLES } from "./core/session";
@@ -18,6 +18,7 @@ import { AdminDashboardPage, AdminSchedulePage, AdminServiceOrderDetailPage, Adm
 import { CustomerDetailPage, LicensesPage, PartnershipsPage, RolesPage, TechnicianAdminDetailPage, TechniciansAdminPage, UsersPage, VerificationPage } from "./admin/people";
 import { GoodsReceiptDetailPage, GoodsReceiptEditorPage, GoodsReceiptsPage } from "./admin/receipts";
 import { CompatibilityPage, CostingMethodsPage, InventoryPage, ProductCreatePage, ProductEditorPage, ProductsAdminPage, PurchasesPage, QuotesAdminPage, SalesOrderAdminDetailPage, StockCountDetailPage, StockCountsPage, TransfersPage } from "./admin/commerce";
+import { TicketDetailPage, TicketsPage } from "./admin/support";
 import { AdminProfilePage, BrandingPage, CashDesksPage, FinancePage, IntegrationsPage, ReportsPage, SettingsPage, SettlementsPage, SubscriptionPlansAdminPage } from "./admin/finance";
 
 /**
@@ -38,6 +39,11 @@ function AdminShell({ children }: { children: React.ReactNode }) {
       { to: "/estimates", label: n("estimates"), icon: FileSpreadsheet, permission: "service_orders:view" },
       { to: "/logistics", label: n("logistics"), icon: Truck, permission: "logistics_tasks:view" },
       { to: "/warranty-claims", label: n("warrantyClaims"), icon: ShieldAlert, permission: "service_orders:view" },
+    ] },
+    { label: n("gSupport"), items: [
+      { to: "/tickets", label: n("tickets"), icon: LifeBuoy, permission: "tickets:view" },
+      { to: "/ticket-categories", label: n("ticketCategories"), icon: FolderTree, permission: "tickets:view" },
+      { to: "/canned-responses", label: n("cannedResponses"), icon: MessageSquareText, permission: "tickets:view" },
     ] },
     { label: n("gServiceConfig"), items: [
       { to: "/services", label: n("services"), icon: Wrench, permission: "catalog:view" },
@@ -129,6 +135,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
   const quick = t("panel.quick");
   const commands: Command[] = [
     ...(can("service_orders:create") ? [{ id: "a:new-order", label: t("adm.orders.create"), group: quick, icon: Plus, run: () => navigate("/service-orders/new") }] : []),
+    ...(can("tickets:create") ? [{ id: "a:new-ticket", label: t("adm.tickets.new"), group: quick, icon: LifeBuoy, run: () => navigate("/tickets?new=1") }] : []),
     ...(can("inventory:create") || can("inventory:edit") ? [{ id: "a:new-grn", label: t("adm.grn.new"), group: quick, icon: PackagePlus, run: () => navigate("/goods-receipts/new") }] : []),
     ...(can("catalog:create") ? [{ id: "a:new-product", label: t("adm.products.create"), group: quick, icon: Package, run: () => navigate("/products/new") }] : []),
     ...(can("technicians:view") ? [{ id: "a:verification", label: n("verification"), group: quick, icon: ShieldCheck, run: () => navigate("/technicians/verification") }] : []),
@@ -162,6 +169,11 @@ export const adminRoutes: RouteDef[] = [
   res("/estimates", "estimates", "adm.nav.estimates"),
   R("/logistics", () => <LogisticsPage />, "adm.nav.logistics"),
   R("/warranty-claims", () => <WarrantyClaimsAdminPage />, "adm.nav.warrantyClaims"),
+
+  R("/tickets", () => <TicketsPage />, "adm.nav.tickets"),
+  R("/tickets/:id", (p) => <TicketDetailPage id={p.id!} />, "adm.nav.tickets"),
+  res("/ticket-categories", "ticketCategories", "adm.nav.ticketCategories"),
+  res("/canned-responses", "cannedResponses", "adm.nav.cannedResponses"),
 
   res("/services", "services", "adm.nav.services"),
   R("/workflow-templates", () => <WorkflowTemplatesPage />, "adm.nav.workflowTemplates"),
