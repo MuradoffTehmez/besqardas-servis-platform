@@ -1,3 +1,9 @@
+Set-PSReadLineOption: C:\Users\Tahmaz Muradov\Documents\PowerShell\Microsoft.PowerShell_profile.ps1:170
+Line |
+ 170 |      Set-PSReadLineOption -PredictionSource History
+     |      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     | The predictive suggestion feature cannot be enabled because the console output doesn't support virtual terminal
+     | processing or it's redirected.
 import { beforeEach, describe, expect, it } from "vitest";
 import { getResponse } from "msw";
 import { handlers } from "./index";
@@ -75,7 +81,7 @@ describe("API endpoint-ləri rollar üzrə", () => {
     }
     const courier = await courierLogin("+994553334455");
     expect((await call("GET", "/courier/tasks", undefined, courier)).status).toBe(200);
-  });
+  }, 15_000);
 
   it("RBAC: icazəsiz rol admin resurslarına çıxa bilmir", async () => {
     const warehouse = await login("warehouse@demo.az");

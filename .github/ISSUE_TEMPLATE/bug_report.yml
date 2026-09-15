@@ -1,21 +1,83 @@
 name: Xəta hesabatı
-description: Təkrar yaradıla bilən problem
+description: Təkrar yaradıla bilən texniki və ya istifadəçi davranışı problemi
 title: "fix: "
+labels:
+  - bug
 body:
-  - type: textarea
-    id: problem
+  - type: markdown
     attributes:
-      label: Problem və gözlənilən nəticə
+      value: Təhlükəsizlik boşluğunu burada paylaşmayın; SECURITY.md-dəki məxfi kanaldan istifadə edin.
+  - type: textarea
+    id: summary
+    attributes:
+      label: Problem
+      description: Nə baş verir və istifadəçiyə təsiri nədir?
     validations:
       required: true
   - type: textarea
     id: steps
     attributes:
       label: Təkrar yaratma addımları
-      description: Route, demo rol, brauzer və ekran ölçüsünü qeyd edin. Şəxsi məlumat paylaşmayın.
+      description: Route, demo rol və başlanğıc vəziyyəti daxil olmaqla nömrələnmiş addımlar yazın.
+      placeholder: |
+        1. /az/... səhifəsinə keç
+        2. ... roluyla daxil ol
+        3. ... düyməsinə bas
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Gözlənilən nəticə
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Faktiki nəticə
     validations:
       required: true
   - type: input
     id: version
     attributes:
-      label: Commit və ya release
+      label: Release və ya commit SHA
+      placeholder: v0.3.1 / 2666754
+    validations:
+      required: true
+  - type: dropdown
+    id: app
+    attributes:
+      label: Tətbiq
+      options:
+        - Web / public
+        - Müştəri kabineti
+        - Usta paneli
+        - Kuryer paneli
+        - B2B paneli
+        - Admin CRM/ERP
+        - Mock API
+        - CI / sənədləşmə
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Mühit
+      description: Əməliyyat sistemi, brauzer və viewport.
+      placeholder: Windows 11, Chrome 140, 1280x720
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Log və screenshot
+      description: Şəxsi məlumatı, tokeni və credential-ları silin.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Yoxlama
+      options:
+        - label: Eyni problem üçün açıq issue axtardım.
+          required: true
+        - label: Hesabatda real şəxsi məlumat və sirr yoxdur.
+          required: true

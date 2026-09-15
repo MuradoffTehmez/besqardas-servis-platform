@@ -26,10 +26,20 @@ export async function resetMock(request: APIRequestContext) {
 export async function open(page: Page, url: string) {
   await page.goto(url);
   await page.waitForSelector("html[data-hydrated]", { timeout: 30_000 });
+  // Cookie seçimi testin predmeti deyil. Bildiriş viewport-un aşağı hissəsindəki
+  // əməliyyatları örtə bildiyi üçün hər təmiz browser context-də deterministik seçim edilir.
+  const cookieDialog = page.getByRole("dialog", { name: t("legal.cookieTitle") });
+  if (await cookieDialog.isVisible().catch(() => false)) {
+    await cookieDialog.getByRole("button", { name: t("legal.essentialOnly") }).click();
+  }
 }
 
 /** E-poçt və şifrə ilə UI vasitəsilə giriş. */
-export async function loginWithEmail(page: Page, email: string, opts: { next?: string; base?: string } = {}) {
+export async function loginWithEmail(
+  page: Page,
+  email: string,
+  opts: { next?: string; base?: string } = {},
+) {
   const base = opts.base ?? "";
   const url = `${base}/az/login${opts.next ? `?next=${encodeURIComponent(opts.next)}` : ""}`;
   // Dev serverdə ilk kompilyasiya səhifəni yenidən yükləyə bilər — forma vəziyyəti itərsə bir dəfə təkrarlanır
@@ -47,7 +57,8 @@ export async function loginWithEmail(page: Page, email: string, opts: { next?: s
       .then(() => true)
       .catch(() => false);
     // 2FA addımı da girişin davamıdır
-    if (left || (await page.getByRole("heading", { name: t("auth.twoFactorTitle") }).isVisible())) return;
+    if (left || (await page.getByRole("heading", { name: t("auth.twoFactorTitle") }).isVisible()))
+      return;
   }
 }
 
@@ -64,7 +75,13 @@ export async function expectNoCriticalA11y(page: Page, label: string) {
     .exclude(".mock-panel")
     .analyze();
   const critical = results.violations.filter((v) => v.impact === "critical");
-  const summary = critical.map((v) => `${v.id}: ${v.help} (${v.nodes.length}) → ${v.nodes.slice(0, 3).map((n) => n.target.join(" ")).join(" | ")}`);
+  const summary = critical.map(
+    (v) =>
+      `${v.id}: ${v.help} (${v.nodes.length}) → ${v.nodes
+        .slice(0, 3)
+        .map((n) => n.target.join(" "))
+        .join(" | ")}`,
+  );
   expect(summary, `${label} — kritik əlçatanlıq pozuntuları`).toEqual([]);
   return results;
 }

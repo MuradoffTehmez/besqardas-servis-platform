@@ -12,19 +12,32 @@ concurrency:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - name: Kodu götür
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: pnpm quraşdır
+        uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
         with:
           version: 10.34.5
-      - uses: actions/setup-node@v4
+      - name: Node.js quraşdır
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version-file: .nvmrc
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm lint
-      - run: pnpm typecheck
-      - run: node scripts/check-i18n.mjs
-      - run: pnpm test
-      - run: pnpm build
+      - name: Asılılıqları quraşdır
+        run: pnpm install --frozen-lockfile
+      - name: Lint
+        run: pnpm lint
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Lokalizasiya bütövlüyü
+        run: node scripts/check-i18n.mjs
+      - name: Unit və inteqrasiya testləri
+        run: pnpm test
+      - name: Production build
+        run: pnpm build
+      - name: Playwright Chromium quraşdır
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Kritik E2E, SEO və əlçatanlıq ssenariləri
+        run: pnpm test:e2e

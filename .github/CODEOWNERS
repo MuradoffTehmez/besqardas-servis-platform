@@ -1,0 +1,8 @@
+# Defolt sahiblik. İxtisaslaşmış komandalar yarandıqda aşağıya daha spesifik qaydalar əlavə edin.
+* @MuradoffTehmez
+
+# Repository siyasəti və supply-chain səthi ayrıca qorunur.
+/.github/ @MuradoffTehmez
+/package.json @MuradoffTehmez
+/pnpm-lock.yaml @MuradoffTehmez
+/SECURITY.md @MuradoffTehmez

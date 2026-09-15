@@ -1,1 +1,11 @@
-blank_issues_enabled: true
+blank_issues_enabled: false
+contact_links:
+  - name: İstifadə və ümumi suallar
+    url: https://github.com/MuradoffTehmez/besqardas-servis-platform/discussions
+    about: Sual, ideya müzakirəsi və istifadə dəstəyi üçün Discussions istifadə edin.
+  - name: Təhlükəsizlik boşluğu
+    url: https://github.com/MuradoffTehmez/besqardas-servis-platform/security/advisories/new
+    about: Həssas təhlükəsizlik hesabatını public issue kimi paylaşmayın.
+  - name: Dəstək qaydaları
+    url: https://github.com/MuradoffTehmez/besqardas-servis-platform/blob/main/SUPPORT.md
+    about: Doğru kanal və hesabat üçün tələb olunan məlumatlar.

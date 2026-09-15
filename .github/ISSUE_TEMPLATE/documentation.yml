@@ -1,0 +1,40 @@
+name: Sənədləşmə problemi
+description: README, Wiki, API, demo və ya developer sənədində çatışmazlıq
+title: "docs: "
+labels:
+  - documentation
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Sənəd sahəsi
+      options:
+        - README
+        - GitHub Wiki
+        - PRD / DEMO
+        - Developer guide
+        - API / schema
+        - Release / changelog
+        - Security / support / governance
+    validations:
+      required: true
+  - type: input
+    id: location
+    attributes:
+      label: Səhifə və ya link
+      placeholder: README.md#quraşdırma
+    validations:
+      required: true
+  - type: textarea
+    id: issue
+    attributes:
+      label: Problem
+      description: Məlumat yanlışdır, köhnədir, çatışmır, yoxsa anlaşılmazdır?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Təklif olunan düzəliş
+    validations:
+      required: true

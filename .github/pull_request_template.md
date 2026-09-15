@@ -1,19 +1,46 @@
-## Dəyişiklik
+## Məqsəd
 
-Problemi və nəticədə istifadəçinin gördüyü davranışı yazın.
+Problemi, istifadəçi təsirini və nəticədə dəyişən davranışı qısa izah edin.
 
 ## Bağlı iş
 
-Closes #
-PRD bölməsi:
+- Closes #
+- PRD bölməsi:
+- Dəyişiklik növü: `feat` / `fix` / `docs` / `test` / `refactor` / `chore`
+
+## Həll
+
+Əsas texniki qərarları, API/schema dəyişikliklərini və alternativləri qeyd edin.
 
 ## Yoxlama
 
-- [ ] Typecheck
-- [ ] Müvafiq testlər
-- [ ] Build
-- [ ] Mobil və desktop yoxlaması (UI dəyişibsə)
+- [ ] `pnpm lint`
+- [ ] `pnpm typecheck`
+- [ ] `node scripts/check-i18n.mjs`
+- [ ] `pnpm test`
+- [ ] `pnpm build`
+- [ ] `pnpm test:e2e` (UI/route/axın dəyişibsə)
+- [ ] Desktop və mobil yoxlama (UI dəyişibsə)
+- [ ] Klaviatura və axe/a11y yoxlaması (interaktiv UI dəyişibsə)
 
-## Məhdudiyyətlər
+İşlədilən testləri və nəticəni yazın:
 
-Məlum natamam iş və demo məhdudiyyətlərini qeyd edin.
+```text
+
+```
+
+## Screenshot və ya qeyd
+
+UI dəyişibsə əvvəl/sonra görüntüsünü əlavə edin. Şəxsi məlumatı və credential-ları silin.
+
+## Risk və rollback
+
+- Risk:
+- Məlum məhdudiyyət:
+- Rollback addımı:
+
+## Sənədləşmə
+
+- [ ] README/Wiki/DEMO/CHANGELOG yenilənib və ya dəyişiklik tələb etmir
+- [ ] Yeni environment dəyişəni `.env.example`-a əlavə edilib və ya tələb olunmur
+- [ ] Breaking dəyişiklik açıq qeyd edilib və ya yoxdur

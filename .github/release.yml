@@ -1,5 +1,23 @@
 changelog:
   categories:
-    - title: Dəyişikliklər
+    - title: 🚀 Yeni funksiyalar
+      labels:
+        - enhancement
+        - feature
+    - title: 🐛 Düzəlişlər
+      labels:
+        - bug
+        - fix
+    - title: 📚 Sənədlər
+      labels:
+        - documentation
+    - title: 🔐 Təhlükəsizlik və asılılıqlar
+      labels:
+        - security
+        - dependencies
+    - title: 🧰 Digər dəyişikliklər
       labels:
         - "*"
+  exclude:
+    labels:
+      - skip-changelog

@@ -17,6 +17,8 @@
     "typecheck": "turbo run typecheck",
     "lint": "eslint . --max-warnings=0",
     "test": "turbo run test",
+    "test:e2e": "playwright test",
+    "check": "pnpm lint && pnpm typecheck && node scripts/check-i18n.mjs && pnpm test && pnpm build",
     "format": "prettier --write \"**/*.{ts,tsx,json,css,md}\" --ignore-path .gitignore"
   },
   "devDependencies": {

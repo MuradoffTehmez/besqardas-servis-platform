@@ -1,7 +1,16 @@
 name: Funksiya və ya texniki iş
-description: PRD-yə bağlı ayrıca iş vahidi
+description: PRD və ölçülə bilən nəticəyə bağlı dəyişiklik təklifi
 title: "feat: "
+labels:
+  - enhancement
 body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem və məqsəd
+      description: İstifadəçi və ya biznes problemi nədir? Həll formasından əvvəl ehtiyacı izah edin.
+    validations:
+      required: true
   - type: input
     id: prd
     attributes:
@@ -12,7 +21,8 @@ body:
   - type: textarea
     id: scope
     attributes:
-      label: Məqsəd və əhatə
+      label: Əhatə
+      description: Daxil olan və qəsdən daxil olmayan işi qeyd edin.
     validations:
       required: true
   - type: textarea
@@ -20,5 +30,23 @@ body:
     attributes:
       label: Qəbul meyarları
       description: Yoxlanıla bilən nəticələri checklist şəklində yazın.
+      placeholder: |
+        - [ ] ... rolunda ... nəticəsi görünür
+        - [ ] AZ/RU/EN mətnləri mövcuddur
+        - [ ] Mobil və klaviatura davranışı yoxlanır
     validations:
       required: true
+  - type: textarea
+    id: risks
+    attributes:
+      label: Risk və asılılıqlar
+      description: API, schema, permission, migration, provider və geriyə uyğunluq təsirini yazın.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Yoxlama
+      options:
+        - label: Eyni təklif üçün açıq issue və PR-ları yoxladım.
+          required: true
+        - label: Təklif Phase 1 demo məhdudiyyətlərini nəzərə alır.
+          required: true
