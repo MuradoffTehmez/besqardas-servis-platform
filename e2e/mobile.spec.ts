@@ -20,7 +20,7 @@ test.describe("Mobil görünüş (§63)", () => {
     await page.getByLabel(t("auth.phone")).fill("553334455");
     await page.getByRole("button", { name: t("auth.sendCode") }).click();
     await page.getByLabel(t("auth.otpDigit", { n: 1 })).fill("123456");
-    await page.getByRole("button", { name: t("auth.signIn") }).click();
+    await page.locator("#main-content").getByRole("button", { name: t("auth.signIn") }).click();
     await expect(page).toHaveURL(/\/az\/courier/);
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
     expect(overflow).toBeLessThanOrEqual(1);

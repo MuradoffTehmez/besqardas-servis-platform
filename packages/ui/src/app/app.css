@@ -3070,3 +3070,29 @@ a.bz-order:hover { border-color: var(--line-focus); background: var(--surface-su
   .bz-limit { flex-direction: column; align-items: stretch; }
   .bz-ring { align-self: center; }
 }
+
+/* ==========================================================================
+   Giriş / qeydiyyat — sayt qabığında
+   ========================================================================== */
+.auth-site { background: radial-gradient(900px 420px at 85% -10%, var(--brand-light), transparent 70%), var(--surface-subtle); padding: 40px 0 64px; }
+.auth-site-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 460px); gap: 32px; align-items: stretch; max-width: 1080px; }
+.auth-site.wide .auth-site-grid { grid-template-columns: minmax(0, 380px) minmax(0, 1fr); }
+.auth-site-story { position: relative; height: auto; border-radius: 24px; padding: 40px; gap: 28px; justify-content: space-between; min-height: 560px; }
+.auth-site-story .auth-story-body { max-width: 460px; }
+.auth-site-main { display: grid; align-content: center; justify-items: center; gap: 12px; min-width: 0; }
+.auth-site .auth-card, .auth-site.wide .auth-card { width: 100%; }
+.auth-site-secure { display: inline-flex; align-items: center; gap: 6px; margin: 0; font-size: 12.5px; color: var(--muted); }
+@media (max-width: 1100px) {
+  .auth-site-grid { gap: 22px; }
+  .auth-site-story { padding: 30px; }
+  .auth-site .auth-stats dd { font-size: 19px; }
+}
+@media (max-width: 860px) {
+  .auth-site { padding: 24px 0 40px; }
+  .auth-site-grid, .auth-site.wide .auth-site-grid { grid-template-columns: minmax(0, 1fr); max-width: 560px; }
+  .auth-site-story { display: none; }
+}
+@media (max-width: 767px) {
+  .auth-site { padding: 14px 0 32px; background: var(--surface-subtle); }
+  .auth-site .auth-card { padding: 22px 18px; border-radius: 18px; box-shadow: none; }
+}

@@ -94,13 +94,13 @@ export const webRoutes: RouteDef[] = [
   { pattern: "/demo", render: () => <DemoMapPage />, titleKey: "demo.title" },
 
   // Auth (§60.2)
-  { pattern: "/login", render: () => <LoginPage />, shell: "bare", titleKey: "auth.loginTitle" },
-  { pattern: "/register", render: () => <RegisterPage />, shell: "bare", titleKey: "auth.registerTitle" },
-  { pattern: "/forgot-password", render: () => <ForgotPasswordPage />, shell: "bare", titleKey: "auth.forgotTitle" },
-  { pattern: "/reset-password", render: () => <ResetPasswordPage />, shell: "bare", titleKey: "auth.resetTitle" },
-  { pattern: "/verify", render: () => <VerifyPage />, shell: "bare", titleKey: "auth.verifyTitle" },
-  { pattern: "/2fa", render: () => <TwoFactorPage />, shell: "bare", titleKey: "auth.twoFactorTitle" },
-  { pattern: "/select-mode", render: () => <SelectModePage />, shell: "bare", titleKey: "auth.selectModeTitle" },
+  { pattern: "/login", render: () => <LoginPage />, titleKey: "auth.loginTitle" },
+  { pattern: "/register", render: () => <RegisterPage />, titleKey: "auth.registerTitle" },
+  { pattern: "/forgot-password", render: () => <ForgotPasswordPage />, titleKey: "auth.forgotTitle" },
+  { pattern: "/reset-password", render: () => <ResetPasswordPage />, titleKey: "auth.resetTitle" },
+  { pattern: "/verify", render: () => <VerifyPage />, titleKey: "auth.verifyTitle" },
+  { pattern: "/2fa", render: () => <TwoFactorPage />, titleKey: "auth.twoFactorTitle" },
+  { pattern: "/select-mode", render: () => <SelectModePage />, titleKey: "auth.selectModeTitle" },
 
   // Müştəri kabineti (§60.3)
   { pattern: "/account", render: () => <AccountDashboardPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.dashboard" },

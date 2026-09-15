@@ -15,7 +15,7 @@ test.describe("Giriş və rol əsaslı yönləndirmə (§9)", () => {
     await page.getByRole("tab", { name: t("auth.byEmail") }).click();
     await page.getByLabel(t("email")).fill("aysel@demo.az");
     await page.getByLabel(t("password")).fill("yanlis-sifre");
-    await page.getByRole("button", { name: t("auth.signIn") }).click();
+    await page.locator("#main-content").getByRole("button", { name: t("auth.signIn") }).click();
     // Xəta mətni API-dən istifadəçinin dilində gəlir (§65.2)
     await expect(page.getByRole("alert").filter({ hasText: /yanlış/i })).toBeVisible();
     await expect(page).toHaveURL(/\/az\/login/);
@@ -26,7 +26,7 @@ test.describe("Giriş və rol əsaslı yönləndirmə (§9)", () => {
     await page.getByLabel(t("auth.phone")).fill("553334455");
     await page.getByRole("button", { name: t("auth.sendCode") }).click();
     await fillOtp(page);
-    await page.getByRole("button", { name: t("auth.signIn") }).click();
+    await page.locator("#main-content").getByRole("button", { name: t("auth.signIn") }).click();
     await expect(page).toHaveURL(/\/az\/courier/);
   });
 
@@ -36,7 +36,7 @@ test.describe("Giriş və rol əsaslı yönləndirmə (§9)", () => {
     await page.getByRole("tab", { name: t("auth.byEmail") }).click();
     await page.getByLabel(t("email")).fill("rashad@demo.az");
     await page.getByLabel(t("password")).fill("Demo1234!");
-    await page.getByRole("button", { name: t("auth.signIn") }).click();
+    await page.locator("#main-content").getByRole("button", { name: t("auth.signIn") }).click();
     await expect(page).toHaveURL(/\/az\/account\/devices$/);
   });
 
