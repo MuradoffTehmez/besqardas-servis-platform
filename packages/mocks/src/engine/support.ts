@@ -112,12 +112,14 @@ function resumeSla(t: TicketRec) {
 
 export function slaView(t: TicketRec) {
   const s = slaTargets(t.categoryId, t.priority);
+  const done = t.status === "RESOLVED" || t.status === "CLOSED";
   const ref = t.resolvedAt ? ms(t.resolvedAt) : t.slaPausedAt ? ms(t.slaPausedAt) : Date.now();
   const breachedFirstResponse = t.firstRespondedAt ? ms(t.firstRespondedAt) > ms(t.firstResponseDueAt) : ref > ms(t.firstResponseDueAt) && t.status !== "CLOSED";
   const breachedResolution = ref > ms(t.resolutionDueAt);
-  const done = t.status === "RESOLVED" || t.status === "CLOSED";
   const remaining = Math.round((ms(t.resolutionDueAt) - ref) / MINUTE);
-  const firstRemaining = t.firstRespondedAt ? Infinity : (ms(t.firstResponseDueAt) - ref) / MINUTE;
+  const firstRemaining = t.firstRespondedAt ? Infinity : Math.round((ms(t.firstResponseDueAt) - ref) / MINUTE);
+  // Növbəti hədəf: cavab verilməyibsə ilk cavab, əks halda həll
+  const target = !done && !t.firstRespondedAt ? ("FIRST_RESPONSE" as const) : ("RESOLUTION" as const);
   let state: "ON_TRACK" | "AT_RISK" | "BREACHED" | "PAUSED" | "MET";
   if (done) state = breachedResolution || breachedFirstResponse ? "BREACHED" : "MET";
   else if (breachedResolution || breachedFirstResponse) state = "BREACHED";
@@ -129,7 +131,9 @@ export function slaView(t: TicketRec) {
     firstResponseDueAt: t.firstResponseDueAt,
     resolutionDueAt: t.resolutionDueAt,
     firstRespondedAt: t.firstRespondedAt,
-    remainingMinutes: done ? null : remaining,
+    target,
+    remainingMinutes: done ? null : target === "FIRST_RESPONSE" ? firstRemaining : remaining,
+    resolutionRemainingMinutes: done ? null : remaining,
     breachedFirstResponse,
     breachedResolution,
     escalationLevel: t.escalationLevel,

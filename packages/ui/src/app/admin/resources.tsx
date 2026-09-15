@@ -14,10 +14,11 @@ export type ResourceKey =
   | "services" | "feeRules" | "reasonCodes" | "b2bAccounts" | "partnerTypes" | "categories" | "brands" | "series" | "models" | "attributes" | "units"
   | "priceLists" | "promotions" | "warehouses" | "warehouseGroups" | "suppliers" | "taxSettings" | "notificationTemplates" | "pages" | "faq" | "banners"
   | "branches" | "zones" | "kpiTargets" | "subscriptions" | "payments" | "invoices" | "fiscalReceipts" | "reservations" | "commissions" | "reviews"
-  | "estimates" | "auditLogs" | "customers" | "couriers" | "employees" | "returns" | "salesOrders" | "stockMovements" | "unitConversions";
+  | "estimates" | "auditLogs" | "customers" | "couriers" | "employees" | "returns" | "salesOrders" | "stockMovements" | "unitConversions"
+  | "ticketCategories" | "cannedResponses";
 
 export function useResourceConfig(key: ResourceKey): ResourceConfig {
-  const { t, money, enumLabel, text, dateTime } = useI18n();
+  const { t, money, enumLabel, text, dateTime, minutes } = useI18n();
   const f = (k: string) => t(`adm.f.${k}`);
   const n = (k: string) => t(`adm.nav.${k}`);
   const docs = (type: string | undefined, title: string): ResourceConfig => ({
@@ -46,6 +47,51 @@ export function useResourceConfig(key: ResourceKey): ResourceConfig {
   });
 
   const configs: Record<ResourceKey, () => ResourceConfig> = {
+    ticketCategories: () => ({
+      path: "/admin/ticket-categories", title: n("ticketCategories"), subtitle: t("adm.tickets.catSubtitle"), perm: "tickets", remove: true, defaultSort: "order",
+      columns: [
+        { key: "name", label: f("name"), sub: "code" },
+        { key: "queue", label: f("queue"), type: "badge", group: "TicketQueue" },
+        { key: "defaultPriority", label: f("defaultPriority"), type: "badge", group: "TicketPriority", mobile: false },
+        { key: "firstResponseMinutes", label: f("firstResponse"), mobile: false, render: (r) => minutes(r.firstResponseMinutes) },
+        { key: "resolutionMinutes", label: f("resolution"), mobile: false, render: (r) => minutes(r.resolutionMinutes) },
+        { key: "openTickets", label: f("openTickets"), type: "number" },
+        { key: "customerVisible", label: f("customerVisible"), type: "bool", mobile: false },
+        { key: "active", label: f("active"), type: "bool" },
+      ],
+      filters: [{ key: "queue", label: f("queue"), enumGroup: "TicketQueue" }],
+      fields: [
+        { name: "code", label: f("code"), required: true, createOnly: true },
+        { name: "queue", label: f("queue"), type: "select", enumGroup: "TicketQueue", required: true },
+        { name: "nameI18n", label: f("name"), type: "i18n", required: true },
+        { name: "descriptionI18n", label: f("description"), type: "i18nText" },
+        { name: "defaultPriority", label: f("defaultPriority"), type: "select", enumGroup: "TicketPriority", required: true },
+        { name: "order", label: f("order"), type: "number" },
+        { name: "sla", label: f("sla"), type: "json", hint: t("adm.tickets.slaHint") },
+        { name: "customerVisible", label: f("customerVisible"), type: "bool" },
+        { name: "active", label: f("active"), type: "bool" },
+      ],
+      initial: { active: true, customerVisible: true, defaultPriority: "NORMAL", queue: "GENERAL" },
+    }),
+    cannedResponses: () => ({
+      path: "/admin/canned-responses", title: n("cannedResponses"), subtitle: t("adm.tickets.cannedSubtitle"), perm: "tickets", remove: true, defaultSort: "-usageCount",
+      columns: [
+        { key: "shortcut", label: f("shortcut"), render: (r) => <code>{r.shortcut}</code> },
+        { key: "title", label: f("title"), type: "i18n" },
+        { key: "categoryName", label: f("category"), type: "i18n", mobile: false },
+        { key: "usageCount", label: f("usageCount"), type: "number", sort: true },
+        { key: "active", label: f("active"), type: "bool" },
+      ],
+      filters: [{ key: "categoryId", label: f("category"), lookup: "ticketCategories" }],
+      fields: [
+        { name: "shortcut", label: f("shortcut"), required: true, hint: "/salam" },
+        { name: "categoryId", label: f("category"), type: "select", lookup: "ticketCategories" },
+        { name: "titleI18n", label: f("title"), type: "i18n", required: true },
+        { name: "bodyI18n", label: f("body"), type: "i18nText", required: true, span: true },
+        { name: "active", label: f("active"), type: "bool" },
+      ],
+      initial: { active: true },
+    }),
     services: () => ({
       path: "/admin/services", title: n("services"), perm: "catalog", remove: true,
       columns: [

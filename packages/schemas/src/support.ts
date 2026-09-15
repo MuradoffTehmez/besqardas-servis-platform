@@ -61,8 +61,11 @@ export const TicketSla = z.object({
   firstResponseDueAt: IsoDateTime.nullable(),
   resolutionDueAt: IsoDateTime.nullable(),
   firstRespondedAt: IsoDateTime.nullable(),
-  /** Həll müddətindən qalan dəqiqə (mənfi — gecikmə). */
+  /** Növbəti hədəf: cavab verilməyibsə ilk cavab, sonra həll. */
+  target: z.enum(["FIRST_RESPONSE", "RESOLUTION"]),
+  /** Növbəti hədəfə qalan dəqiqə (mənfi — gecikmə). */
   remainingMinutes: z.number().nullable(),
+  resolutionRemainingMinutes: z.number().nullable(),
   breachedFirstResponse: z.boolean(),
   breachedResolution: z.boolean(),
   escalationLevel: z.number().int().min(0),
