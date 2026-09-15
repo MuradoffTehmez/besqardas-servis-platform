@@ -1,12 +1,13 @@
 "use client";
 import React, { useState } from "react";
-import { Award, BadgeCheck, Boxes, Building, CalendarDays, Check as CheckIcon, CheckCircle2, FileText, Handshake, IdCard, Info, KeyRound, Mail, MapPin, Phone, Receipt, Send, ShieldCheck, Smartphone, UserPlus } from "lucide-react";
+import { ArrowLeft, ArrowRight, Award, BadgeCheck, Boxes, Building, CalendarDays, Check as CheckIcon, CheckCircle2, FileText, Handshake, IdCard, Info, KeyRound, LayoutDashboard, Lock, Mail, MapPin, Phone, Receipt, Send, ShieldCheck, Smartphone, UserPlus, UserRound, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@sp/utils";
 import { ApiError, post, useApi, useQueryClient } from "@sp/api-client";
 import { useI18n } from "../core/i18n";
 import { Link, useRouter } from "../core/router";
 import { useSession } from "../core/session";
+import { useAppKind } from "../core/app";
 import { adminUrl, homeFor, webUrl } from "../core/shells";
 import { Check, FormError, Loading, Radios, SelectField, TextField, errorText, useFormState } from "../kit/base";
 import { FileDrop, OtpInput, PhoneField, type PickedFile } from "../kit/media";
@@ -16,34 +17,76 @@ import { InfoHero } from "./info";
 /* Ümumi auth layout                                                   */
 /* ------------------------------------------------------------------ */
 
-export function AuthLayout({ title, subtitle, children, wide }: { title: React.ReactNode; subtitle?: React.ReactNode; children: React.ReactNode; wide?: boolean }) {
-  const { t, locale } = useI18n();
+const AUTH_LOCALES = [["az", "AZ"], ["ru", "RU"], ["en", "EN"]] as const;
+
+export function AuthLayout({ title, subtitle, children, wide, icon: Icon }: { title: React.ReactNode; subtitle?: React.ReactNode; children: React.ReactNode; wide?: boolean; icon?: React.ComponentType<{ size?: number; "aria-hidden"?: boolean }> }) {
+  const { t, locale, num } = useI18n();
   const { setLocale } = useRouter();
+  const kind = useAppKind();
+  const admin = kind === "admin";
+  const brand = useApi<any>("/branding", { staleTime: 300_000 });
+  const home = useApi<any>(admin ? null : "/home", { staleTime: 300_000 });
+  const stats = home.data?.stats;
+  const year = new Date().getFullYear();
+  const features = admin
+    ? [{ icon: LayoutDashboard, text: t("auth.storyAdmin1") }, { icon: Boxes, text: t("auth.storyAdmin2") }, { icon: ShieldCheck, text: t("auth.storyAdmin3") }]
+    : [{ icon: Wrench, text: t("auth.story1") }, { icon: FileText, text: t("auth.story2") }, { icon: ShieldCheck, text: t("auth.story3") }];
+  const siteLink = admin ? <a href={webUrl()} className="auth-back"><ArrowLeft size={16} aria-hidden /> {t("auth.backToSite")}</a> : <Link to="/" className="auth-back"><ArrowLeft size={16} aria-hidden /> {t("auth.backToSite")}</Link>;
   return (
-    <div className="auth-shell">
+    <div className={cn("auth-shell", admin && "is-admin")}>
       <aside className="auth-story">
-        <Link to="/" className="brand-logo auth-logo"><span className="logo-icon">bq</span><span className="logo-text">besqardas<span className="logo-sub">servis</span></span></Link>
-        <h2>{t("auth.storyTitle")}</h2>
-        <ul>
-          <li><CheckCircle2 size={18} /> {t("auth.story1")}</li>
-          <li><CheckCircle2 size={18} /> {t("auth.story2")}</li>
-          <li><CheckCircle2 size={18} /> {t("auth.story3")}</li>
-        </ul>
+        <div className="auth-story-top">
+          {admin ? (
+            <span className="auth-brand"><span className="auth-brand-icon"><Wrench size={20} aria-hidden /></span><span>besqardas <small>CRM</small></span></span>
+          ) : (
+            <Link to="/" className="auth-brand"><span className="auth-brand-icon"><Wrench size={20} aria-hidden /></span><span>besqardas <small>servis</small></span></Link>
+          )}
+        </div>
+        <div className="auth-story-body">
+          <span className="auth-story-eyebrow">{admin ? t("auth.storyAdminEyebrow") : t("auth.storyEyebrow")}</span>
+          <h2>{admin ? t("auth.storyAdminTitle") : t("auth.storyTitle")}</h2>
+          <p>{admin ? t("auth.storyAdminText") : t("auth.storyText")}</p>
+          <ul>
+            {features.map((f, i) => <li key={i}><span><f.icon size={18} aria-hidden /></span>{f.text}</li>)}
+          </ul>
+        </div>
+        {stats ? (
+          <dl className="auth-stats">
+            <div><dt>{t("homeExtra.completed")}</dt><dd>{num(stats.completedServices)}+</dd></div>
+            <div><dt>{t("homeExtra.rating")}</dt><dd>{num(stats.rating, 1)}<small>/5</small></dd></div>
+            <div><dt>{t("homeExtra.branches")}</dt><dd>{num(stats.branches)}</dd></div>
+          </dl>
+        ) : (
+          <p className="auth-secure"><Lock size={15} aria-hidden /> {t("auth.secureNote")}</p>
+        )}
       </aside>
       <main id="main-content" className={cn("auth-main", wide && "wide")}>
         <div className="auth-top">
-          <Link to="/" className="btn ghost btn-sm">← {t("auth.backToSite")}</Link>
-          <select className="form-input auth-lang" value={locale} onChange={(e) => setLocale(e.target.value as "az")} aria-label={t("common.language")}>
-            <option value="az">Azərbaycan</option>
-            <option value="ru">Русский</option>
-            <option value="en">English</option>
-          </select>
+          {siteLink}
+          <div className="auth-langs" role="group" aria-label={t("common.language")}>
+            {AUTH_LOCALES.map(([code, label]) => (
+              <button key={code} type="button" className={cn(locale === code && "active")} aria-pressed={locale === code} onClick={() => setLocale(code)}>{label}</button>
+            ))}
+          </div>
         </div>
-        <div className="auth-card">
-          <h1>{title}</h1>
-          {subtitle && <p className="text-muted mb-4">{subtitle}</p>}
-          {children}
+        <div className="auth-center">
+          <div className="auth-mobile-brand"><span className="auth-brand-icon"><Wrench size={18} aria-hidden /></span><span>besqardas <small>{admin ? "CRM" : "servis"}</small></span></div>
+          <div className="auth-card">
+            {Icon && <span className="auth-card-icon"><Icon size={24} aria-hidden /></span>}
+            <h1>{title}</h1>
+            {subtitle && <p className="auth-subtitle">{subtitle}</p>}
+            {children}
+          </div>
+          <p className="auth-secure-inline"><Lock size={13} aria-hidden /> {t("auth.secureNote")}</p>
         </div>
+        <footer className="auth-foot">
+          <span>© {year} {brand.data?.companyName ?? "besqardasServis.az"}</span>
+          {admin ? (
+            <><a href={webUrl("/terms")}>{t("legal.terms")}</a><a href={webUrl("/privacy")}>{t("legal.privacy")}</a></>
+          ) : (
+            <><Link to="/terms">{t("legal.terms")}</Link><Link to="/privacy">{t("legal.privacy")}</Link><Link to="/contact">{t("contact")}</Link></>
+          )}
+        </footer>
       </main>
     </div>
   );
@@ -57,6 +100,8 @@ export function useAfterLogin(app: "web" | "admin") {
   const { navigate, query } = useRouter();
   const qc = useQueryClient();
   return async (result: any) => {
+    // Yeni sessiya keşə dərhal yazılır — qorunan səhifə köhnə (qonaq) sessiyanı görüb girişə qaytarmasın
+    if (result?.session) qc.setQueryData(["api", "/auth/session"], result.session);
     await qc.invalidateQueries({ queryKey: ["api"] });
     if (result.status === "SELECT_MODE") return navigate(`/select-mode${query.get("next") ? `?next=${encodeURIComponent(query.get("next")!)}` : ""}`);
     const target = result.redirectTo as string;
@@ -122,7 +167,7 @@ export function LoginPage({ app = "web" }: { app?: "web" | "admin" }) {
 
   if (step === "2FA" && challenge) {
     return (
-      <AuthLayout title={t("auth.twoFactorTitle")} subtitle={t("auth.twoFactorText", { target: challenge.masked })}>
+      <AuthLayout icon={ShieldCheck} title={t("auth.twoFactorTitle")} subtitle={t("auth.twoFactorText", { target: challenge.masked })}>
         <form onSubmit={(e) => { e.preventDefault(); void handle(() => post("/auth/2fa", { challengeId: challenge.id, code: form.values.code })); }}>
           <FormError error={error} />
           <OtpInput value={form.values.code} onChange={(v) => form.set("code", v)} autoFocus />
@@ -136,7 +181,7 @@ export function LoginPage({ app = "web" }: { app?: "web" | "admin" }) {
 
   if (step === "OTP" && challenge) {
     return (
-      <AuthLayout title={t("auth.otpTitle")} subtitle={t("auth.otpText", { target: challenge.masked })}>
+      <AuthLayout icon={Smartphone} title={t("auth.otpTitle")} subtitle={t("auth.otpText", { target: challenge.masked })}>
         <form onSubmit={(e) => { e.preventDefault(); void handle(() => post("/auth/otp/verify", { phone: form.values.phone, code: form.values.code, challengeId: challenge.id })); }}>
           <FormError error={error} />
           <OtpInput value={form.values.code} onChange={(v) => form.set("code", v)} autoFocus />
@@ -153,7 +198,7 @@ export function LoginPage({ app = "web" }: { app?: "web" | "admin" }) {
 
   return (
     <AuthLayout title={app === "admin" ? t("auth.adminLoginTitle") : t("auth.loginTitle")} subtitle={app === "admin" ? t("auth.adminLoginText") : t("auth.loginText")}>
-      <div className="kit-segment" role="tablist">
+      <div className="kit-segment auth-tabs" role="tablist">
         <button type="button" role="tab" aria-selected={method === "PHONE"} className={cn(method === "PHONE" && "active")} onClick={() => setMethod("PHONE")}><Phone size={15} /> {t("auth.byPhone")}</button>
         <button type="button" role="tab" aria-selected={method === "EMAIL"} className={cn(method === "EMAIL" && "active")} onClick={() => setMethod("EMAIL")}><Mail size={15} /> {t("auth.byEmail")}</button>
       </div>
@@ -171,7 +216,7 @@ export function LoginPage({ app = "web" }: { app?: "web" | "admin" }) {
         <button className="btn primary w-full" disabled={busy}>{method === "EMAIL" ? t("auth.signIn") : t("auth.sendCode")}</button>
       </form>
       {app === "web" && (
-        <p className="text-center mt-4 text-sm">{t("auth.noAccount")} <Link to="/register" className="text-brand font-semibold">{t("auth.register")}</Link></p>
+        <p className="auth-switch">{t("auth.noAccount")} <Link to="/register">{t("auth.register")}</Link></p>
       )}
       {demo.data && (
         <details className="auth-demo mt-6">
@@ -206,12 +251,13 @@ export function SelectModePage({ app = "web" }: { app?: "web" | "admin" }) {
   if (loading) return <Loading />;
   if (!user) return <LoginPage app={app} />;
   return (
-    <AuthLayout title={t("auth.selectModeTitle")} subtitle={t("auth.selectModeText")}>
-      <div className="grid gap-3">
+    <AuthLayout icon={UserRound} title={t("auth.selectModeTitle")} subtitle={t("auth.selectModeText")}>
+      <div className="auth-modes">
         {user.roles.map((r) => (
-          <button key={r} type="button" className="choice-card" disabled={!!busy} onClick={async () => { setBusy(r); try { await after(await post("/auth/select-mode", { role: r })); } finally { setBusy(null); } }}>
-            <strong>{enumLabel("Role", r)}</strong>
-            <small className="text-muted">{t(`auth.modeHint.${homeFor(r) === "ADMIN_APP" ? "internal" : r}`)}</small>
+          <button key={r} type="button" className="auth-mode" disabled={!!busy} onClick={async () => { setBusy(r); try { await after(await post("/auth/select-mode", { role: r })); } finally { setBusy(null); } }}>
+            <span className="auth-mode-icon">{homeFor(r) === "ADMIN_APP" ? <LayoutDashboard size={20} aria-hidden /> : r === "TECHNICIAN" ? <Wrench size={20} aria-hidden /> : <UserRound size={20} aria-hidden />}</span>
+            <span className="auth-mode-copy"><strong>{enumLabel("Role", r)}</strong><small>{t(`auth.modeHint.${homeFor(r) === "ADMIN_APP" ? "internal" : r}`)}</small></span>
+            <ArrowRight size={18} aria-hidden />
           </button>
         ))}
       </div>
@@ -252,10 +298,6 @@ export function RegisterPage() {
   };
   return (
     <AuthLayout title={t("auth.registerTitle")} subtitle={t("auth.registerText")}>
-      <div className="auth-links mb-4">
-        <Link to="/become-technician" className="chip"><UserPlus size={14} /> {t("auth.technicianApply")}</Link>
-        <Link to="/business" className="chip">{t("auth.b2bApply")}</Link>
-      </div>
       <form onSubmit={submit} noValidate>
         <FormError error={error instanceof ApiError && !Object.keys(error.fieldErrors).length ? error : null} />
         {challenge ? (
@@ -266,8 +308,11 @@ export function RegisterPage() {
           </>
         ) : (
           <>
-            <Radios name="method" value={v.method} onValue={(m) => form.set("method", m)} columns={2} options={[{ value: "PHONE", label: t("auth.byPhone") }, { value: "EMAIL", label: t("auth.byEmail") }]} />
-            <div className="kit-grid cols-2 mt-3">
+            <div className="kit-segment auth-tabs" role="tablist">
+              <button type="button" role="tab" aria-selected={v.method === "PHONE"} className={cn(v.method === "PHONE" && "active")} onClick={() => form.set("method", "PHONE")}><Phone size={15} /> {t("auth.byPhone")}</button>
+              <button type="button" role="tab" aria-selected={v.method === "EMAIL"} className={cn(v.method === "EMAIL" && "active")} onClick={() => form.set("method", "EMAIL")}><Mail size={15} /> {t("auth.byEmail")}</button>
+            </div>
+            <div className="auth-row">
               <TextField label={t("fields.firstName")} required autoComplete="given-name" value={v.firstName} onValue={(x) => form.set("firstName", x)} error={form.errors.firstName} />
               <TextField label={t("fields.lastName")} required autoComplete="family-name" value={v.lastName} onValue={(x) => form.set("lastName", x)} error={form.errors.lastName} />
             </div>
@@ -286,7 +331,14 @@ export function RegisterPage() {
         )}
         <button className="btn primary w-full mt-4" disabled={busy}>{challenge ? t("auth.confirmAndCreate") : t("auth.createAccount")}</button>
       </form>
-      <p className="text-center mt-4 text-sm">{t("auth.haveAccount")} <Link to="/login" className="text-brand font-semibold">{t("login")}</Link></p>
+      <p className="auth-switch">{t("auth.haveAccount")} <Link to="/login">{t("login")}</Link></p>
+      <div className="auth-join">
+        <span>{t("auth.joinTitle")}</span>
+        <div>
+          <Link to="/become-technician"><UserPlus size={15} aria-hidden /> {t("auth.technicianApply")}</Link>
+          <Link to="/business"><Building size={15} aria-hidden /> {t("auth.b2bApply")}</Link>
+        </div>
+      </div>
     </AuthLayout>
   );
 }
@@ -297,11 +349,12 @@ export function ForgotPasswordPage() {
   const [sent, setSent] = useState<string | null>(null);
   const [error, setError] = useState<unknown>(null);
   return (
-    <AuthLayout title={t("auth.forgotTitle")} subtitle={t("auth.forgotText")}>
+    <AuthLayout icon={KeyRound} title={t("auth.forgotTitle")} subtitle={t("auth.forgotText")}>
       {sent ? (
-        <div className="alert alert-success" role="status">
-          {t("auth.resetSent")}
-          <p className="mt-2 text-sm"><Link to={sent} className="text-brand">{t("auth.demoResetLink")}</Link></p>
+        <div className="auth-sent" role="status">
+          <span><Mail size={22} aria-hidden /></span>
+          <p>{t("auth.resetSent")}</p>
+          <Link to={sent} className="btn outline btn-sm">{t("auth.demoResetLink")}</Link>
         </div>
       ) : (
         <form onSubmit={async (e) => { e.preventDefault(); setError(null); try { const r = await post("/auth/forgot-password", { email }); setSent(r.devResetLink); } catch (err) { setError(err); } }}>
@@ -310,7 +363,7 @@ export function ForgotPasswordPage() {
           <button className="btn primary w-full"><KeyRound size={16} /> {t("auth.sendResetLink")}</button>
         </form>
       )}
-      <p className="text-center mt-4"><Link to="/login" className="text-brand">{t("auth.backToLogin")}</Link></p>
+      <p className="auth-switch"><Link to="/login"><ArrowLeft size={14} aria-hidden /> {t("auth.backToLogin")}</Link></p>
     </AuthLayout>
   );
 }
@@ -321,7 +374,7 @@ export function ResetPasswordPage() {
   const form = useFormState({ password: "", confirmPassword: "" });
   const [error, setError] = useState<unknown>(null);
   return (
-    <AuthLayout title={t("auth.resetTitle")}>
+    <AuthLayout icon={Lock} title={t("auth.resetTitle")}>
       <form onSubmit={async (e) => { e.preventDefault(); setError(null); try { await post("/auth/reset-password", { token: query.get("token") ?? "", ...form.values }); toast.success(t("auth.passwordChanged")); navigate("/login"); } catch (err) { setError(err); form.fromError(err); } }}>
         <FormError error={error instanceof ApiError && !Object.keys(error.fieldErrors).length ? error : null} />
         {error instanceof ApiError && error.fieldErrors.token && <div className="alert alert-danger">{t("validation.tokenInvalid")}</div>}
@@ -329,6 +382,7 @@ export function ResetPasswordPage() {
         <TextField label={t("auth.confirmPassword")} type="password" autoComplete="new-password" required value={form.values.confirmPassword} onValue={(v) => form.set("confirmPassword", v)} error={form.errors.confirmPassword} />
         <button className="btn primary w-full">{t("auth.savePassword")}</button>
       </form>
+      <p className="auth-switch"><Link to="/login"><ArrowLeft size={14} aria-hidden /> {t("auth.backToLogin")}</Link></p>
     </AuthLayout>
   );
 }
@@ -344,7 +398,7 @@ export function VerifyPage() {
   if (!user) return <LoginPage />;
   const done = type === "email" ? user.emailVerified : user.phoneVerified;
   return (
-    <AuthLayout title={t(`auth.verify_${type}_title`)} subtitle={t(`auth.verify_${type}_text`, { target: type === "email" ? user.email ?? "" : user.phone ?? "" })}>
+    <AuthLayout icon={type === "email" ? Mail : Smartphone} title={t(`auth.verify_${type}_title`)} subtitle={t(`auth.verify_${type}_text`, { target: type === "email" ? user.email ?? "" : user.phone ?? "" })}>
       {done ? (
         <div className="alert alert-success">{t("auth.alreadyVerified")}</div>
       ) : (
@@ -370,7 +424,7 @@ export function TwoFactorPage() {
   if (loading) return <Loading />;
   if (!user) return <LoginPage />;
   return (
-    <AuthLayout title={t("auth.twoFactorSetupTitle")} subtitle={t("auth.twoFactorSetupText")}>
+    <AuthLayout icon={ShieldCheck} title={t("auth.twoFactorSetupTitle")} subtitle={t("auth.twoFactorSetupText")}>
       <div className="kit-note mb-4"><Smartphone size={18} /> {user.twoFactorEnabled ? t("auth.twoFactorOn") : t("auth.twoFactorOff")}</div>
       <form onSubmit={async (e) => { e.preventDefault(); setError(null); try { await post("/account/security/2fa", { enabled: !user.twoFactorEnabled, code }); await refresh(); toast.success(t("common.saved")); setCode(""); } catch (err) { setError(err); } }}>
         <FormError error={error} />
