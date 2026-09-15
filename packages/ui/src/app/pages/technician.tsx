@@ -1,13 +1,14 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
-import { BarChart3, Boxes, CalendarDays, ClipboardList, Crown, FileBadge, LayoutDashboard, MapPin, MessageSquare, Navigation, Phone, Settings, Star, Trash2, Users, Wallet, Wrench, Plus, BadgeCheck, Clock, AlertTriangle, Lock, UserRound } from "lucide-react";
+import { BarChart3, Bell, Boxes, CalendarDays, ChevronRight, ClipboardList, Crown, FileBadge, LayoutDashboard, MapPin, MessageSquare, Navigation, Phone, Settings, Star, Timer, Trash2, Users, Wallet, Wrench, Plus, BadgeCheck, Clock, AlertTriangle, Lock, UserRound, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@sp/utils";
 import { del, patch, post, put, qs, useApi } from "@sp/api-client";
 import { useI18n } from "../core/i18n";
 import { Link, useRouter } from "../core/router";
 import { useSession } from "../core/session";
-import { PanelShell, type NavGroup } from "../core/shells";
+import { useMedia } from "../core/nav";
+import { SiteWorkspace, type NavGroup } from "../core/shells";
 import type { RouteDef } from "../core/router";
 import { Avatar, Card, Check, EmptyState, EnumBadge, FormError, Grid, KeyValue, Loading, PageHeader, QueryView, SearchBox, SelectField, Stars, Stat, Tabs, TextArea, TextField, Toggle, errorText } from "../kit/base";
 import { Dialog, ResourceTable } from "../kit/actions";
@@ -15,7 +16,7 @@ import { EstimateView, StageTimeline } from "../kit/domain";
 import { BarsChart, DonutChart, FileDrop, LinesChart, MapView, QuantityInput, type PickedFile } from "../kit/media";
 import { DocumentsList, HistoryList, Progress, PromptDialog, UsageBar, useRefresh } from "./common";
 import { OrderActions } from "./workflow";
-import { ProfilePage, SubscriptionPage } from "./account";
+import { NotificationsPage, ProfilePage, SubscriptionPage } from "./account";
 
 /* ------------------------------------------------------------------ */
 /* Shell və route-lar (PRD §60.4)                                       */
@@ -23,7 +24,7 @@ import { ProfilePage, SubscriptionPage } from "./account";
 
 export function TechnicianShell({ children }: { children: React.ReactNode }) {
   const { t } = useI18n();
-  const { user } = useSession();
+  const { user, session } = useSession();
   const dash = useApi<any>("/technician/dashboard", { staleTime: 30_000 });
   const staff = user?.employmentType === "STAFF";
   const nav: NavGroup[] = [
@@ -33,6 +34,7 @@ export function TechnicianShell({ children }: { children: React.ReactNode }) {
         { to: "/technician/jobs", label: t("tech.nav.jobs"), icon: ClipboardList, badge: dash.data?.offers || null },
         { to: "/technician/schedule", label: t("tech.nav.schedule"), icon: CalendarDays },
         { to: "/technician/customers", label: t("tech.nav.customers"), icon: Users },
+        { to: "/technician/notifications", label: t("acc.nav.notifications"), icon: Bell, badge: session?.unreadNotifications || null },
       ],
     },
     {
@@ -56,7 +58,8 @@ export function TechnicianShell({ children }: { children: React.ReactNode }) {
       ],
     },
   ];
-  return <PanelShell nav={nav} title={t("tech.title")}>{children}</PanelShell>;
+  const plan = staff ? t("tech.nav.license") : dash.data?.planName;
+  return <SiteWorkspace nav={nav} title={t("tech.title")} badge={plan ? { label: plan, to: "/technician/subscription", icon: Crown } : null}>{children}</SiteWorkspace>;
 }
 
 const TECH = ["TECHNICIAN"];
@@ -79,83 +82,168 @@ export const technicianRoutes: RouteDef[] = [
   r("/technician/statistics", () => <StatisticsPage />, "tech.nav.statistics"),
   r("/technician/settings", () => <TechSettingsPage />, "tech.nav.settings"),
   r("/technician/profile", () => <ProfilePage />, "acc.nav.profile"),
+  r("/technician/notifications", () => <NotificationsPage />, "acc.nav.notifications"),
 ];
 
 /* ------------------------------------------------------------------ */
 /* Dashboard                                                            */
 /* ------------------------------------------------------------------ */
 
-function JobRow({ o }: { o: any }) {
-  const { t, dateTime, text, money } = useI18n();
+const mapsUrl = (address: string) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
+const telUrl = (phone: string) => `tel:${phone.replace(/[^\d+]/g, "")}`;
+
+/** Sahə işi kartı: vaxt, xidmət, müştəri, ünvan, mərhələ və sürətli əməliyyatlar (marşrut, zəng, aç). */
+function TechJobCard({ o, showDate }: { o: any; showDate?: boolean }) {
+  const { t, time, date, text, money } = useI18n();
   return (
-    <li>
-      <Link to={`/technician/jobs/${o.id}`} className="grow">
-        <strong>{o.number} · {text(o.serviceName)}</strong>
-        <small className="block text-muted">{[o.scheduledAt && dateTime(o.scheduledAt), o.customerName, o.addressShort].filter(Boolean).join(" · ")}</small>
-        <small className="block">{o.currentStageName} · <EnumBadge group="StageStatus" code={o.currentStageStatus} /></small>
-      </Link>
-      <span className="flex gap-2 items-center">
-        {o.urgent && <span className="badge badge-danger">{t("acc.orders.urgent")}</span>}
-        {o.total && <strong>{money(o.total)}</strong>}
-      </span>
-    </li>
+    <article className={cn("tp-job", o.urgent && "is-urgent")}>
+      <div className="tp-job-time">
+        <strong>{o.scheduledAt ? time(o.scheduledAt) : "—"}</strong>
+        {showDate && o.scheduledAt && <small>{date(o.scheduledAt).slice(0, 5)}</small>}
+      </div>
+      <div className="tp-job-body">
+        <div className="tp-job-top">
+          <Link to={`/technician/jobs/${o.id}`} className="tp-job-title"><span>{o.number}</span> {text(o.serviceName)}</Link>
+          {o.urgent && <span className="tp-urgent"><Zap size={12} aria-hidden /> {t("acc.orders.urgent")}</span>}
+        </div>
+        <ul className="tp-job-meta">
+          {o.customerName && <li><UserRound size={14} aria-hidden /> {o.customerName}</li>}
+          {o.addressShort && <li><MapPin size={14} aria-hidden /> {o.addressShort}</li>}
+        </ul>
+        <div className="tp-job-foot">
+          <span className="tp-stage">{o.currentStageName} <EnumBadge group="StageStatus" code={o.currentStageStatus} /></span>
+          {o.total && <strong className="tp-job-sum">{money(o.total)}</strong>}
+        </div>
+        {typeof o.progress === "number" && <div className="tp-progress" aria-hidden><i style={{ width: `${Math.max(4, Math.min(100, o.progress))}%` }} /></div>}
+      </div>
+      <div className="tp-job-actions">
+        {o.addressShort && <a className="tp-icon-btn" href={mapsUrl(o.addressShort)} target="_blank" rel="noopener noreferrer" aria-label={t("tech.dash.navigate")} title={t("tech.dash.navigate")}><Navigation size={17} /></a>}
+        {o.customerPhone && <a className="tp-icon-btn" href={telUrl(o.customerPhone)} aria-label={t("tech.dash.call")} title={t("tech.dash.call")}><Phone size={17} /></a>}
+        <Link to={`/technician/jobs/${o.id}`} className="tp-icon-btn primary" aria-label={t("tech.dash.open")} title={t("tech.dash.open")}><ChevronRight size={18} /></Link>
+      </div>
+    </article>
   );
 }
 
+function Meter({ label, used, limit, icon: Icon, tone, to, hint }: { label: string; used: number; limit: number | null; icon: React.ComponentType<{ size?: number }>; tone: string; to?: string; hint?: React.ReactNode }) {
+  const pct = limit ? Math.min(100, Math.round((used / limit) * 100)) : 0;
+  const body = (
+    <>
+      <span className="tp-kpi-icon"><Icon size={20} /></span>
+      <span className="tp-kpi-label">{label}</span>
+      <strong className="tp-kpi-value">{used}<small> / {limit ?? "∞"}</small></strong>
+      {limit ? <span className={cn("tp-meter", pct >= 90 && "is-full")}><i style={{ width: `${pct}%` }} /></span> : <span className="tp-kpi-hint">{hint}</span>}
+    </>
+  );
+  return to ? <Link to={to} className={cn("tp-kpi", `tone-${tone}`)}>{body}</Link> : <div className={cn("tp-kpi", `tone-${tone}`)}>{body}</div>;
+}
+
 function TechDashboardPage() {
-  const { t, money } = useI18n();
+  const { t, money, num, date, time } = useI18n();
   const { user } = useSession();
   const q = useApi<any>("/technician/dashboard");
   return (
-    <>
-      <PageHeader title={t("acc.dash.hello", { name: user?.firstName ?? "" })} subtitle={t("tech.dash.subtitle")} actions={<Link to="/technician/jobs?tab=offers" className="btn primary"><ClipboardList size={16} /> {t("tech.jobs.offers")}</Link>} />
-      <QueryView query={q} rows={8}>
-        {(d) => (
-          <>
-            {d.offers > 0 && <div className="kit-note info mb-4 flex justify-between items-center gap-2 flex-wrap"><span>{t("tech.dash.offersWaiting", { count: d.offers })}</span><Link to="/technician/jobs?tab=offers" className="btn primary btn-sm">{t("common.view")}</Link></div>}
-            {d.subscriptionStatus && !["ACTIVE", "TRIAL"].includes(d.subscriptionStatus) && <div className="kit-note danger mb-4">{t("tech.dash.subInactive")} <Link to="/technician/subscription" className="text-brand">{t("acc.dash.managePlan")}</Link></div>}
-            {d.documentsExpiring > 0 && <div className="kit-note warning mb-4">{t("tech.dash.docsExpiring", { count: d.documentsExpiring })}</div>}
-            {d.reservationsExpiring > 0 && <div className="kit-note warning mb-4">{t("tech.dash.resExpiring", { count: d.reservationsExpiring })}</div>}
-            <Grid cols={4}>
-              <Stat label={t("tech.dash.active")} value={`${d.activeJobs} / ${d.activeLimit ?? "∞"}`} icon={Wrench} to="/technician/jobs" />
-              <Stat label={t("tech.dash.monthly")} value={`${d.monthlyAccepted} / ${d.monthlyLimit ?? "∞"}`} icon={ClipboardList} tone="info" />
-              <Stat label={t("tech.dash.rating")} value={<Stars value={d.rating} count={d.reviewCount} />} icon={Star} tone="warning" to="/technician/reviews" />
-              <Stat label={d.employmentType === "STAFF" ? t("tech.dash.cash") : t("tech.dash.earnings")} value={d.employmentType === "STAFF" ? money(d.cashBalance) : money(d.earningsThisMonth)} hint={d.employmentType === "STAFF" ? t("tech.dash.cashLimit", { limit: money(d.cashLimit) }) : undefined} icon={Wallet} tone="success" to="/technician/earnings" />
-            </Grid>
-            <div className="kit-split">
-              <div className="kit-stack">
-                <Card title={t("tech.dash.today")} actions={<Link to="/technician/schedule" className="btn ghost btn-sm">{t("tech.nav.schedule")}</Link>}>
-                  {d.todayJobs.length ? <ul className="kit-list">{d.todayJobs.map((o: any) => <JobRow key={o.id} o={o} />)}</ul> : <EmptyState title={t("tech.dash.noToday")} />}
-                </Card>
-                <Card title={t("tech.dash.next")}>
-                  {d.nextJobs.length ? <ul className="kit-list">{d.nextJobs.map((o: any) => <JobRow key={o.id} o={o} />)}</ul> : <EmptyState />}
-                </Card>
+    <QueryView query={q} rows={8}>
+      {(d) => {
+        const staff = d.employmentType === "STAFF";
+        const next = d.todayJobs.find((o: any) => o.scheduledAt) ?? d.nextJobs[0];
+        return (
+          <div className="tp-dash">
+            <header className="tp-hero">
+              <div className="tp-hero-main">
+                <span className="tp-date"><CalendarDays size={14} aria-hidden /> {date(new Date().toISOString())}</span>
+                <h1>{t("acc.dash.hello", { name: user?.firstName ?? "" })}</h1>
+                <p>{t("tech.dash.subtitle")}</p>
+                <div className="tp-chips">
+                  <span><BadgeCheck size={14} aria-hidden /> {t(`wf.assign.${d.employmentType}`)}</span>
+                  <span><Crown size={14} aria-hidden /> {staff ? (d.licenseActive ? t("tech.dash.licenseActive") : t("tech.dash.licenseRevoked")) : d.planName}</span>
+                  <span><Star size={14} aria-hidden /> {num(d.rating, 1)} · {d.reviewCount}</span>
+                </div>
               </div>
-              <div className="kit-stack">
-                <Card title={d.employmentType === "STAFF" ? t("tech.nav.license") : t("tech.nav.subscription")}>
-                  <KeyValue cols={1} items={[[t("tech.dash.type"), t(`wf.assign.${d.employmentType}`)], d.employmentType === "STAFF" ? [t("tech.dash.license"), d.licenseActive ? <span key="l" className="badge badge-success">{t("tech.dash.licenseActive")}</span> : <span key="l" className="badge badge-danger">{t("tech.dash.licenseRevoked")}</span>] : [t("tech.dash.plan"), d.planName]]} />
+              <div className="tp-hero-today">
+                <strong>{d.todayJobs.length}</strong>
+                <span>{t("tech.dash.todayCount")}</span>
+                {next?.scheduledAt && <small><Clock size={13} aria-hidden /> {t("tech.dash.nextAt", { time: time(next.scheduledAt) })}</small>}
+              </div>
+            </header>
+
+            {d.offers > 0 && (
+              <Link to="/technician/jobs?tab=offers" className="tp-offer-alert">
+                <span className="tp-pulse"><ClipboardList size={20} aria-hidden /></span>
+                <span className="grow"><strong>{t("tech.dash.offersWaiting", { count: d.offers })}</strong></span>
+                <span className="btn btn-sm">{t("common.view")} <ChevronRight size={15} aria-hidden /></span>
+              </Link>
+            )}
+            {d.subscriptionStatus && !["ACTIVE", "TRIAL"].includes(d.subscriptionStatus) && <div className="tp-alert danger"><AlertTriangle size={18} aria-hidden /> <span className="grow">{t("tech.dash.subInactive")}</span> <Link to="/technician/subscription" className="btn btn-sm outline">{t("acc.dash.managePlan")}</Link></div>}
+            {d.documentsExpiring > 0 && <div className="tp-alert warning"><FileBadge size={18} aria-hidden /> <span className="grow">{t("tech.dash.docsExpiring", { count: d.documentsExpiring })}</span> <Link to="/technician/documents" className="btn btn-sm outline">{t("common.view")}</Link></div>}
+            {d.reservationsExpiring > 0 && <div className="tp-alert warning"><Clock size={18} aria-hidden /> <span className="grow">{t("tech.dash.resExpiring", { count: d.reservationsExpiring })}</span> <Link to="/technician/reservations" className="btn btn-sm outline">{t("common.view")}</Link></div>}
+
+            <div className="tp-kpis">
+              <Meter label={t("tech.dash.active")} used={d.activeJobs} limit={d.activeLimit} icon={Wrench} tone="teal" to="/technician/jobs" />
+              <Meter label={t("tech.dash.monthly")} used={d.monthlyAccepted} limit={d.monthlyLimit} icon={ClipboardList} tone="blue" />
+              <Link to="/technician/reviews" className="tp-kpi tone-amber">
+                <span className="tp-kpi-icon"><Star size={20} /></span>
+                <span className="tp-kpi-label">{t("tech.dash.rating")}</span>
+                <strong className="tp-kpi-value">{num(d.rating, 1)}<small> / 5</small></strong>
+                <span className="tp-stars" aria-hidden>{[1, 2, 3, 4, 5].map((n) => <Star key={n} size={13} fill="currentColor" className={cn(n > Math.round(d.rating) && "off")} />)}<em>{d.reviewCount}</em></span>
+              </Link>
+              <Link to="/technician/earnings" className="tp-kpi tone-green">
+                <span className="tp-kpi-icon"><Wallet size={20} /></span>
+                <span className="tp-kpi-label">{staff ? t("tech.dash.cash") : t("tech.dash.earnings")}</span>
+                <strong className="tp-kpi-value">{money(staff ? d.cashBalance : d.earningsThisMonth)}</strong>
+                <span className="tp-kpi-hint">{staff ? t("tech.dash.cashLimit", { limit: money(d.cashLimit) }) : "\u00a0"}</span>
+              </Link>
+            </div>
+
+            <div className="tp-grid">
+              <div className="tp-main">
+                <section className="tp-section">
+                  <div className="tp-section-head">
+                    <h2>{t("tech.dash.today")}</h2>
+                    <Link to="/technician/schedule" className="tp-link">{t("tech.nav.schedule")} <ChevronRight size={15} aria-hidden /></Link>
+                  </div>
+                  {d.todayJobs.length ? <div className="tp-jobs">{d.todayJobs.map((o: any) => <TechJobCard key={o.id} o={o} />)}</div> : <EmptyState icon={CalendarDays} title={t("tech.dash.noToday")} />}
+                </section>
+                <section className="tp-section">
+                  <div className="tp-section-head">
+                    <h2>{t("tech.dash.next")}</h2>
+                    <Link to="/technician/jobs" className="tp-link">{t("tech.nav.jobs")} <ChevronRight size={15} aria-hidden /></Link>
+                  </div>
+                  {d.nextJobs.length ? <div className="tp-jobs">{d.nextJobs.map((o: any) => <TechJobCard key={o.id} o={o} showDate />)}</div> : <EmptyState title={t("tech.dash.noNext")} />}
+                </section>
+              </div>
+              <aside className="tp-side">
+                <section className="tp-section">
+                  <div className="tp-section-head"><h2>{staff ? t("tech.nav.license") : t("tech.nav.subscription")}</h2><Link to="/technician/subscription" className="tp-link">{t("acc.dash.managePlan")}</Link></div>
+                  <div className="tp-plan">
+                    <span className="tp-plan-icon"><Crown size={22} aria-hidden /></span>
+                    <div><strong>{staff ? t("tech.dash.license") : d.planName}</strong><small>{t(`wf.assign.${d.employmentType}`)}</small></div>
+                    {staff ? <span className={cn("badge", d.licenseActive ? "badge-success" : "badge-danger")}>{d.licenseActive ? t("tech.dash.licenseActive") : t("tech.dash.licenseRevoked")}</span> : null}
+                  </div>
                   <UsageBar label={t("tech.dash.monthly")} used={d.monthlyAccepted} limit={d.monthlyLimit} />
                   <UsageBar label={t("tech.dash.active")} used={d.activeJobs} limit={d.activeLimit} />
-                </Card>
+                </section>
                 {d.companies?.length > 0 && (
-                  <Card title={t("tech.dash.companies")}>
-                    <ul className="kit-list">{d.companies.map((c: any) => <li key={c.name}><span className="grow">{c.name}</span><span className="badge">{t("tech.dash.jobs", { count: c.jobs })}</span></li>)}</ul>
-                  </Card>
+                  <section className="tp-section">
+                    <div className="tp-section-head"><h2>{t("tech.dash.companies")}</h2></div>
+                    <ul className="tp-companies">{d.companies.map((c: any) => <li key={c.name}><span className="tp-company-avatar">{c.name[0]}</span><span className="grow">{c.name}</span><span className="badge">{t("tech.dash.jobs", { count: c.jobs })}</span></li>)}</ul>
+                  </section>
                 )}
-                <Card title={t("acc.dash.quick")}>
-                  <div className="quick-grid">
-                    <Link to="/technician/schedule"><CalendarDays size={18} />{t("tech.dash.blockTime")}</Link>
-                    <Link to="/technician/reservations"><Boxes size={18} />{t("tech.res.new")}</Link>
-                    <Link to="/technician/earnings"><Wallet size={18} />{t("tech.nav.earnings")}</Link>
-                    <Link to="/technician/settings"><MapPin size={18} />{t("tech.settings.zones")}</Link>
+                <section className="tp-section">
+                  <div className="tp-section-head"><h2>{t("acc.dash.quick")}</h2></div>
+                  <div className="tp-quick">
+                    <Link to="/technician/schedule" className="tone-blue"><span><CalendarDays size={20} /></span>{t("tech.dash.blockTime")}</Link>
+                    <Link to="/technician/reservations" className="tone-violet"><span><Boxes size={20} /></span>{t("tech.res.new")}</Link>
+                    <Link to="/technician/earnings" className="tone-green"><span><Wallet size={20} /></span>{t("tech.nav.earnings")}</Link>
+                    <Link to="/technician/settings" className="tone-orange"><span><MapPin size={20} /></span>{t("tech.settings.zones")}</Link>
                   </div>
-                </Card>
-              </div>
+                </section>
+              </aside>
             </div>
-          </>
-        )}
-      </QueryView>
-    </>
+          </div>
+        );
+      }}
+    </QueryView>
   );
 }
 
@@ -168,12 +256,24 @@ function JobsPage() {
   const { query, setQuery } = useRouter();
   const tab = query.get("tab") ?? "active";
   const offers = useApi<any[]>("/technician/offers", { refetchInterval: 30_000 });
+  const mobile = useMedia("(max-width: 767px)");
   return (
     <>
       <PageHeader title={t("tech.nav.jobs")} />
       <Tabs value={tab} onChange={(v) => setQuery({ tab: v, page: null, q: null })} tabs={[{ id: "active", label: t("acc.orders.active") }, { id: "offers", label: t("tech.jobs.offers"), badge: offers.data?.length }, { id: "done", label: t("acc.orders.archive") }]} />
-      {tab === "offers" ? <OffersList query={offers} /> : <JobsTable tab={tab} key={tab} />}
+      {tab === "offers" ? <OffersList query={offers} /> : mobile ? <JobCards tab={tab} key={tab} /> : <JobsTable tab={tab} key={tab} />}
     </>
+  );
+}
+
+/** Mobil: cədvəl əvəzinə iş kartları. */
+function JobCards({ tab }: { tab: string }) {
+  const { t } = useI18n();
+  const q = useApi<any>(`/technician/jobs${qs({ tab, pageSize: 50, sort: tab === "done" ? "-scheduledAt" : "scheduledAt" })}`);
+  return (
+    <QueryView query={q} empty={<EmptyState icon={ClipboardList} title={t("tech.dash.noNext")} />} isEmpty={(d: any) => !d.items.length}>
+      {(d: any) => <div className="tp-jobs">{d.items.map((o: any) => <TechJobCard key={o.id} o={o} showDate />)}</div>}
+    </QueryView>
   );
 }
 
@@ -216,13 +316,34 @@ function OffersList({ query }: { query: any }) {
       {(list: any[]) => (
         <div className="kit-stack">
           {list.map((o) => (
-            <Card key={o.id} title={`${o.orderNumber} · ${o.serviceName}`} subtitle={`${o.companyName} · ${o.categoryName}`} actions={<span className="flex gap-2">{o.urgent && <span className="badge badge-danger">{t("acc.orders.urgent")}</span>}{o.customerPreferred && <span className="badge badge-success">{t("tech.jobs.preferred")}</span>}</span>}>
-              <KeyValue cols={3} items={[[t("tech.jobs.time"), dateTime(o.scheduledAt)], [t("acc.orders.address"), `${o.addressShort} · ${num(o.distanceKm, 1)} km`], [t("tech.jobs.form"), enumLabel("ExecutionForm", o.executionForm)], [t("acc.orders.problem"), o.problem], [t("tech.jobs.earning"), <strong key="e">{money(o.estimatedEarning)}</strong>], [t("tech.jobs.expires"), <span key="x" className="text-warning">{relative(o.expiresAt)}</span>]]} />
-              <div className="flex gap-2 mt-4 flex-wrap">
-                <button type="button" className="btn primary" onClick={() => accept(o)}>{t("actions.accept")}</button>
-                <button type="button" className="btn outline danger-outline" onClick={() => setDecline(o)}>{t("actions.decline")}</button>
-              </div>
-            </Card>
+            <article key={o.id} className={cn("tp-offer", o.urgent && "is-urgent")}>
+              <header className="tp-offer-head">
+                <span className="tp-offer-icon"><Wrench size={20} aria-hidden /></span>
+                <div className="grow">
+                  <small>{o.orderNumber} · {o.categoryName}</small>
+                  <h3>{o.serviceName}</h3>
+                  <span className="tp-offer-company">{o.companyName}</span>
+                </div>
+                <div className="tp-offer-badges">
+                  {o.urgent && <span className="tp-urgent"><Zap size={12} aria-hidden /> {t("acc.orders.urgent")}</span>}
+                  {o.customerPreferred && <span className="badge badge-success">{t("tech.jobs.preferred")}</span>}
+                  <span className="tp-expires"><Timer size={13} aria-hidden /> {relative(o.expiresAt)}</span>
+                </div>
+              </header>
+              <ul className="tp-offer-facts">
+                <li><CalendarDays size={16} aria-hidden /><span><small>{t("tech.jobs.time")}</small>{dateTime(o.scheduledAt)}</span></li>
+                <li><MapPin size={16} aria-hidden /><span><small>{t("acc.orders.address")}</small>{o.addressShort} · {t("tech.dash.distance", { km: num(o.distanceKm, 1) })}</span></li>
+                <li><Wrench size={16} aria-hidden /><span><small>{t("tech.jobs.form")}</small>{enumLabel("ExecutionForm", o.executionForm)}</span></li>
+                {o.problem && <li><MessageSquare size={16} aria-hidden /><span><small>{t("acc.orders.problem")}</small>{o.problem}</span></li>}
+              </ul>
+              <footer className="tp-offer-foot">
+                <div className="tp-offer-earn"><small>{t("tech.dash.earning")}</small><strong>{money(o.estimatedEarning)}</strong></div>
+                <div className="tp-offer-actions">
+                  <button type="button" className="btn outline danger-outline" onClick={() => setDecline(o)}>{t("actions.decline")}</button>
+                  <button type="button" className="btn primary" onClick={() => accept(o)}>{t("actions.accept")}</button>
+                </div>
+              </footer>
+            </article>
           ))}
           {decline && <DeclineOffer offer={decline} onClose={() => setDecline(null)} />}
         </div>

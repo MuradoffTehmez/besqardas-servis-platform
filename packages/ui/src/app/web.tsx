@@ -1,13 +1,10 @@
 "use client";
 import React from "react";
-import { Bell, CreditCard, FileText, Heart, HardDrive, LayoutDashboard, Lock, LogOut, MapPin, Package, RotateCcw, ShieldCheck, Star, User, Users, Wrench, Crown } from "lucide-react";
-import { cn } from "@sp/utils";
+import { Bell, CreditCard, FileText, Heart, HardDrive, LayoutDashboard, Lock, MapPin, Package, RotateCcw, ShieldCheck, Star, User, Users, Wrench, Crown } from "lucide-react";
 import { useI18n } from "./core/i18n";
 import { useSession } from "./core/session";
 import { AppProviders, RoutedApp, SystemPage, defaultShells, type InitialAppState, type ShellRender } from "./core/app";
-import { PublicShell, type NavGroup } from "./core/shells";
-import { Link, useRouter } from "./core/router";
-import { Avatar } from "./kit/base";
+import { SiteWorkspace, type NavGroup } from "./core/shells";
 import type { RouteDef } from "./core/router";
 import { BecomeTechnicianPage, BusinessPage, ForgotPasswordPage, LoginPage, RegisterPage, ResetPasswordPage, SelectModePage, TwoFactorPage, VerifyPage } from "./pages/auth";
 import { BookingPage, ContentPage, HomePage, ServiceDetailPage, ServicesPage, WarrantyVerifyPage } from "./pages/public";
@@ -16,7 +13,7 @@ import { CartPage, CheckoutPage, CheckoutResultPage, PayPage, ProductPage, Searc
 import { ComparePage } from "./pages/compare";
 import { AccountDashboardPage, AddressesPage, DeviceDetailPage, DevicesPage, DocumentsPage, FamilyPage, FavoritesPage, MyReviewsPage, NotificationsPage, PaymentsPage, ProfilePage, ReturnsPage, SalesOrderDetailPage, SalesOrdersPage, SecurityPage, ServiceOrderDetailPage, ServiceOrdersPage, SubscriptionPage, WarrantiesPage } from "./pages/account";
 import { technicianRoutes, TechnicianShell } from "./pages/technician";
-import { courierRoutes } from "./pages/courier";
+import { CourierShell, courierRoutes } from "./pages/courier";
 import { b2bRoutes, B2BShell } from "./pages/b2b";
 import { DemoMapPage } from "./pages/demo";
 
@@ -24,14 +21,10 @@ import { DemoMapPage } from "./pages/demo";
  * Müştəri saytı (apps/web): public sayt, auth, kabinet, usta paneli, B2B kabinetləri və kuryer interfeysi (PRD §60).
  */
 
-/**
- * Müştəri kabineti sayt qabığının (header/footer) içində açılır: solda istifadəçi kartı və bölmələr,
- * sağda səhifə məzmunu. Mobildə bölmələr yuxarıda üfüqi sürüşən zolaq olur.
- */
+/** Müştəri kabineti — sayt qabığında (SiteWorkspace). */
 function AccountShell({ children }: { children: React.ReactNode }) {
-  const { t, enumLabel } = useI18n();
-  const { session, ent, user, logout } = useSession();
-  const { path, navigate } = useRouter();
+  const { t } = useI18n();
+  const { session, ent } = useSession();
   const nav: NavGroup[] = [
     {
       items: [
@@ -64,48 +57,8 @@ function AccountShell({ children }: { children: React.ReactNode }) {
       ],
     },
   ];
-  const groups = nav.map((g) => ({ ...g, items: g.items.filter((i) => !i.hidden) }));
-  const items = groups.flatMap((g) => g.items);
-  const active = items.filter((i) => path === i.to || (!i.exact && path.startsWith(`${i.to}/`))).sort((a, b) => b.to.length - a.to.length)[0];
   const plan = session?.plan?.name as string | undefined;
-  return (
-    <PublicShell>
-      <div className="acc-shell">
-        <div className="container acc-grid">
-          <aside className="acc-side" aria-label={t("acc.title")}>
-            {user && (
-              <div className="acc-user">
-                <Avatar name={user.fullName} tone={user.avatarTone} src={user.avatarUrl} size={52} />
-                <div className="acc-user-copy">
-                  <strong>{user.fullName}</strong>
-                  <small>{user.email ?? user.phone ?? enumLabel("Role", user.activeRole)}</small>
-                  {plan && <Link to="/account/subscription" className="acc-plan"><Crown size={12} aria-hidden /> {plan}</Link>}
-                </div>
-              </div>
-            )}
-            <nav className="acc-nav">
-              {groups.map((g, gi) => (
-                <div key={g.label ?? gi} className="acc-nav-group">
-                  {g.label && <span className="acc-nav-label">{g.label}</span>}
-                  {g.items.map((i) => (
-                    <Link key={i.to} to={i.to} className={cn("acc-nav-link", active === i && "active")} aria-current={active === i ? "page" : undefined}>
-                      <i.icon size={17} />
-                      <span>{i.label}</span>
-                      {i.badge ? <b className="acc-badge">{i.badge}</b> : null}
-                    </Link>
-                  ))}
-                </div>
-              ))}
-            </nav>
-            <button type="button" className="acc-logout" onClick={async () => { await logout(); navigate("/"); }}>
-              <LogOut size={17} aria-hidden /> {t("logout")}
-            </button>
-          </aside>
-          <div className="acc-content">{children}</div>
-        </div>
-      </div>
-    </PublicShell>
-  );
+  return <SiteWorkspace nav={nav} title={t("acc.title")} badge={plan ? { label: plan, to: "/account/subscription", icon: Crown } : null}>{children}</SiteWorkspace>;
 }
 
 const CUSTOMER = ["CUSTOMER"];
@@ -123,7 +76,7 @@ export const webRoutes: RouteDef[] = [
   { pattern: "/compare", render: () => <ComparePage />, titleKey: "compare.title" },
   { pattern: "/cart", render: () => <CartPage />, titleKey: "cart.title" },
   { pattern: "/checkout", render: () => <CheckoutPage />, titleKey: "checkout.title" },
-  { pattern: "/checkout/pay", render: () => <PayPage />, shell: "bare", titleKey: "pay.title" },
+  { pattern: "/checkout/pay", render: () => <PayPage />, titleKey: "pay.title" },
   { pattern: "/checkout/result", render: () => <CheckoutResultPage />, titleKey: "result.title" },
   { pattern: "/technicians", render: () => <TechniciansPage />, titleKey: "technicians" },
   { pattern: "/technicians/:id", render: (p) => <TechnicianProfilePage id={p.id!} /> },
@@ -185,6 +138,7 @@ const webShells: Record<string, ShellRender> = {
   account: (c) => <AccountShell>{c}</AccountShell>,
   technician: (c) => <TechnicianShell>{c}</TechnicianShell>,
   b2b: (c) => <B2BShell>{c}</B2BShell>,
+  courier: (c) => <CourierShell>{c}</CourierShell>,
 };
 
 export function WebApp(ssr: InitialAppState) {
