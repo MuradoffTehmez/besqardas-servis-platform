@@ -512,7 +512,18 @@
     "noCommission": "Platforma işlərinizdən komissiya tutmur — yalnız abunə haqqı.",
     "submit": "Müraciəti göndər",
     "doneTitle": "Müraciətiniz qəbul edildi",
-    "doneText": "Sənədləriniz yoxlanılır. Nəticə SMS və e-poçtla bildiriləcək."
+    "doneText": "Sənədləriniz yoxlanılır. Nəticə SMS və e-poçtla bildiriləcək.",
+    "benefitsTitle": "Niyə bizimlə işləməli?",
+    "benefit1": "Sifarişlərdən komissiya tutulmur",
+    "benefit2": "Zonanıza uyğun iş təklifləri",
+    "benefit3": "Cədvəlinizi özünüz idarə edirsiniz",
+    "benefit4": "Rəqəmsal akt, smeta və ödəniş hesabatları",
+    "reqTitle": "Müraciət üçün lazımdır",
+    "req1": "Şəxsiyyət vəsiqəsi",
+    "req2": "Peşə sertifikatı (varsa)",
+    "req3": "İxtisas üzrə təcrübə",
+    "stepOf": "Addım {n} / {total}",
+    "nextSteps": "Növbəti mərhələlər"
   },
   "b2bApply": {
     "title": "Biznes müştəriləri üçün",
@@ -528,7 +539,25 @@
     "processNote": "Satış əməkdaşı müraciəti yoxlayır, qiymət siyahısı, ödəniş şərtləri və kredit limitini təyin edir.",
     "submit": "Müraciət göndər",
     "doneTitle": "Müraciət göndərildi",
-    "doneText": "Satış komandamız 1 iş günü ərzində sizinlə əlaqə saxlayacaq."
+    "doneText": "Satış komandamız 1 iş günü ərzində sizinlə əlaqə saxlayacaq.",
+    "eyebrow": "Biznes həlləri",
+    "benefitsTitle": "B2B müştərilərə üstünlüklər",
+    "benefit1": "Müqavilə üzrə SLA və planlı servis",
+    "benefit2": "Fərdi qiymət siyahısı və endirimlər",
+    "benefit3": "Təxirə salınmış ödəniş və kredit limiti",
+    "benefit4": "Hesab-faktura, akt və sənədlər bir kabinetdə",
+    "segmentTitle": "Əməkdaşlıq növü",
+    "companySection": "Şirkət məlumatları",
+    "contactSection": "Əlaqə şəxsi",
+    "howTitle": "Müraciət necə işləyir",
+    "how1": "Müraciəti göndərirsiniz",
+    "how2": "Satış əməkdaşı 1 iş günü ərzində əlaqə saxlayır",
+    "how3": "Şərtlər razılaşdırılır, müqavilə imzalanır",
+    "how4": "B2B kabinetiniz aktivləşir",
+    "helpTitle": "Sualınız var?",
+    "helpText": "Korporativ satış komandası ilə birbaşa əlaqə saxlayın.",
+    "backHome": "Ana səhifəyə qayıt",
+    "agree": "Müraciət göndərməklə qəbul edirsiniz:"
   },
   "shop": {
     "title": "Məhsul kataloqu",
@@ -911,6 +940,17 @@
     "customerNote": "Qanunla tələb olunan sənədlər (fiskal çek, faktura, zəmanət) bütün planlarda verilir.",
     "technicianNote": "Platforma müstəqil ustaların işlərindən komissiya tutmur. Şirkət əməkdaşları daxili lisenziya ilə işləyir."
   },
+  "contentPage": {
+    "eyebrowLegal": "Hüquqi məlumat",
+    "eyebrowAbout": "Şirkət haqqında",
+    "updated": "Son yenilənmə: {date}",
+    "toc": "Mündəricat",
+    "print": "Çap et",
+    "questionsTitle": "Sualınız var?",
+    "questionsText": "Sənədlə bağlı suallarınızı dəstək komandamıza yazın.",
+    "otherDocs": "Digər sənədlər",
+    "explore": "Platformanı kəşf edin"
+  },
   "warrantyVerify": {
     "title": "Zəmanət yoxlaması",
     "text": "Zəmanət sənədindəki QR kodu skan edin və ya kodu daxil edin.",
@@ -924,7 +964,19 @@
     "period": "Müddət",
     "coverage": "Əhatə",
     "issuer": "Verən",
-    "privacy": "Fərdi məlumatlar göstərilmir."
+    "privacy": "Fərdi məlumatlar göstərilmir.",
+    "eyebrow": "Rəsmi zəmanət",
+    "howTitle": "Necə yoxlanılır?",
+    "step1": "Zəmanət sənədindəki və ya cihaz etiketindəki QR kodu telefonla skan edin",
+    "step2": "Və ya zəmanət kodunu yuxarıdakı xanaya daxil edin",
+    "step3": "Status, müddət və əhatə dərhal göstərilir",
+    "whereTitle": "Kodu harada tapım?",
+    "whereText": "Kod servis aktında, zəmanət talonunda və kabinetinizin \"Zəmanətlər\" bölməsində göstərilir.",
+    "myWarranties": "Zəmanətlərim",
+    "validText": "Bu zəmanət qüvvədədir və rəsmi olaraq şirkət tərəfindən təmin edilir.",
+    "invalidText": "Zəmanət müddəti bitib, istifadə olunub və ya ləğv edilib.",
+    "notFoundText": "Kodu yoxlayın və ya dəstək xidməti ilə əlaqə saxlayın.",
+    "daysLeft": "{days} gün qalıb"
   },
   "branchesPage": {
     "title": "Filiallar və servis mərkəzləri",

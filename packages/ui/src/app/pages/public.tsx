@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { CalendarClock, CheckCircle2, Clock, Crown, MapPin, QrCode } from "lucide-react";
+import { ArrowRight, CalendarClock, CheckCircle2, Clock, Crown, FileText, Info, Keyboard, Lock, MapPin, Printer, QrCode, ScanLine, SearchX, ShieldAlert, ShieldCheck } from "lucide-react";
 import { cn } from "@sp/utils";
 import { idempotencyKey, post, qs, useApi, useQueryClient } from "@sp/api-client";
 import { HomeView } from "../../views/public/home-view";
@@ -13,6 +13,7 @@ import { Avatar, EmptyState, ErrorState, FormError, KeyValue, Loading, PageHeade
 import { SlotPicker } from "../kit/domain";
 import { FileDrop, type PickedFile } from "../kit/media";
 import { ProductTile, useCartActions } from "./shop";
+import { InfoHero } from "./info";
 
 /* ------------------------------------------------------------------ */
 /* Ana səhifə, servislər                                               */
@@ -345,44 +346,178 @@ export function BookingPage({ slug }: { slug: string }) {
 export function WarrantyVerifyPage({ code: initial }: { code?: string }) {
   const { t, enumLabel, date } = useI18n();
   const { navigate } = useRouter();
+  const { user } = useSession();
   const [code, setCode] = useState(initial ?? "");
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => setNow(Date.now()), []);
+  useEffect(() => setCode(initial ?? ""), [initial]);
   const q = useApi<any>(initial ? `/warranty/verify/${encodeURIComponent(initial)}` : null);
+  const k = (key: string, vars?: Record<string, string | number>) => t(`warrantyVerify.${key}`, vars);
+  const d = q.data;
+  const state = !d ? null : !d.status ? "missing" : d.valid ? "valid" : "invalid";
+  const daysLeft = d?.valid && d.endsAt && now ? Math.max(0, Math.ceil((Date.parse(d.endsAt) - now) / 86_400_000)) : null;
+  const StateIcon = state === "valid" ? ShieldCheck : state === "invalid" ? ShieldAlert : SearchX;
+
   return (
-    <div className="container py-8 max-w-xl mx-auto">
-      <PageHeader title={t("warrantyVerify.title")} subtitle={t("warrantyVerify.text")} />
-      <form className="flex gap-2 mb-4" onSubmit={(e) => { e.preventDefault(); if (code.trim()) navigate(`/warranty/verify/${code.trim()}`); }}>
-        <input className="form-input" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="W30012AB12" aria-label={t("warrantyVerify.code")} />
-        <button className="btn primary"><QrCode size={16} /> {t("warrantyVerify.check")}</button>
-      </form>
-      {initial && (q.isLoading ? <Loading /> : q.error ? <ErrorState error={q.error} /> : q.data && (
-        <div className={cn("kit-card", q.data.valid ? "border-success" : "border-danger")}>
-          <div className="kit-card-body">
-            <h2 className={q.data.valid ? "text-success" : "text-danger"}>{q.data.status ? (q.data.valid ? t("warrantyVerify.valid") : t("warrantyVerify.invalid")) : t("warrantyVerify.notFound")}</h2>
-            {q.data.status && <KeyValue items={[[t("warrantyVerify.status"), <EnumBadge key="s" group="WarrantyStatus" code={q.data.status} />], [t("warrantyVerify.type"), enumLabel("WarrantyType", q.data.type)], [t("booking.device"), q.data.deviceName], [t("fields.serialNumber"), q.data.serialMasked], [t("warrantyVerify.period"), `${date(q.data.startsAt)} — ${date(q.data.endsAt)}`], [t("warrantyVerify.coverage"), q.data.coverage], [t("warrantyVerify.issuer"), q.data.issuer]]} />}
-            <p className="text-sm text-muted mt-3">{t("warrantyVerify.privacy")}</p>
-          </div>
+    <div className="info-page wv">
+      <InfoHero eyebrow={k("eyebrow")} title={k("title")} text={k("text")} center>
+        <form className="wv-form" onSubmit={(e) => { e.preventDefault(); if (code.trim()) navigate(`/warranty/verify/${encodeURIComponent(code.trim())}`); }}>
+          <label className="ih-search wv-input">
+            <QrCode size={20} aria-hidden />
+            <input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="W30012AB12" aria-label={k("code")} autoComplete="off" spellCheck={false} />
+          </label>
+          <button className="btn primary btn-lg wv-submit"><ShieldCheck size={18} aria-hidden /> {k("check")}</button>
+        </form>
+      </InfoHero>
+
+      <div className="container info-body wv-body">
+        {initial && (q.isLoading ? <Loading rows={3} /> : q.error ? <ErrorState error={q.error} onRetry={() => q.refetch()} /> : d && (
+          <section className={cn("wv-result", `is-${state}`)} aria-live="polite">
+            <div className="wv-result-head">
+              <span className="wv-result-icon"><StateIcon size={30} aria-hidden /></span>
+              <div className="wv-result-copy">
+                <small>{k("code")}: <code>{d.code}</code></small>
+                <h2>{state === "missing" ? k("notFound") : state === "valid" ? k("valid") : k("invalid")}</h2>
+                <p>{state === "missing" ? k("notFoundText") : state === "valid" ? k("validText") : k("invalidText")}</p>
+              </div>
+              {daysLeft != null && <span className="wv-days"><CalendarClock size={16} aria-hidden /> {k("daysLeft", { days: daysLeft })}</span>}
+            </div>
+            {d.status && (
+              <dl className="wv-grid">
+                <div><dt>{k("status")}</dt><dd><EnumBadge group="WarrantyStatus" code={d.status} /></dd></div>
+                <div><dt>{k("type")}</dt><dd>{enumLabel("WarrantyType", d.type)}</dd></div>
+                <div><dt>{t("booking.device")}</dt><dd>{d.deviceName ?? "—"}</dd></div>
+                <div><dt>{t("fields.serialNumber")}</dt><dd>{d.serialMasked ?? "—"}</dd></div>
+                <div><dt>{k("period")}</dt><dd>{date(d.startsAt)} — {date(d.endsAt)}</dd></div>
+                <div><dt>{k("issuer")}</dt><dd>{d.issuer ?? "—"}</dd></div>
+                {d.coverage && <div className="wide"><dt>{k("coverage")}</dt><dd>{d.coverage}</dd></div>}
+              </dl>
+            )}
+            <p className="wv-privacy"><Lock size={14} aria-hidden /> {k("privacy")}</p>
+          </section>
+        ))}
+
+        <div className="wv-info">
+          <section className="info-section">
+            <h2>{k("howTitle")}</h2>
+            <ol className="wv-steps">
+              {[ScanLine, Keyboard, ShieldCheck].map((Icon, i) => (
+                <li key={i}>
+                  <span className="wv-step-icon"><Icon size={22} aria-hidden /><b>{i + 1}</b></span>
+                  <p>{k(`step${i + 1}`)}</p>
+                </li>
+              ))}
+            </ol>
+          </section>
+          <section className="info-section wv-where">
+            <span className="wv-where-icon"><FileText size={24} aria-hidden /></span>
+            <h2>{k("whereTitle")}</h2>
+            <p>{k("whereText")}</p>
+            <Link to={user ? "/account/warranties" : "/login?next=/account/warranties"} className="btn outline"><ShieldCheck size={16} aria-hidden /> {k("myWarranties")}</Link>
+          </section>
         </div>
-      ))}
+      </div>
     </div>
   );
 }
 
 /* ------------------------------------------------------------------ */
-/* Məzmun səhifələri                                                    */
+/* Məzmun səhifələri: haqqımızda, istifadə şərtləri, məxfilik            */
 /* ------------------------------------------------------------------ */
 
+type ContentSection = { id: string; num: string | null; title: string | null; lines: string[] };
+
+/** Mətn gövdəsini bölmələrə ayırır: "1. Başlıq" ilə başlayan blok nömrəli bölmədir. */
+function parseContent(body: string): ContentSection[] {
+  return body
+    .split(/\n\s*\n/)
+    .map((b) => b.trim())
+    .filter(Boolean)
+    .map((block, i) => {
+      const lines = block.split("\n").map((l) => l.trim()).filter(Boolean);
+      const m = lines[0]?.match(/^(\d+)\.\s+(.+)$/);
+      return m ? { id: `bolme-${m[1]}`, num: m[1]!, title: m[2]!, lines: lines.slice(1) } : { id: `blok-${i}`, num: null, title: null, lines };
+    });
+}
+
+function ContentLine({ line }: { line: string }) {
+  const kv = line.match(/^([^:.]{2,40}):\s+(.+)$/);
+  return kv ? <p className="ct-kv"><strong>{kv[1]}</strong><span>{kv[2]}</span></p> : <p>{line}</p>;
+}
+
+const CONTENT_LINKS: { slug: "about" | "terms" | "privacy"; key: string; icon: typeof FileText }[] = [
+  { slug: "about", key: "about", icon: Info },
+  { slug: "terms", key: "legal.terms", icon: FileText },
+  { slug: "privacy", key: "legal.privacy", icon: Lock },
+];
+
 export function ContentPage({ slug }: { slug: "about" | "terms" | "privacy" }) {
+  const { t, date } = useI18n();
   const q = useApi<any>(`/content/pages/${slug}`);
+  const brand = useApi<any>("/branding", { staleTime: 300_000 });
+  const legal = slug !== "about";
+  if (q.isLoading) return <div className="container py-12"><Loading rows={6} /></div>;
+  if (q.error || !q.data) return <div className="container py-12"><ErrorState error={q.error} onRetry={() => q.refetch()} /></div>;
+  const p = q.data;
+  const sections = parseContent(p.body ?? "");
+  const toc = sections.filter((s) => s.title);
+  const phone = brand.data?.contacts?.phone as string | undefined;
+
   return (
-    <div className="container py-8 max-w-4xl mx-auto content-page">
-      <QueryView query={q}>
-        {(p) => (
-          <article>
-            <h1>{p.title}</h1>
-            {p.body.split("\n\n").map((para: string, i: number) => <p key={i} style={{ whiteSpace: "pre-line" }}>{para}</p>)}
+    <div className="info-page ct">
+      <InfoHero eyebrow={t(legal ? "contentPage.eyebrowLegal" : "contentPage.eyebrowAbout")} title={p.title} text={p.updatedAt ? t("contentPage.updated", { date: date(p.updatedAt) }) : undefined} />
+      <div className="container info-body">
+        <div className={cn("ct-layout", toc.length > 1 && "has-toc")}>
+          {toc.length > 1 && (
+            <aside className="ct-toc">
+              <nav aria-label={t("contentPage.toc")}>
+                <h2>{t("contentPage.toc")}</h2>
+                <ol>
+                  {toc.map((s) => <li key={s.id}><a href={`#${s.id}`}><span>{s.num}</span>{s.title}</a></li>)}
+                </ol>
+              </nav>
+            </aside>
+          )}
+          <article className="ct-article">
+            {sections.map((s) => s.title ? (
+              <section key={s.id} id={s.id} className="ct-sec">
+                <h2><span className="ct-num">{s.num}</span>{s.title}</h2>
+                {s.lines.map((l, i) => <ContentLine key={i} line={l} />)}
+              </section>
+            ) : (
+              <div key={s.id} className="ct-block">{s.lines.map((l, i) => <ContentLine key={i} line={l} />)}</div>
+            ))}
           </article>
-        )}
-      </QueryView>
+          <aside className="ct-aside">
+            {legal && <button type="button" className="btn outline w-full ct-print" onClick={() => window.print()}><Printer size={16} aria-hidden /> {t("contentPage.print")}</button>}
+            <section className="info-section compact">
+              <h2>{legal ? t("contentPage.questionsTitle") : t("contentPage.explore")}</h2>
+              {legal ? (
+                <>
+                  <p className="ct-aside-text">{t("contentPage.questionsText")}</p>
+                  <Link to="/contact" className="btn primary w-full">{t("contact")}</Link>
+                  {phone && <a className="btn ghost w-full mt-2" href={`tel:${phone.replace(/[^\d+*]/g, "")}`}>{phone}</a>}
+                </>
+              ) : (
+                <div className="ct-links">
+                  <Link to="/services">{t("services")} <ArrowRight size={14} aria-hidden /></Link>
+                  <Link to="/technicians">{t("technicians")} <ArrowRight size={14} aria-hidden /></Link>
+                  <Link to="/branches">{t("nav.branches")} <ArrowRight size={14} aria-hidden /></Link>
+                  <Link to="/contact">{t("contact")} <ArrowRight size={14} aria-hidden /></Link>
+                </div>
+              )}
+            </section>
+            <section className="info-section compact">
+              <h2>{t("contentPage.otherDocs")}</h2>
+              <div className="ct-links">
+                {CONTENT_LINKS.filter((l) => l.slug !== slug).map((l) => (
+                  <Link key={l.slug} to={`/${l.slug}`}><l.icon size={15} aria-hidden /> {t(l.key)} <ArrowRight size={14} aria-hidden /></Link>
+                ))}
+              </div>
+            </section>
+          </aside>
+        </div>
+      </div>
     </div>
   );
 }

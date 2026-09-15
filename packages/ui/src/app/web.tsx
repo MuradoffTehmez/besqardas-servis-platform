@@ -87,8 +87,8 @@ export const webRoutes: RouteDef[] = [
   { pattern: "/privacy", render: () => <ContentPage slug="privacy" />, titleKey: "legal.privacy" },
   { pattern: "/faq", render: () => <FaqPage />, titleKey: "faqPage.title" },
   { pattern: "/contact", render: () => <ContactPage />, titleKey: "contact" },
-  { pattern: "/become-technician", render: () => <BecomeTechnicianPage />, shell: "bare", titleKey: "techApply.title" },
-  { pattern: "/business", render: () => <BusinessPage />, shell: "bare", titleKey: "b2bApply.title" },
+  { pattern: "/become-technician", render: () => <BecomeTechnicianPage />, titleKey: "techApply.title" },
+  { pattern: "/business", render: () => <BusinessPage />, titleKey: "b2bApply.title" },
   { pattern: "/demo", render: () => <DemoMapPage />, titleKey: "demo.title" },
 
   // Auth (§60.2)

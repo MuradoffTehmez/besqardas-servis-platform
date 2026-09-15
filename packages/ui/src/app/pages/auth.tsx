@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { CheckCircle2, KeyRound, Mail, Phone, ShieldCheck, Smartphone, UserPlus } from "lucide-react";
+import { Award, BadgeCheck, Boxes, Building, CalendarDays, Check as CheckIcon, CheckCircle2, FileText, Handshake, IdCard, Info, KeyRound, Mail, MapPin, Phone, Receipt, Send, ShieldCheck, Smartphone, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@sp/utils";
 import { ApiError, post, useApi, useQueryClient } from "@sp/api-client";
@@ -10,6 +10,7 @@ import { useSession } from "../core/session";
 import { adminUrl, homeFor, webUrl } from "../core/shells";
 import { Check, FormError, Loading, Radios, SelectField, TextField, errorText, useFormState } from "../kit/base";
 import { FileDrop, OtpInput, PhoneField, type PickedFile } from "../kit/media";
+import { InfoHero } from "./info";
 
 /* ------------------------------------------------------------------ */
 /* Ümumi auth layout                                                   */
@@ -381,12 +382,50 @@ export function TwoFactorPage() {
 }
 
 /* ------------------------------------------------------------------ */
+/* Müraciət səhifələri üçün ortaq hissələr                              */
+/* ------------------------------------------------------------------ */
+
+function BenefitCard({ title, items }: { title: string; items: { icon: React.ComponentType<{ size?: number; "aria-hidden"?: boolean }>; text: string }[] }) {
+  return (
+    <div className="apply-benefits">
+      <h2>{title}</h2>
+      <ul>
+        {items.map((it, i) => (
+          <li key={i}><span><it.icon size={18} aria-hidden /></span>{it.text}</li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function ApplyDone({ title, text, steps, current = 0, children }: { title: string; text: string; steps: string[]; current?: number; children?: React.ReactNode }) {
+  return (
+    <div className="info-page">
+      <div className="container apply-done">
+        <div className="apply-done-card" role="status">
+          <span className="apply-done-icon"><CheckCircle2 size={40} aria-hidden /></span>
+          <h1>{title}</h1>
+          <p>{text}</p>
+          <ol className="apply-timeline">
+            {steps.map((s, i) => (
+              <li key={i} className={cn(i < current && "done", i === current && "now")}>
+                <span>{i < current ? <CheckIcon size={13} aria-hidden /> : i + 1}</span>{s}
+              </li>
+            ))}
+          </ol>
+          <div className="apply-done-actions">{children}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /* Usta müraciəti (§9.4)                                                */
 /* ------------------------------------------------------------------ */
 
 export function BecomeTechnicianPage() {
   const { t, text, enumLabel, money } = useI18n();
-  const { navigate } = useRouter();
   const specs = useApi<any[]>("/specializations");
   const zones = useApi<any[]>("/zones");
   const plans = useApi<any[]>("/plans?group=TECHNICIAN");
@@ -397,7 +436,8 @@ export function BecomeTechnicianPage() {
   const [docs, setDocs] = useState<PickedFile[]>([]);
   const form = useFormState({ firstName: "", lastName: "", phone: "", email: "", city: "Bakı", specializationIds: [] as string[], zoneIds: [] as string[], workDays: [1, 2, 3, 4, 5, 6], workFrom: "09:00", workTo: "19:00", planId: "", billingPeriod: "MONTH_1" });
   const v = form.values;
-  const steps = [t("techApply.step1"), t("techApply.step2"), t("techApply.step3"), t("techApply.step4"), t("techApply.step5")];
+  const k = (key: string, vars?: Record<string, string | number>) => t(`techApply.${key}`, vars);
+  const steps = [k("step1"), k("step2"), k("step3"), k("step4"), k("step5")];
   const toggle = (key: "specializationIds" | "zoneIds" | "workDays", value: any) => form.set(key, (v[key] as any[]).includes(value) ? (v[key] as any[]).filter((x) => x !== value) : [...(v[key] as any[]), value]);
   const specList = specs.data ?? [];
   const canNext = [v.firstName && v.lastName && v.phone && v.email, v.specializationIds.length > 0, v.zoneIds.length > 0 && v.workDays.length > 0, docs.length > 0, !!v.planId][step];
@@ -410,111 +450,136 @@ export function BecomeTechnicianPage() {
       setError(e);
       form.fromError(e);
       const errs = e instanceof ApiError ? Object.keys(e.fieldErrors) : [];
-      if (errs.some((k) => ["firstName", "lastName", "phone", "email"].includes(k))) setStep(0);
+      if (errs.some((key) => ["firstName", "lastName", "phone", "email"].includes(key))) setStep(0);
     }
   };
   if (done) {
     return (
-      <div className="container py-12 max-w-xl mx-auto text-center">
-        <CheckCircle2 size={56} className="text-success mx-auto" />
-        <h1>{t("techApply.doneTitle")}</h1>
-        <p>{t("techApply.doneText")}</p>
-        <div className="kit-steps-status mt-4">
-          <span className="badge badge-warning">{enumLabel("TechnicianStatus", "PENDING_VERIFICATION")}</span> → <span className="badge">{enumLabel("TechnicianStatus", "VERIFIED")}</span> → <span className="badge">{enumLabel("TechnicianStatus", "ACTIVE")}</span>
-        </div>
-        <button type="button" className="btn primary mt-6" onClick={() => navigate("/")}>{t("system.home")}</button>
-      </div>
+      <ApplyDone title={k("doneTitle")} text={k("doneText")} current={1} steps={["PENDING_VERIFICATION", "VERIFIED", "ACTIVE"].map((s) => enumLabel("TechnicianStatus", s))}>
+        <Link to="/" className="btn primary">{t("b2bApply.backHome")}</Link>
+        <Link to="/pricing?group=TECHNICIAN" className="btn outline">{t("nav.pricing")}</Link>
+      </ApplyDone>
     );
   }
   return (
-    <div className="container py-8">
-      <header className="pub-hero-small">
-        <span className="eyebrow">{t("techApply.eyebrow")}</span>
-        <h1>{t("techApply.title")}</h1>
-        <p>{t("techApply.text")}</p>
-        <p className="text-sm text-muted">{t("techApply.staffNote")}</p>
-      </header>
-      <ol className="wizard-stepper kit-stepper" aria-label={t("common.steps")}>
-        {steps.map((s, i) => <li key={s} className={cn("wizard-step-pill", i === step && "active", i < step && "done")} aria-current={i === step ? "step" : undefined}>{i + 1}. {s}</li>)}
-      </ol>
-      <div className="kit-card mt-4 max-w-4xl mx-auto">
-        <div className="kit-card-body">
-          <FormError error={error} />
-          {step === 0 && (
-            <div className="kit-grid cols-2">
-              <TextField label={t("fields.firstName")} required value={v.firstName} onValue={(x) => form.set("firstName", x)} error={form.errors.firstName} />
-              <TextField label={t("fields.lastName")} required value={v.lastName} onValue={(x) => form.set("lastName", x)} error={form.errors.lastName} />
-              <PhoneField label={t("auth.phone")} required value={v.phone} onValue={(x) => form.set("phone", x)} error={form.errors.phone} />
-              <TextField label={t("email")} type="email" required value={v.email} onValue={(x) => form.set("email", x)} error={form.errors.email} />
-              <SelectField label={t("fields.city")} value={v.city} onValue={(x) => form.set("city", x)} options={["Bakı", "Sumqayıt", "Gəncə"].map((c) => ({ value: c, label: c }))} />
+    <div className="info-page apply">
+      <InfoHero
+        eyebrow={k("eyebrow")}
+        title={k("title")}
+        text={k("text")}
+        aside={<BenefitCard title={k("benefitsTitle")} items={[{ icon: BadgeCheck, text: k("benefit1") }, { icon: MapPin, text: k("benefit2") }, { icon: CalendarDays, text: k("benefit3") }, { icon: Receipt, text: k("benefit4") }]} />}
+      >
+        <p className="apply-note"><Info size={16} aria-hidden /> {k("staffNote")}</p>
+      </InfoHero>
+
+      <div className="container info-body">
+        <div className="apply-layout">
+          <div className="apply-form">
+            <ol className="apply-stepper" aria-label={t("common.steps")}>
+              {steps.map((s, i) => (
+                <li key={s} className={cn(i === step && "active", i < step && "done")} aria-current={i === step ? "step" : undefined}>
+                  <span className="apply-step-dot">{i < step ? <CheckIcon size={14} aria-hidden /> : i + 1}</span>
+                  <span className="apply-step-label">{s}</span>
+                </li>
+              ))}
+            </ol>
+            <div className="apply-step-head">
+              <small>{k("stepOf", { n: step + 1, total: steps.length })}</small>
+              <h2>{steps[step]}</h2>
             </div>
-          )}
-          {step === 1 && (
-            <>
-              <p className="text-muted mb-3">{t("techApply.specHint")}</p>
-              {specs.isLoading ? <Loading /> : (
-                <div className="kit-chip-grid">
-                  {specList.map((s: any) => <button key={s.id} type="button" className={cn("chip", v.specializationIds.includes(s.id) && "active")} aria-pressed={v.specializationIds.includes(s.id)} onClick={() => toggle("specializationIds", s.id)}>{text(s.name)}</button>)}
+            <FormError error={error} />
+            {step === 0 && (
+              <div className="apply-grid">
+                <TextField label={t("fields.firstName")} required value={v.firstName} onValue={(x) => form.set("firstName", x)} error={form.errors.firstName} autoComplete="given-name" />
+                <TextField label={t("fields.lastName")} required value={v.lastName} onValue={(x) => form.set("lastName", x)} error={form.errors.lastName} autoComplete="family-name" />
+                <PhoneField label={t("auth.phone")} required value={v.phone} onValue={(x) => form.set("phone", x)} error={form.errors.phone} />
+                <TextField label={t("email")} type="email" required value={v.email} onValue={(x) => form.set("email", x)} error={form.errors.email} autoComplete="email" />
+                <SelectField label={t("fields.city")} value={v.city} onValue={(x) => form.set("city", x)} options={["Bakı", "Sumqayıt", "Gəncə"].map((c) => ({ value: c, label: c }))} />
+              </div>
+            )}
+            {step === 1 && (
+              <>
+                <p className="apply-hint">{k("specHint")}</p>
+                {specs.isLoading ? <Loading /> : (
+                  <div className="apply-chips">
+                    {specList.map((s: any) => <button key={s.id} type="button" className={cn("apply-chip", v.specializationIds.includes(s.id) && "active")} aria-pressed={v.specializationIds.includes(s.id)} onClick={() => toggle("specializationIds", s.id)}>{v.specializationIds.includes(s.id) && <CheckIcon size={14} aria-hidden />}{text(s.name)}</button>)}
+                  </div>
+                )}
+                {form.errors.specializationIds && <p className="kit-field-error">{t("validation.selectAtLeastOne")}</p>}
+              </>
+            )}
+            {step === 2 && (
+              <>
+                <h3 className="apply-sub">{k("zones")}</h3>
+                <div className="apply-chips">
+                  {(zones.data ?? []).map((z: any) => <button key={z.id} type="button" className={cn("apply-chip", v.zoneIds.includes(z.id) && "active")} aria-pressed={v.zoneIds.includes(z.id)} onClick={() => toggle("zoneIds", z.id)}>{v.zoneIds.includes(z.id) && <CheckIcon size={14} aria-hidden />}{text(z.name)}</button>)}
                 </div>
+                <h3 className="apply-sub">{k("hours")}</h3>
+                <div className="apply-chips">
+                  {[1, 2, 3, 4, 5, 6, 0].map((d) => <button key={d} type="button" className={cn("apply-chip", v.workDays.includes(d) && "active")} aria-pressed={v.workDays.includes(d)} onClick={() => toggle("workDays", d)}>{t(`days.${d}`)}</button>)}
+                </div>
+                <div className="apply-grid mt-3">
+                  <TextField label={k("from")} type="time" value={v.workFrom} onValue={(x) => form.set("workFrom", x)} />
+                  <TextField label={k("to")} type="time" value={v.workTo} onValue={(x) => form.set("workTo", x)} />
+                </div>
+              </>
+            )}
+            {step === 3 && (
+              <>
+                <p className="apply-hint">{k("docsHint")}</p>
+                <FileDrop files={docs} onChange={setDocs} accept="image/*,application/pdf" capture />
+                {form.errors.documents && <p className="kit-field-error">{t("validation.uploadDocuments")}</p>}
+              </>
+            )}
+            {step === 4 && (
+              <>
+                <p className="apply-hint">{k("planHint")}</p>
+                <Radios name="period" value={v.billingPeriod} onValue={(x) => form.set("billingPeriod", x)} columns={2} options={[{ value: "MONTH_1", label: enumLabel("BillingPeriod", "MONTH_1") }, { value: "MONTH_12", label: enumLabel("BillingPeriod", "MONTH_12") }]} />
+                <div className="apply-plans">
+                  {(plans.data ?? []).map((p) => {
+                    const price = p.prices.find((x: any) => x.period === v.billingPeriod);
+                    return (
+                      <label key={p.id} className={cn("apply-plan", v.planId === p.id && "active", p.highlight && "is-featured")}>
+                        <input type="radio" name="plan" checked={v.planId === p.id} onChange={() => form.set("planId", p.id)} className="sr-only" />
+                        <span className="apply-plan-top"><strong>{text(p.name)}</strong>{p.highlight && <span className="apply-plan-flag">{t("plans.popular")}</span>}</span>
+                        <small className="apply-plan-desc">{text(p.description)}</small>
+                        <span className="apply-plan-price"><strong>{money(price?.price)}</strong> / {enumLabel("BillingPeriod", v.billingPeriod)}</span>
+                        {p.trialDays ? <small className="apply-plan-trial">{t("plans.trial", { days: p.trialDays })}</small> : null}
+                        <ul>
+                          {(defs.data ?? []).filter((d) => d.group === "TECHNICIAN" && p.entitlements[d.code] !== undefined && p.entitlements[d.code] !== false && p.entitlements[d.code] !== 0).slice(0, 5).map((d) => <li key={d.code}><CheckIcon size={13} aria-hidden /> {text(d.label)}{typeof p.entitlements[d.code] !== "boolean" ? `: ${p.entitlements[d.code] === "UNLIMITED" ? t("plans.unlimited") : p.entitlements[d.code]}` : ""}</li>)}
+                        </ul>
+                      </label>
+                    );
+                  })}
+                </div>
+                <p className="apply-hint mt-3">{k("noCommission")}</p>
+              </>
+            )}
+            <div className="apply-nav">
+              <button type="button" className="btn outline" disabled={step === 0} onClick={() => setStep((s) => s - 1)}>{t("common.back")}</button>
+              {step < steps.length - 1 ? (
+                <button type="button" className="btn primary" disabled={!canNext} onClick={() => setStep((s) => s + 1)}>{t("continue")}</button>
+              ) : (
+                <button type="button" className="btn primary" disabled={!canNext} onClick={submit}><Send size={16} aria-hidden /> {k("submit")}</button>
               )}
-              {form.errors.specializationIds && <p className="kit-field-error">{t("validation.selectAtLeastOne")}</p>}
-            </>
-          )}
-          {step === 2 && (
-            <>
-              <h3>{t("techApply.zones")}</h3>
-              <div className="kit-chip-grid mb-4">
-                {(zones.data ?? []).map((z: any) => <button key={z.id} type="button" className={cn("chip", v.zoneIds.includes(z.id) && "active")} aria-pressed={v.zoneIds.includes(z.id)} onClick={() => toggle("zoneIds", z.id)}>{text(z.name)}</button>)}
-              </div>
-              <h3>{t("techApply.hours")}</h3>
-              <div className="kit-chip-grid mb-3">
-                {[1, 2, 3, 4, 5, 6, 0].map((d) => <button key={d} type="button" className={cn("chip", v.workDays.includes(d) && "active")} aria-pressed={v.workDays.includes(d)} onClick={() => toggle("workDays", d)}>{t(`days.${d}`)}</button>)}
-              </div>
-              <div className="kit-grid cols-2">
-                <TextField label={t("techApply.from")} type="time" value={v.workFrom} onValue={(x) => form.set("workFrom", x)} />
-                <TextField label={t("techApply.to")} type="time" value={v.workTo} onValue={(x) => form.set("workTo", x)} />
-              </div>
-            </>
-          )}
-          {step === 3 && (
-            <>
-              <p className="text-muted mb-3">{t("techApply.docsHint")}</p>
-              <FileDrop files={docs} onChange={setDocs} accept="image/*,application/pdf" capture />
-              {form.errors.documents && <p className="kit-field-error">{t("validation.uploadDocuments")}</p>}
-            </>
-          )}
-          {step === 4 && (
-            <>
-              <p className="text-muted mb-3">{t("techApply.planHint")}</p>
-              <Radios name="period" value={v.billingPeriod} onValue={(x) => form.set("billingPeriod", x)} columns={2} options={[{ value: "MONTH_1", label: enumLabel("BillingPeriod", "MONTH_1") }, { value: "MONTH_12", label: enumLabel("BillingPeriod", "MONTH_12") }]} />
-              <div className="kit-plan-cards mt-4">
-                {(plans.data ?? []).map((p) => {
-                  const price = p.prices.find((x: any) => x.period === v.billingPeriod);
-                  return (
-                    <label key={p.id} className={cn("kit-plan selectable", v.planId === p.id && "current")}>
-                      <input type="radio" name="plan" checked={v.planId === p.id} onChange={() => form.set("planId", p.id)} className="sr-only" />
-                      <h3>{text(p.name)}</h3>
-                      <p className="text-sm">{text(p.description)}</p>
-                      <div className="kit-plan-price"><strong>{money(price?.price)}</strong><span>/ {enumLabel("BillingPeriod", v.billingPeriod)}</span></div>
-                      {p.trialDays ? <small className="text-success">{t("plans.trial", { days: p.trialDays })}</small> : null}
-                      <ul className="kit-plan-mini">
-                        {(defs.data ?? []).filter((d) => d.group === "TECHNICIAN" && p.entitlements[d.code] !== undefined && p.entitlements[d.code] !== false && p.entitlements[d.code] !== 0).slice(0, 7).map((d) => <li key={d.code}>{text(d.label)}{typeof p.entitlements[d.code] !== "boolean" ? `: ${p.entitlements[d.code] === "UNLIMITED" ? t("plans.unlimited") : p.entitlements[d.code]}` : ""}</li>)}
-                      </ul>
-                    </label>
-                  );
-                })}
-              </div>
-              <p className="text-sm text-muted mt-3">{t("techApply.noCommission")}</p>
-            </>
-          )}
-        </div>
-        <div className="wizard-footer kit-card-foot">
-          <button type="button" className="btn outline" disabled={step === 0} onClick={() => setStep((s) => s - 1)}>{t("common.back")}</button>
-          {step < steps.length - 1 ? (
-            <button type="button" className="btn primary" disabled={!canNext} onClick={() => setStep((s) => s + 1)}>{t("continue")}</button>
-          ) : (
-            <button type="button" className="btn primary" disabled={!canNext} onClick={submit}>{t("techApply.submit")}</button>
-          )}
+            </div>
+          </div>
+
+          <aside className="apply-aside">
+            <section className="info-section compact">
+              <h2>{k("reqTitle")}</h2>
+              <ul className="apply-req">
+                <li><IdCard size={18} aria-hidden /> {k("req1")}</li>
+                <li><Award size={18} aria-hidden /> {k("req2")}</li>
+                <li><BadgeCheck size={18} aria-hidden /> {k("req3")}</li>
+              </ul>
+            </section>
+            <section className="info-section compact">
+              <h2>{t("nav.pricing")}</h2>
+              <p className="apply-hint">{k("noCommission")}</p>
+              <Link to="/pricing?group=TECHNICIAN" className="btn outline w-full">{t("nav.pricing")}</Link>
+            </section>
+          </aside>
         </div>
       </div>
     </div>
@@ -525,52 +590,98 @@ export function BecomeTechnicianPage() {
 /* B2B müraciəti (§9.5)                                                 */
 /* ------------------------------------------------------------------ */
 
+const SEGMENT_ICONS: Record<string, React.ComponentType<{ size?: number; "aria-hidden"?: boolean }>> = { CORPORATE: Building, PARTNER: Handshake, WHOLESALE: Boxes };
+
 export function BusinessPage() {
   const { t, enumLabel } = useI18n();
+  const brand = useApi<any>("/branding", { staleTime: 300_000 });
   const form = useFormState({ companyName: "", voen: "", legalAddress: "", contactName: "", contactPhone: "", contactEmail: "", segment: "CORPORATE", note: "" });
   const [docs, setDocs] = useState<PickedFile[]>([]);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const v = form.values;
-  if (done) return (
-    <div className="container py-12 max-w-xl mx-auto text-center">
-      <CheckCircle2 size={56} className="text-success mx-auto" />
-      <h1>{t("b2bApply.doneTitle")}</h1>
-      <p>{t("b2bApply.doneText")}</p>
-    </div>
-  );
+  const k = (key: string) => t(`b2bApply.${key}`);
+  const phone = brand.data?.contacts?.phone as string | undefined;
+  const how = [k("how1"), k("how2"), k("how3"), k("how4")];
+  if (done) {
+    return (
+      <ApplyDone title={k("doneTitle")} text={k("doneText")} steps={how} current={1}>
+        <Link to="/" className="btn primary">{k("backHome")}</Link>
+        <Link to="/shop" className="btn outline">{t("nav.shop")}</Link>
+      </ApplyDone>
+    );
+  }
   return (
-    <div className="container py-8">
-      <header className="pub-hero-small">
-        <span className="eyebrow">B2B</span>
-        <h1>{t("b2bApply.title")}</h1>
-        <p>{t("b2bApply.text")}</p>
-      </header>
-      <div className="kit-grid cols-3 mb-6">
-        {["CORPORATE", "PARTNER", "WHOLESALE"].map((s) => (
-          <button key={s} type="button" className={cn("choice-card", v.segment === s && "active")} onClick={() => form.set("segment", s)} aria-pressed={v.segment === s}>
-            <strong>{enumLabel("Segment", s)}</strong>
-            <small className="text-muted">{t(`b2bApply.segment_${s}`)}</small>
-          </button>
-        ))}
-      </div>
-      <form className="kit-card max-w-4xl mx-auto" onSubmit={async (e) => { e.preventDefault(); setError(null); try { await post("/auth/b2b-application", { ...v, documents: docs.map((d) => ({ kind: "OTHER", name: d.name })) }); setDone(true); } catch (err) { setError(err); form.fromError(err); } }}>
-        <div className="kit-card-body">
-          <FormError error={error} />
-          <div className="kit-grid cols-2">
-            <TextField label={t("b2bApply.companyName")} required value={v.companyName} onValue={(x) => form.set("companyName", x)} error={form.errors.companyName} />
-            <TextField label={t("docs.voen")} required inputMode="numeric" maxLength={10} value={v.voen} onValue={(x) => form.set("voen", x.replace(/\D/g, ""))} error={form.errors.voen} hint={t("b2bApply.voenHint")} />
-            <TextField label={t("b2bApply.legalAddress")} required className="span-2" value={v.legalAddress} onValue={(x) => form.set("legalAddress", x)} error={form.errors.legalAddress} />
-            <TextField label={t("b2bApply.contactName")} required value={v.contactName} onValue={(x) => form.set("contactName", x)} error={form.errors.contactName} />
-            <PhoneField label={t("auth.phone")} required value={v.contactPhone} onValue={(x) => form.set("contactPhone", x)} error={form.errors.contactPhone} />
-            <TextField label={t("email")} type="email" required value={v.contactEmail} onValue={(x) => form.set("contactEmail", x)} error={form.errors.contactEmail} />
-          </div>
-          <h3 className="mt-4">{t("b2bApply.documents")}</h3>
-          <FileDrop files={docs} onChange={setDocs} />
-          <p className="text-sm text-muted mt-3">{t("b2bApply.processNote")}</p>
+    <div className="info-page apply">
+      <InfoHero
+        eyebrow={k("eyebrow")}
+        title={k("title")}
+        text={k("text")}
+        aside={<BenefitCard title={k("benefitsTitle")} items={[{ icon: ShieldCheck, text: k("benefit1") }, { icon: Receipt, text: k("benefit2") }, { icon: CalendarDays, text: k("benefit3") }, { icon: FileText, text: k("benefit4") }]} />}
+      />
+      <div className="container info-body">
+        <div className="apply-layout">
+          <form className="apply-form" noValidate onSubmit={async (e) => { e.preventDefault(); setError(null); try { await post("/auth/b2b-application", { ...v, documents: docs.map((d) => ({ kind: "OTHER", name: d.name })) }); setDone(true); } catch (err) { setError(err); form.fromError(err); } }}>
+            <FormError error={error} />
+            <section className="apply-sec">
+              <h2><span className="apply-num">1</span> {k("segmentTitle")}</h2>
+              <div className="apply-segments" role="radiogroup" aria-label={k("segmentTitle")}>
+                {["CORPORATE", "PARTNER", "WHOLESALE"].map((s) => {
+                  const Icon = SEGMENT_ICONS[s] ?? Building;
+                  return (
+                    <button key={s} type="button" role="radio" aria-checked={v.segment === s} className={cn("apply-seg", v.segment === s && "active")} onClick={() => form.set("segment", s)}>
+                      <span className="apply-seg-icon"><Icon size={22} aria-hidden /></span>
+                      <strong>{enumLabel("Segment", s)}</strong>
+                      <small>{k(`segment_${s}`)}</small>
+                      <span className="apply-seg-check" aria-hidden><CheckIcon size={13} /></span>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+            <section className="apply-sec">
+              <h2><span className="apply-num">2</span> {k("companySection")}</h2>
+              <div className="apply-grid">
+                <TextField label={k("companyName")} required value={v.companyName} onValue={(x) => form.set("companyName", x)} error={form.errors.companyName} autoComplete="organization" />
+                <TextField label={t("docs.voen")} required inputMode="numeric" maxLength={10} value={v.voen} onValue={(x) => form.set("voen", x.replace(/\D/g, ""))} error={form.errors.voen} hint={k("voenHint")} />
+                <TextField label={k("legalAddress")} required className="span-2" value={v.legalAddress} onValue={(x) => form.set("legalAddress", x)} error={form.errors.legalAddress} />
+              </div>
+            </section>
+            <section className="apply-sec">
+              <h2><span className="apply-num">3</span> {k("contactSection")}</h2>
+              <div className="apply-grid">
+                <TextField label={k("contactName")} required value={v.contactName} onValue={(x) => form.set("contactName", x)} error={form.errors.contactName} autoComplete="name" />
+                <PhoneField label={t("auth.phone")} required value={v.contactPhone} onValue={(x) => form.set("contactPhone", x)} error={form.errors.contactPhone} />
+                <TextField label={t("email")} type="email" required value={v.contactEmail} onValue={(x) => form.set("contactEmail", x)} error={form.errors.contactEmail} autoComplete="email" />
+              </div>
+            </section>
+            <section className="apply-sec">
+              <h2><span className="apply-num">4</span> {k("documents")}</h2>
+              <FileDrop files={docs} onChange={setDocs} />
+              <p className="apply-hint mt-3">{k("processNote")}</p>
+            </section>
+            <div className="apply-nav">
+              <p className="apply-hint">{k("agree")} <Link to="/terms" className="text-brand">{t("legal.terms")}</Link></p>
+              <button className="btn primary btn-lg"><Send size={17} aria-hidden /> {k("submit")}</button>
+            </div>
+          </form>
+
+          <aside className="apply-aside">
+            <section className="info-section compact">
+              <h2>{k("howTitle")}</h2>
+              <ol className="apply-how">
+                {how.map((s, i) => <li key={i}><span>{i + 1}</span>{s}</li>)}
+              </ol>
+            </section>
+            <section className="info-section compact">
+              <h2>{k("helpTitle")}</h2>
+              <p className="apply-hint">{k("helpText")}</p>
+              {phone && <a className="btn outline w-full" href={`tel:${phone.replace(/[^\d+*]/g, "")}`}><Phone size={16} aria-hidden /> {phone}</a>}
+              <Link to="/contact" className="btn ghost w-full mt-2">{t("contact")}</Link>
+            </section>
+          </aside>
         </div>
-        <div className="kit-card-foot"><button className="btn primary">{t("b2bApply.submit")}</button></div>
-      </form>
+      </div>
     </div>
   );
 }
