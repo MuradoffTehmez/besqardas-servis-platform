@@ -70,6 +70,14 @@ const dict: Record<string, LocalizedText> = {
   "notif.newTask": L("Yeni logistika tapşırığı", "Новая логистическая задача", "New logistics task"),
   "notif.orderCompleted": L("Servis tamamlandı", "Сервис завершён", "Service completed"),
   "notif.orderConfirmed": L("Sifariş təsdiqləndi", "Заказ подтверждён", "Order confirmed"),
+  "notif.subscriptionRenewal": L("Abunəlik yenilənəcək", "Продление подписки", "Subscription renewal"),
+  "notif.serviceDue": L("Periodik servis vaxtıdır", "Пора плановому обслуживанию", "Periodic service due"),
+  "notif.settlementApproved": L("Hesablaşma təsdiqləndi", "Выплата одобрена", "Settlement approved"),
+  "notif.lowStock": L("Aşağı stok xəbərdarlığı", "Низкий остаток", "Low stock alert"),
+  "notif.slaBreach": L("SLA pozuntusu", "Нарушение SLA", "SLA breach"),
+  "notif.lowRating": L("Aşağı reytinqli rəy", "Отзыв с низкой оценкой", "Low-rated review"),
+  "notif.documentExpiring": L("Sənədin müddəti bitib", "Истёк срок документа", "Document expired"),
+  "notif.warrantyApproved": L("Zəmanət müraciəti təsdiqləndi", "Гарантийное обращение одобрено", "Warranty claim approved"),
 };
 
 export function t(key: string, locale: Locale, vars?: Record<string, string | number>): string {

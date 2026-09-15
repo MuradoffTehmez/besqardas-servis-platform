@@ -10,6 +10,7 @@ import { useI18n } from "./i18n";
 import { Link, useRouter } from "./router";
 import { INTERNAL_ROLES, useSession } from "./session";
 import { Avatar, EmptyState, Loading } from "../kit/base";
+import { notificationMeta } from "../../components/domain/notification-meta";
 import { CommandPalette, UserMenu, fold, useCurrentRoute, useMedia, usePaletteHotkey, type Command, type MenuLink } from "./nav";
 
 /* ------------------------------------------------------------------ */
@@ -373,15 +374,19 @@ function NotificationBell({ count }: { count: number }) {
           </div>
           {list.isLoading ? <Loading rows={3} /> : !list.data?.items?.length ? <EmptyState title={t("panel.noNotifications")} /> : (
             <ul className="kit-notif-list">
-              {list.data.items.map((n: any) => (
-                <li key={n.id} className={cn(!n.read && "unread")}>
-                  <button type="button" onClick={async () => { await post(`/notifications/${n.id}/read`); await qc.invalidateQueries({ queryKey: ["api"] }); setOpen(false); if (n.link?.startsWith("/")) navigate(n.link); }}>
-                    <strong>{n.title}</strong>
-                    <span>{n.body}</span>
-                    <small>{relative(n.createdAt)}</small>
-                  </button>
-                </li>
-              ))}
+              {list.data.items.map((n: any) => {
+                const m = notificationMeta(n.event);
+                return (
+                  <li key={n.id} className={cn(!n.read && "unread", `tone-${m.tone}`)}>
+                    <button type="button" onClick={async () => { await post(`/notifications/${n.id}/read`); await qc.invalidateQueries({ queryKey: ["api"] }); setOpen(false); if (n.link?.startsWith("/")) navigate(n.link); }}>
+                      <span className="kit-notif-icon"><m.icon size={17} aria-hidden /></span>
+                      <strong>{n.title}</strong>
+                      <span>{n.body}</span>
+                      <small>{relative(n.createdAt)}</small>
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
