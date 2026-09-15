@@ -1,6 +1,6 @@
 "use client";
-import { Platform } from "@sp/ui";
+import { AdminApp } from "@sp/ui/admin";
 
 export default function Page() {
-  return <Platform admin />;
+  return <AdminApp />;
 }

@@ -1,51 +1,22 @@
 "use client";
 import React, { useState } from "react";
-import { Bell, MapPin, Navigation, Package, Phone, Truck, UserRound, Wallet } from "lucide-react";
+import { MapPin, Navigation, Package, Phone, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@sp/utils";
 import { post, qs, useApi } from "@sp/api-client";
 import { useI18n } from "../core/i18n";
 import { Link, useRouter } from "../core/router";
-import type { RouteDef } from "../core/router";
 import { EmptyState, EnumBadge, FormError, KeyValue, QueryView, SelectField, Tabs, TextArea, TextField } from "../kit/base";
 import { Dialog } from "../kit/actions";
 import { FileDrop, MapView, SignaturePad, type PickedFile } from "../kit/media";
 import { useRefresh } from "./common";
-import { NotificationsPage, ProfilePage } from "./account";
-import { useSession } from "../core/session";
-import { SiteWorkspace, type NavGroup } from "../core/shells";
 
 /**
  * Kuryer interfeysi (PRD §21.6): mobil, böyük düymələr, yalnız öz tapşırıqları. Müştəri əlaqəsi tapşırıq aktiv olanda görünür.
  */
 
-const COURIER = ["COURIER", "TECHNICIAN"];
 
-/** Kuryer interfeysi də digər kabinetlər kimi sayt qabığında açılır. */
-export function CourierShell({ children }: { children: React.ReactNode }) {
-  const { t } = useI18n();
-  const { session } = useSession();
-  const nav: NavGroup[] = [
-    {
-      items: [
-        { to: "/courier", label: t("courier.tasksTitle"), icon: Package, exact: true },
-        { to: "/courier/notifications", label: t("acc.nav.notifications"), icon: Bell, badge: session?.unreadNotifications || null },
-        { to: "/courier/profile", label: t("acc.nav.profile"), icon: UserRound },
-      ],
-    },
-  ];
-  return <SiteWorkspace nav={nav} title={t("courier.title")} badge={{ label: t("courier.title"), icon: Truck }}>{children}</SiteWorkspace>;
-}
-
-export const courierRoutes: RouteDef[] = [
-  { pattern: "/courier", render: () => <CourierTasksPage />, shell: "courier", roles: COURIER, titleKey: "courier.title" },
-  { pattern: "/courier/tasks", render: () => <CourierTasksPage />, shell: "courier", roles: COURIER, titleKey: "courier.title" },
-  { pattern: "/courier/profile", render: () => <ProfilePage />, shell: "courier", roles: COURIER, titleKey: "acc.nav.profile" },
-  { pattern: "/courier/notifications", render: () => <NotificationsPage />, shell: "courier", roles: COURIER, titleKey: "acc.nav.notifications" },
-  { pattern: "/courier/tasks/:id", render: (p) => <CourierTaskPage id={p.id!} />, shell: "courier", roles: COURIER, titleKey: "courier.title" },
-];
-
-function CourierTasksPage() {
+export function CourierTasksPage() {
   const { t, time, date, money, enumLabel } = useI18n();
   const { query, setQuery } = useRouter();
   const view = query.get("view") ?? "today";
@@ -86,7 +57,7 @@ function CourierTasksPage() {
   );
 }
 
-function CourierTaskPage({ id }: { id: string }) {
+export function CourierTaskPage({ id }: { id: string }) {
   const { t, time, date, dateTime, money, enumLabel, text } = useI18n();
   const q = useApi<any>(`/courier/tasks/${id}`);
   const [action, setAction] = useState<string | null>(null);

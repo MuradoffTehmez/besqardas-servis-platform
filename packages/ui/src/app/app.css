@@ -18,7 +18,7 @@
 .btn.danger-outline:hover { background: var(--danger-light); }
 .btn:disabled, .btn[disabled] { opacity: .55; cursor: not-allowed; }
 .rot { transform: rotate(-90deg); }
-h1, h2, h3 { font-family: "Manrope", "Plus Jakarta Sans", sans-serif; }
+h1, h2, h3 { font-family: var(--font-display, "Manrope"), var(--font-sans, "Plus Jakarta Sans"), sans-serif; }
 
 /* ---------- Səhifə başlığı ---------- */
 .pg-header { margin-bottom: 24px; }
@@ -3116,3 +3116,7 @@ a.bz-order:hover { border-color: var(--line-focus); background: var(--surface-su
   .panel-locale svg:last-child { display: none; }
   .panel-locale { padding: 0 8px; }
 }
+
+/* Qrafik yüklənərkən yer tutucu */
+.kit-chart-loading { border-radius: 12px; background: linear-gradient(90deg, var(--surface-subtle), var(--line-subtle), var(--surface-subtle)); }
+

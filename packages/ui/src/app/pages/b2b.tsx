@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { AlertTriangle, BadgePercent, BarChart3, Bell, Building2, CalendarClock, ChevronRight, ClipboardList, CreditCard, FileSignature, FileText, Gauge, HardDrive, LayoutDashboard, Megaphone, Package, Percent, Plus, ShieldCheck, ShoppingBag, Timer, Trash2, Upload, UserRound, Users, Wallet, Wrench, Zap } from "lucide-react";
+import { AlertTriangle, BadgePercent, Building2, ChevronRight, ClipboardList, CreditCard, FileSignature, FileText, Gauge, Megaphone, Package, Percent, Plus, ShieldCheck, ShoppingBag, Timer, Trash2, Upload, Wallet, Wrench, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@sp/utils";
 import { patch, post, put, useApi } from "@sp/api-client";
@@ -8,111 +8,30 @@ import { useI18n } from "../core/i18n";
 import { Link, useRouter } from "../core/router";
 import { useSession } from "../core/session";
 import { formatMonth } from "@sp/i18n";
-import { SiteWorkspace, type NavGroup } from "../core/shells";
-import type { RouteDef } from "../core/router";
 import { Card, EmptyState, EnumBadge, FormError, Grid, KeyValue, PageHeader, QueryView, SelectField, Stat, TextArea, TextField, errorText } from "../kit/base";
 import { ConfirmDialog, Dialog, ResourceTable } from "../kit/actions";
 import { BarsChart, DonutChart, MapView } from "../kit/media";
 import { PhoneField } from "../kit/media";
 import { AvatarUploader } from "../kit/upload";
-import { DocumentsPage, NotificationsPage, ProfilePage, SalesOrderDetailPage, SalesOrdersPage, ServiceOrderDetailPage, ServiceOrdersPage } from "./account";
-import { ShopPage } from "./shop";
+import { DocumentsPage, ServiceOrdersPage } from "./account";
 import { DocumentDialog, UsageBar, useRefresh } from "./common";
 
 /**
  * B2B kabinetləri (PRD §44–45, §60.5): korporativ müştəri, partner və topdan alıcı. Qiymət, limit və borc API-dən gəlir.
  */
 
-type Segment = "corporate" | "partner" | "wholesale";
+export type Segment = "corporate" | "partner" | "wholesale";
 
-function segmentOf(role: string): Segment {
+export function segmentOf(role: string): Segment {
   return role === "PARTNER" ? "partner" : role === "WHOLESALE_CUSTOMER" ? "wholesale" : "corporate";
 }
 
-export function B2BShell({ children }: { children: React.ReactNode }) {
-  const { t, enumLabel } = useI18n();
-  const { role, user, session } = useSession();
-  const seg = segmentOf(role);
-  const base = `/${seg}`;
-  const common = [
-    { to: `${base}/notifications`, label: t("acc.nav.notifications"), icon: Bell, badge: session?.unreadNotifications || null },
-    { to: `${base}/documents`, label: t("b2b.nav.documents"), icon: FileText },
-    { to: `${base}/users`, label: t("b2b.nav.users"), icon: Users },
-    { to: `${base}/company`, label: t("b2b.nav.companyProfile"), icon: Building2 },
-    { to: `${base}/profile`, label: t("acc.nav.profile"), icon: UserRound },
-  ];
-  const nav: Record<Segment, NavGroup[]> = {
-    corporate: [
-      { items: [{ to: base, label: t("b2b.nav.dashboard"), icon: LayoutDashboard, exact: true }, { to: `${base}/services`, label: t("b2b.nav.services"), icon: Wrench }, { to: `${base}/schedule`, label: t("b2b.nav.schedule"), icon: CalendarClock }, { to: `${base}/sites`, label: t("b2b.nav.sites"), icon: Building2 }, { to: `${base}/devices`, label: t("b2b.nav.devices"), icon: HardDrive }] },
-      { label: t("b2b.nav.company"), items: [{ to: `${base}/contracts`, label: t("b2b.nav.contracts"), icon: FileSignature }, { to: `${base}/reports`, label: t("b2b.nav.reports"), icon: BarChart3 }, ...common] },
-    ],
-    partner: [
-      { items: [{ to: base, label: t("b2b.nav.dashboard"), icon: LayoutDashboard, exact: true }, { to: `${base}/catalog`, label: t("b2b.nav.catalog"), icon: ShoppingBag }, { to: `${base}/orders`, label: t("b2b.nav.orders"), icon: Package }, { to: `${base}/services`, label: t("b2b.nav.services"), icon: Wrench }] },
-      { label: t("b2b.nav.finance"), items: [{ to: `${base}/commissions`, label: t("b2b.nav.commissions"), icon: Percent }, { to: `${base}/balance`, label: t("b2b.nav.balance"), icon: Wallet }, ...common] },
-    ],
-    wholesale: [
-      { items: [{ to: base, label: t("b2b.nav.dashboard"), icon: LayoutDashboard, exact: true }, { to: `${base}/catalog`, label: t("b2b.nav.catalog"), icon: ShoppingBag }, { to: `${base}/quick-order`, label: t("b2b.nav.quickOrder"), icon: Zap }, { to: `${base}/quotes`, label: t("b2b.nav.quotes"), icon: ClipboardList }, { to: `${base}/orders`, label: t("b2b.nav.orders"), icon: Package }] },
-      { label: t("b2b.nav.finance"), items: [{ to: `${base}/balance`, label: t("b2b.nav.balance"), icon: Wallet }, ...common] },
-    ],
-  };
-  return <SiteWorkspace nav={nav[seg]} title={user?.companyName ?? t(`b2b.${seg}`)} badge={{ label: enumLabel("Segment", seg.toUpperCase()), icon: Building2 }}>{children}</SiteWorkspace>;
-}
-
-const route = (roles: string[], pattern: string, render: RouteDef["render"], titleKey: string): RouteDef => ({ pattern, render, shell: "b2b", roles, titleKey });
-const CORP = ["CORPORATE_CUSTOMER"];
-const PART = ["PARTNER"];
-const WHOLE = ["WHOLESALE_CUSTOMER"];
-
-export const b2bRoutes: RouteDef[] = [
-  route(CORP, "/corporate", () => <B2BDashboardPage />, "b2b.nav.dashboard"),
-  route(CORP, "/corporate/sites", () => <SitesPage />, "b2b.nav.sites"),
-  route(CORP, "/corporate/devices", () => <B2BDevicesPage />, "b2b.nav.devices"),
-  route(CORP, "/corporate/services", () => <B2BServicesPage base="/corporate/services" />, "b2b.nav.services"),
-  route(CORP, "/corporate/services/:id", (p) => <ServiceOrderDetailPage id={p.id!} back="/corporate/services" />, "b2b.nav.services"),
-  route(CORP, "/corporate/schedule", () => <SchedulePlanPage />, "b2b.nav.schedule"),
-  route(CORP, "/corporate/contracts", () => <ContractsPage />, "b2b.nav.contracts"),
-  route(CORP, "/corporate/documents", () => <B2BDocumentsPage />, "b2b.nav.documents"),
-  route(CORP, "/corporate/reports", () => <ReportsPage />, "b2b.nav.reports"),
-  route(CORP, "/corporate/users", () => <CompanyUsersPage />, "b2b.nav.users"),
-  route(CORP, "/corporate/company", () => <CompanyProfilePage />, "b2b.nav.companyProfile"),
-  route(CORP, "/corporate/profile", () => <ProfilePage />, "acc.nav.profile"),
-  route(CORP, "/corporate/notifications", () => <NotificationsPage />, "acc.nav.notifications"),
-
-  route(PART, "/partner", () => <B2BDashboardPage />, "b2b.nav.dashboard"),
-  route(PART, "/partner/catalog", () => <ShopPage base="/partner/catalog" />, "b2b.nav.catalog"),
-  route(PART, "/partner/catalog/*", (p) => <ShopPage base="/partner/catalog" categoryPath={p["*"]} />, "b2b.nav.catalog"),
-  route(PART, "/partner/orders", () => <SalesOrdersPage base="/partner/orders" />, "b2b.nav.orders"),
-  route(PART, "/partner/orders/:id", (p) => <SalesOrderDetailPage id={p.id!} back="/partner/orders" />, "b2b.nav.orders"),
-  route(PART, "/partner/services", () => <B2BServicesPage base="/partner/services" />, "b2b.nav.services"),
-  route(PART, "/partner/services/:id", (p) => <ServiceOrderDetailPage id={p.id!} back="/partner/services" />, "b2b.nav.services"),
-  route(PART, "/partner/commissions", () => <CommissionsPage />, "b2b.nav.commissions"),
-  route(PART, "/partner/documents", () => <B2BDocumentsPage />, "b2b.nav.documents"),
-  route(PART, "/partner/balance", () => <BalancePage />, "b2b.nav.balance"),
-  route(PART, "/partner/users", () => <CompanyUsersPage />, "b2b.nav.users"),
-  route(PART, "/partner/company", () => <CompanyProfilePage />, "b2b.nav.companyProfile"),
-  route(PART, "/partner/profile", () => <ProfilePage />, "acc.nav.profile"),
-  route(PART, "/partner/notifications", () => <NotificationsPage />, "acc.nav.notifications"),
-
-  route(WHOLE, "/wholesale", () => <B2BDashboardPage />, "b2b.nav.dashboard"),
-  route(WHOLE, "/wholesale/catalog", () => <ShopPage base="/wholesale/catalog" />, "b2b.nav.catalog"),
-  route(WHOLE, "/wholesale/catalog/*", (p) => <ShopPage base="/wholesale/catalog" categoryPath={p["*"]} />, "b2b.nav.catalog"),
-  route(WHOLE, "/wholesale/quick-order", () => <QuickOrderPage />, "b2b.nav.quickOrder"),
-  route(WHOLE, "/wholesale/quotes", () => <QuotesPage />, "b2b.nav.quotes"),
-  route(WHOLE, "/wholesale/orders", () => <SalesOrdersPage base="/wholesale/orders" />, "b2b.nav.orders"),
-  route(WHOLE, "/wholesale/orders/:id", (p) => <SalesOrderDetailPage id={p.id!} back="/wholesale/orders" />, "b2b.nav.orders"),
-  route(WHOLE, "/wholesale/documents", () => <B2BDocumentsPage />, "b2b.nav.documents"),
-  route(WHOLE, "/wholesale/balance", () => <BalancePage />, "b2b.nav.balance"),
-  route(WHOLE, "/wholesale/users", () => <CompanyUsersPage />, "b2b.nav.users"),
-  route(WHOLE, "/wholesale/company", () => <CompanyProfilePage />, "b2b.nav.companyProfile"),
-  route(WHOLE, "/wholesale/profile", () => <ProfilePage />, "acc.nav.profile"),
-  route(WHOLE, "/wholesale/notifications", () => <NotificationsPage />, "acc.nav.notifications"),
-];
 
 /* ------------------------------------------------------------------ */
 /* Dashboard                                                            */
 /* ------------------------------------------------------------------ */
 
-function B2BDashboardPage() {
+export function B2BDashboardPage() {
   const { t, money, date, enumLabel, num, locale } = useI18n();
   const { role } = useSession();
   const seg = segmentOf(role);
@@ -254,7 +173,7 @@ function B2BDashboardPage() {
 /* Korporativ: obyektlər, cihazlar, servislər, qrafik, müqavilə, hesabat */
 /* ------------------------------------------------------------------ */
 
-function SitesPage() {
+export function SitesPage() {
   const { t, date } = useI18n();
   const q = useApi<any>("/b2b/sites");
   const [adding, setAdding] = useState(false);
@@ -318,7 +237,7 @@ function LimitDialog({ current, onClose }: { current: number; onClose: () => voi
   );
 }
 
-function B2BDevicesPage() {
+export function B2BDevicesPage() {
   const { t, date, enumLabel } = useI18n();
   const sites = useApi<any>("/b2b/sites");
   return (
@@ -342,7 +261,7 @@ function B2BDevicesPage() {
   );
 }
 
-function B2BServicesPage({ base }: { base: string }) {
+export function B2BServicesPage({ base }: { base: string }) {
   const { t } = useI18n();
   const { role } = useSession();
   return <ServiceOrdersPage base={base} title={t("b2b.nav.services")} intro={role === "CORPORATE_CUSTOMER" ? <ApprovalQueue base={base} /> : null} />;
@@ -402,7 +321,7 @@ function ApprovalQueue({ base }: { base: string }) {
   );
 }
 
-function SchedulePlanPage() {
+export function SchedulePlanPage() {
   const { t, date, text } = useI18n();
   const refresh = useRefresh();
   const { navigate } = useRouter();
@@ -427,7 +346,7 @@ function SchedulePlanPage() {
   );
 }
 
-function ContractsPage() {
+export function ContractsPage() {
   const { t, date } = useI18n();
   const q = useApi<any[]>("/b2b/contracts");
   return (
@@ -449,7 +368,7 @@ function ContractsPage() {
   );
 }
 
-function ReportsPage() {
+export function ReportsPage() {
   const { t, money } = useI18n();
   const q = useApi<any>("/b2b/reports");
   return (
@@ -482,7 +401,7 @@ function ReportsPage() {
 /* Ümumi: sənədlər, balans, istifadəçilər                              */
 /* ------------------------------------------------------------------ */
 
-function B2BDocumentsPage() {
+export function B2BDocumentsPage() {
   const { t } = useI18n();
   const refresh = useRefresh();
   const [doc, setDoc] = useState<string | null>(null);
@@ -495,7 +414,7 @@ function B2BDocumentsPage() {
   );
 }
 
-function BalancePage() {
+export function BalancePage() {
   const { t, money, date, text } = useI18n();
   const q = useApi<any>("/b2b/balance");
   return (
@@ -543,7 +462,7 @@ function BalancePage() {
 /* Şirkət profili                                                       */
 /* ------------------------------------------------------------------ */
 
-function CompanyProfilePage() {
+export function CompanyProfilePage() {
   const { t, date, money, enumLabel } = useI18n();
   const q = useApi<any>("/b2b/company");
   const refresh = useRefresh();
@@ -633,7 +552,7 @@ function CompanyProfilePage() {
 
 const COMPANY_ROLES = ["ORDERER", "APPROVER", "ACCOUNTANT", "SITE_MANAGER"];
 
-function CompanyUsersPage() {
+export function CompanyUsersPage() {
   const { t, relative, enumLabel, money } = useI18n();
   const { user } = useSession();
   const q = useApi<any>("/b2b/users");
@@ -695,7 +614,7 @@ function InviteDialog({ onClose }: { onClose: () => void }) {
 /* Partner: komissiyalar                                                */
 /* ------------------------------------------------------------------ */
 
-function CommissionsPage() {
+export function CommissionsPage() {
   const { t, money, date, enumLabel } = useI18n();
   const q = useApi<any>("/b2b/commissions?pageSize=50");
   return (
@@ -735,7 +654,7 @@ function CommissionsPage() {
 /* Topdan: sürətli sifariş və kommersiya təklifləri (§45.3)             */
 /* ------------------------------------------------------------------ */
 
-function QuickOrderPage() {
+export function QuickOrderPage() {
   const { t, money, text, qty } = useI18n();
   const { navigate } = useRouter();
   const refresh = useRefresh();
@@ -812,7 +731,7 @@ function QuickOrderPage() {
   );
 }
 
-function QuotesPage() {
+export function QuotesPage() {
   const { t, money, date, text, qty } = useI18n();
   const q = useApi<any>("/b2b/quotes?pageSize=50");
   const refresh = useRefresh();

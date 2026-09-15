@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
-import { BarChart3, Bell, Boxes, CalendarDays, ChevronRight, ClipboardList, Crown, FileBadge, LayoutDashboard, MapPin, MessageSquare, Navigation, Phone, Settings, Star, Timer, Trash2, Users, Wallet, Wrench, Plus, BadgeCheck, Clock, AlertTriangle, Lock, UserRound, Zap } from "lucide-react";
+import { Boxes, CalendarDays, ChevronRight, ClipboardList, Crown, FileBadge, MapPin, MessageSquare, Navigation, Phone, Star, Timer, Trash2, Users, Wallet, Wrench, Plus, BadgeCheck, Clock, AlertTriangle, Lock, UserRound, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@sp/utils";
 import { del, patch, post, put, qs, useApi } from "@sp/api-client";
@@ -8,82 +8,13 @@ import { useI18n } from "../core/i18n";
 import { Link, useRouter } from "../core/router";
 import { useSession } from "../core/session";
 import { useMedia } from "../core/nav";
-import { SiteWorkspace, type NavGroup } from "../core/shells";
-import type { RouteDef } from "../core/router";
 import { Avatar, Card, Check, EmptyState, EnumBadge, FormError, Grid, KeyValue, Loading, PageHeader, QueryView, SearchBox, SelectField, Stars, Stat, Tabs, TextArea, TextField, Toggle, errorText } from "../kit/base";
 import { Dialog, ResourceTable } from "../kit/actions";
 import { EstimateView, StageTimeline } from "../kit/domain";
 import { BarsChart, DonutChart, FileDrop, LinesChart, MapView, QuantityInput, type PickedFile } from "../kit/media";
 import { DocumentsList, HistoryList, Progress, PromptDialog, UsageBar, useRefresh } from "./common";
 import { OrderActions } from "./workflow";
-import { NotificationsPage, ProfilePage, SubscriptionPage } from "./account";
 
-/* ------------------------------------------------------------------ */
-/* Shell və route-lar (PRD §60.4)                                       */
-/* ------------------------------------------------------------------ */
-
-export function TechnicianShell({ children }: { children: React.ReactNode }) {
-  const { t } = useI18n();
-  const { user, session } = useSession();
-  const dash = useApi<any>("/technician/dashboard", { staleTime: 30_000 });
-  const staff = user?.employmentType === "STAFF";
-  const nav: NavGroup[] = [
-    {
-      items: [
-        { to: "/technician/dashboard", label: t("tech.nav.dashboard"), icon: LayoutDashboard },
-        { to: "/technician/jobs", label: t("tech.nav.jobs"), icon: ClipboardList, badge: dash.data?.offers || null },
-        { to: "/technician/schedule", label: t("tech.nav.schedule"), icon: CalendarDays },
-        { to: "/technician/customers", label: t("tech.nav.customers"), icon: Users },
-        { to: "/technician/notifications", label: t("acc.nav.notifications"), icon: Bell, badge: session?.unreadNotifications || null },
-      ],
-    },
-    {
-      label: t("tech.nav.work"),
-      items: [
-        { to: "/technician/inventory", label: staff ? t("tech.nav.inventory") : t("tech.nav.materials"), icon: Boxes },
-        { to: "/technician/reservations", label: t("tech.nav.reservations"), icon: Clock },
-        { to: "/technician/specializations", label: t("tech.nav.specializations"), icon: BadgeCheck },
-        { to: "/technician/earnings", label: t("tech.nav.earnings"), icon: Wallet },
-        { to: "/technician/statistics", label: t("tech.nav.statistics"), icon: BarChart3 },
-      ],
-    },
-    {
-      label: t("tech.nav.profile"),
-      items: [
-        { to: "/technician/profile", label: t("acc.nav.profile"), icon: UserRound },
-        { to: "/technician/reviews", label: t("tech.nav.reviews"), icon: Star },
-        { to: "/technician/documents", label: t("tech.nav.documents"), icon: FileBadge },
-        { to: "/technician/subscription", label: staff ? t("tech.nav.license") : t("tech.nav.subscription"), icon: Crown },
-        { to: "/technician/settings", label: t("tech.nav.settings"), icon: Settings },
-      ],
-    },
-  ];
-  const plan = staff ? t("tech.nav.license") : dash.data?.planName;
-  return <SiteWorkspace nav={nav} title={t("tech.title")} badge={plan ? { label: plan, to: "/technician/subscription", icon: Crown } : null}>{children}</SiteWorkspace>;
-}
-
-const TECH = ["TECHNICIAN"];
-const r = (pattern: string, render: RouteDef["render"], titleKey: string): RouteDef => ({ pattern, render, shell: "technician", roles: TECH, titleKey });
-
-export const technicianRoutes: RouteDef[] = [
-  r("/technician", () => <TechDashboardPage />, "tech.nav.dashboard"),
-  r("/technician/dashboard", () => <TechDashboardPage />, "tech.nav.dashboard"),
-  r("/technician/jobs", () => <JobsPage />, "tech.nav.jobs"),
-  r("/technician/jobs/:id", (p) => <JobDetailPage id={p.id!} />, "tech.nav.jobs"),
-  r("/technician/schedule", () => <SchedulePage />, "tech.nav.schedule"),
-  r("/technician/specializations", () => <SpecializationsPage />, "tech.nav.specializations"),
-  r("/technician/inventory", () => <InventoryPage />, "tech.nav.inventory"),
-  r("/technician/reservations", () => <ReservationsPage />, "tech.nav.reservations"),
-  r("/technician/customers", () => <CustomersPage />, "tech.nav.customers"),
-  r("/technician/earnings", () => <EarningsPage />, "tech.nav.earnings"),
-  r("/technician/subscription", () => <SubscriptionPage />, "tech.nav.subscription"),
-  r("/technician/reviews", () => <TechReviewsPage />, "tech.nav.reviews"),
-  r("/technician/documents", () => <TechDocumentsPage />, "tech.nav.documents"),
-  r("/technician/statistics", () => <StatisticsPage />, "tech.nav.statistics"),
-  r("/technician/settings", () => <TechSettingsPage />, "tech.nav.settings"),
-  r("/technician/profile", () => <ProfilePage />, "acc.nav.profile"),
-  r("/technician/notifications", () => <NotificationsPage />, "acc.nav.notifications"),
-];
 
 /* ------------------------------------------------------------------ */
 /* Dashboard                                                            */
@@ -138,7 +69,7 @@ function Meter({ label, used, limit, icon: Icon, tone, to, hint }: { label: stri
   return to ? <Link to={to} className={cn("tp-kpi", `tone-${tone}`)}>{body}</Link> : <div className={cn("tp-kpi", `tone-${tone}`)}>{body}</div>;
 }
 
-function TechDashboardPage() {
+export function TechDashboardPage() {
   const { t, money, num, date, time } = useI18n();
   const { user } = useSession();
   const q = useApi<any>("/technician/dashboard");
@@ -251,7 +182,7 @@ function TechDashboardPage() {
 /* İşlər və təkliflər (§15, §18)                                        */
 /* ------------------------------------------------------------------ */
 
-function JobsPage() {
+export function JobsPage() {
   const { t } = useI18n();
   const { query, setQuery } = useRouter();
   const tab = query.get("tab") ?? "active";
@@ -366,7 +297,7 @@ function DeclineOffer({ offer, onClose }: { offer: any; onClose: () => void }) {
   );
 }
 
-function JobDetailPage({ id }: { id: string }) {
+export function JobDetailPage({ id }: { id: string }) {
   const { t, dateTime, enumLabel, text, money } = useI18n();
   const q = useApi<any>(`/service-orders/${id}`, { refetchInterval: 20_000 });
   const { query, setQuery } = useRouter();
@@ -434,7 +365,7 @@ function bakuParts(iso: string) {
   return { day: d.toISOString().slice(0, 10), hour: d.getUTCHours(), minute: d.getUTCMinutes() };
 }
 
-function SchedulePage() {
+export function SchedulePage() {
   const { t, locale, time } = useI18n();
   const [offset, setOffset] = useState(0);
   const start = useMemo(() => {
@@ -531,7 +462,7 @@ function BlockDialog({ onClose }: { onClose: () => void }) {
 /* İxtisaslar (§14)                                                     */
 /* ------------------------------------------------------------------ */
 
-function SpecializationsPage() {
+export function SpecializationsPage() {
   const { t, enumLabel, date } = useI18n();
   const q = useApi<any>("/technician/specializations");
   const refresh = useRefresh();
@@ -594,7 +525,7 @@ function SpecDialog({ available, onClose }: { available: any[]; onClose: () => v
 /* Anbar və rezervlər (§27, §39)                                        */
 /* ------------------------------------------------------------------ */
 
-function InventoryPage() {
+export function InventoryPage() {
   const { t, qty, money, dateTime, enumLabel, text } = useI18n();
   const [search, setSearch] = useState("");
   const q = useApi<any>(`/technician/inventory${qs({ q: search, pageSize: 50 })}`);
@@ -649,7 +580,7 @@ function InventoryPage() {
   );
 }
 
-function ReservationsPage() {
+export function ReservationsPage() {
   const { t, qty, dateTime, enumLabel, text, relative } = useI18n();
   const q = useApi<any>("/technician/reservations?pageSize=50");
   const refresh = useRefresh();
@@ -720,7 +651,7 @@ function ReservationDialog({ onClose }: { onClose: () => void }) {
 /* Müştərilər, qazanc, rəylər, sənədlər, statistika, ayarlar            */
 /* ------------------------------------------------------------------ */
 
-function CustomersPage() {
+export function CustomersPage() {
   const { t, date } = useI18n();
   const q = useApi<any>("/technician/customers?pageSize=100");
   const refresh = useRefresh();
@@ -757,7 +688,7 @@ function CustomersPage() {
   );
 }
 
-function EarningsPage() {
+export function EarningsPage() {
   const { t, money, date, enumLabel } = useI18n();
   const q = useApi<any>("/technician/earnings");
   const [handover, setHandover] = useState(false);
@@ -824,7 +755,7 @@ function EarningsPage() {
   );
 }
 
-function TechReviewsPage() {
+export function TechReviewsPage() {
   const { t, date } = useI18n();
   const q = useApi<any>("/technician/reviews?pageSize=50");
   const refresh = useRefresh();
@@ -858,7 +789,7 @@ function TechReviewsPage() {
   );
 }
 
-function TechDocumentsPage() {
+export function TechDocumentsPage() {
   const { t, date, enumLabel } = useI18n();
   const q = useApi<any>("/technician/documents");
   const refresh = useRefresh();
@@ -904,7 +835,7 @@ function TechDocumentsPage() {
   );
 }
 
-function StatisticsPage() {
+export function StatisticsPage() {
   const { t, text } = useI18n();
   const q = useApi<any>("/technician/statistics");
   return (
@@ -944,7 +875,7 @@ function StatisticsPage() {
 
 const DAYS = [1, 2, 3, 4, 5, 6, 0];
 
-function TechSettingsPage() {
+export function TechSettingsPage() {
   const { t, text } = useI18n();
   const q = useApi<any>("/technician/settings");
   const { ent } = useSession();
