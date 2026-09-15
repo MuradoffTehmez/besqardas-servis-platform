@@ -129,6 +129,10 @@ docs/           PRD, demo, audit və release sənədləri
 | `pnpm typecheck`              | Workspace TypeScript yoxlamalarını işlədir                      |
 | `pnpm test`                   | Vitest unit və inteqrasiya testlərini işlədir                   |
 | `pnpm test:e2e`               | Playwright kritik axın, SEO və a11y testlərini işlədir          |
+| `pnpm test:visual`            | Desktop və mobil vizual reqressiya etalonlarını müqayisə edir   |
+| `pnpm perf:lighthouse`        | İşləyən serverlərə Lighthouse CI büdcələrini tətbiq edir         |
+| `pnpm storybook`              | `@sp/ui` komponent kataloqunu 6006 portunda açır                |
+| `pnpm build-storybook`        | Statik komponent kataloqunu `storybook-static`-ə yığır          |
 | `node scripts/check-i18n.mjs` | İtkin və artıq tərcümə açarlarını yoxlayır                      |
 | `pnpm check`                  | Lint, typecheck, i18n, test və build qapılarını ardıcıl işlədir |
 | `pnpm format`                 | Dəstəklənən faylları Prettier ilə formatlayır                   |
@@ -171,9 +175,12 @@ Phase 1 üçün real provider credential-ları və production backend bu repoya 
 
 - Unit testlər: axtarış normallaşdırması və i18n utilitləri
 - İnteqrasiya testləri: mock API, RBAC, servis state machine-ləri, checkout və anbar axınları
-- E2E: autentifikasiya, geri yönləndirmə, servis sifarişi, smeta, kataloq, checkout, mobil menyu, kuryer və usta axınları
+- E2E: autentifikasiya, geri yönləndirmə, servis sifarişi, smeta, usta qəbulu → icra → təhvil, kataloq, checkout, mobil menyu, kuryer və klaviatura axınları
 - SEO: SSR məzmunu, canonical, `hreflang`, JSON-LD, sitemap, robots və 404
 - Əlçatanlıq: əsas public və kabinet səhifələrində axe WCAG 2.2 AA kritik pozuntu yoxlaması
+- Performans: Core Web Vitals (LCP, CLS, TTFB) E2E büdcələri və Lighthouse CI workflow-u
+- Vizual reqressiya: login, qeydiyyat, planlar, FAQ və 404 üçün desktop/mobil etalonlar
+- Komponent kataloqu: Storybook 10 (UI kit və domen kartları)
 
 Cari audit 205 route tərifini statik olaraq xəritələyib və kritik istifadəçi axınlarını brauzerdə yoxlayıb. Əhatə və açıq risklər [PROJECT_AUDIT.md](docs/PROJECT_AUDIT.md)-dədir.
 
@@ -195,6 +202,7 @@ Bu demo production sistemi deyil. Aşağıdakılar ayrıca backend və infrastru
 - [Demo əhatəsi və təqdimat ssenarisi](docs/DEMO.md)
 - [Layihə auditi](docs/PROJECT_AUDIT.md)
 - [Release prosesi](docs/RELEASING.md)
+- [Brauzer qəbul protokolu](docs/ACCEPTANCE.md)
 - [Dəyişiklik tarixçəsi](CHANGELOG.md)
 - [GitHub Wiki](https://github.com/MuradoffTehmez/besqardas-servis-platform/wiki)
 - [Töhfə qaydaları](CONTRIBUTING.md)
