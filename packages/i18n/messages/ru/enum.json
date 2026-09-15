@@ -543,7 +543,52 @@
       "integrations": "Интеграции",
       "kpi_targets": "Цели KPI",
       "settings": "Настройки",
-      "branches": "Филиалы"
+      "branches": "Филиалы",
+      "tickets": "Обращения (Help Desk)"
+    },
+    "TicketStatus": {
+      "NEW": "Новое",
+      "OPEN": "В работе",
+      "PENDING_CUSTOMER": "Ждём ответа клиента",
+      "ON_HOLD": "Отложено",
+      "RESOLVED": "Решено",
+      "CLOSED": "Закрыто"
+    },
+    "TicketPriority": {
+      "LOW": "Низкий",
+      "NORMAL": "Обычный",
+      "HIGH": "Высокий",
+      "URGENT": "Срочный"
+    },
+    "TicketChannel": {
+      "WEB_FORM": "Форма на сайте",
+      "PORTAL": "Кабинет",
+      "PHONE": "Телефон",
+      "EMAIL": "E-mail",
+      "WHATSAPP": "WhatsApp",
+      "INTERNAL": "Внутренний"
+    },
+    "TicketQueue": {
+      "GENERAL": "Общая поддержка",
+      "SERVICE": "Сервис",
+      "SALES": "Продажи",
+      "BILLING": "Финансы",
+      "WARRANTY": "Гарантия",
+      "TECHNICAL": "Технический"
+    },
+    "TicketSlaState": {
+      "ON_TRACK": "В срок",
+      "AT_RISK": "Под угрозой",
+      "BREACHED": "Нарушен",
+      "PAUSED": "На паузе",
+      "MET": "Выполнен"
+    },
+    "TicketRelatedType": {
+      "SERVICE_ORDER": "Сервисный заказ",
+      "SALES_ORDER": "Заказ товара",
+      "WARRANTY": "Гарантия",
+      "PAYMENT": "Платёж",
+      "RETURN": "Возврат"
     },
     "EmploymentType": {
       "STAFF": "Штатный мастер",

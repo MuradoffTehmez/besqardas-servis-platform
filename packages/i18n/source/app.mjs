@@ -91,6 +91,8 @@ export default {
   },
   validation: {
     emailRequired: ["Bu seçim üçün e-poçt ünvanı lazımdır", "Для этого нужен e-mail", "An email address is required for this"],
+    subjectMin: ["Mövzu ən azı 5 simvol olmalıdır", "Тема — не менее 5 символов", "Subject must be at least 5 characters"],
+    contactRequired: ["Telefon və ya e-poçt göstərin", "Укажите телефон или e-mail", "Enter a phone number or email"],
     linesRequired: ["Ən azı bir məhsul əlavə edin", "Добавьте хотя бы один товар", "Add at least one item"],
     fileInvalid: ["Fayl oxunmadı", "Не удалось прочитать файл", "The file couldn't be read"],
     tooManyFiles: ["Çox sayda fayl", "Слишком много файлов", "Too many files"],
@@ -1070,6 +1072,9 @@ export default {
     consent: ["Fərdi məlumatlarımın müraciətin cavablandırılması üçün emalına razıyam", "Согласен на обработку данных для ответа", "I consent to processing my data to answer my request"],
     send: ["Göndər", "Отправить", "Send"],
     sent: ["Mesajınız göndərildi. Tezliklə cavab verəcəyik.", "Сообщение отправлено. Скоро ответим.", "Message sent. We'll reply soon."],
+    ticketNumber: ["Müraciət nömrəniz: {number}", "Номер обращения: {number}", "Your request number: {number}"],
+    track: ["Müraciəti kabinetdə izlə", "Отслеживать в кабинете", "Track it in your account"],
+    trackHint: ["Hesabınıza daxil olsanız, bütün müraciətlərinizi və cavabları kabinetdə görə bilərsiniz.", "Войдите в аккаунт, чтобы видеть обращения и ответы в кабинете.", "Sign in to see all your requests and replies in your account."],
   },
   panel: {
     toSite: ["Sayta keç", "На сайт", "Go to website"],

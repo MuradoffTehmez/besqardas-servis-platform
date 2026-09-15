@@ -543,7 +543,52 @@
       "integrations": "Integrations",
       "kpi_targets": "KPI targets",
       "settings": "Settings",
-      "branches": "Branches"
+      "branches": "Branches",
+      "tickets": "Tickets (Help Desk)"
+    },
+    "TicketStatus": {
+      "NEW": "New",
+      "OPEN": "Open",
+      "PENDING_CUSTOMER": "Awaiting customer",
+      "ON_HOLD": "On hold",
+      "RESOLVED": "Resolved",
+      "CLOSED": "Closed"
+    },
+    "TicketPriority": {
+      "LOW": "Low",
+      "NORMAL": "Normal",
+      "HIGH": "High",
+      "URGENT": "Urgent"
+    },
+    "TicketChannel": {
+      "WEB_FORM": "Website form",
+      "PORTAL": "Portal",
+      "PHONE": "Phone",
+      "EMAIL": "Email",
+      "WHATSAPP": "WhatsApp",
+      "INTERNAL": "Internal"
+    },
+    "TicketQueue": {
+      "GENERAL": "General support",
+      "SERVICE": "Service",
+      "SALES": "Sales",
+      "BILLING": "Billing",
+      "WARRANTY": "Warranty",
+      "TECHNICAL": "Technical"
+    },
+    "TicketSlaState": {
+      "ON_TRACK": "On track",
+      "AT_RISK": "At risk",
+      "BREACHED": "Breached",
+      "PAUSED": "Paused",
+      "MET": "Met"
+    },
+    "TicketRelatedType": {
+      "SERVICE_ORDER": "Service order",
+      "SALES_ORDER": "Product order",
+      "WARRANTY": "Warranty",
+      "PAYMENT": "Payment",
+      "RETURN": "Return"
     },
     "EmploymentType": {
       "STAFF": "Staff",
