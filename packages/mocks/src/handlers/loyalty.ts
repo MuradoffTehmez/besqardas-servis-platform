@@ -105,11 +105,12 @@ export const loyaltyHandlers = [
       refereeBonusPoints: num("refereeBonusPoints", 0, 100000),
       referralQualifyCents: num("referralQualifyCents", 0, 100000000),
     };
+    let nextTiers: typeof p.tiers | undefined;
     if (Array.isArray(data.tiers)) {
       const tiers = data.tiers as { tier: LoyaltyTierCode; thresholdPoints: number; multiplier: number; cashbackPercent: number; extraDiscountPercent: number }[];
       if (tiers.some((t) => !TIERS.includes(t.tier) || Number(t.thresholdPoints) < 0 || Number(t.multiplier) < 1 || Number(t.cashbackPercent) < 0 || Number(t.cashbackPercent) > 20)) errors.tiers = ["validation.invalid"];
       else {
-        p.tiers = TIERS.map((code) => {
+        nextTiers = TIERS.map((code) => {
           const incoming = tiers.find((t) => t.tier === code);
           const current = p.tiers.find((t) => t.tier === code)!;
           return incoming ? { ...current, thresholdPoints: Math.round(Number(incoming.thresholdPoints)), multiplier: Number(incoming.multiplier), cashbackPercent: Number(incoming.cashbackPercent), extraDiscountPercent: Number(incoming.extraDiscountPercent) } : current;
@@ -128,6 +129,10 @@ export const loyaltyHandlers = [
     if (typeof data.active === "boolean" && data.active !== p.active) {
       changes.push({ field: "active", from: String(p.active), to: String(data.active) });
       p.active = data.active;
+    }
+    if (nextTiers) {
+      changes.push({ field: "tiers", from: JSON.stringify(p.tiers), to: JSON.stringify(nextTiers) });
+      p.tiers = nextTiers;
     }
     if (changes.length) audit(ctx, "edit", "loyalty", "program", "Loyallıq proqramı", changes);
     return { program: programDto(), stats: stats() };

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { getResponse } from "msw";
 import { handlers } from "./index";
 import { reset } from "../seed";
+import { db } from "../db/state";
 
 /** Loyallıq testləri: xal toplama, FIFO xərcləmə, keşbek, səviyyə, referral və admin idarəetməsi. */
 
@@ -26,7 +27,13 @@ async function buy(cookie: string, opts: { redeemPoints?: number; useWallet?: bo
   const product = (await call("GET", "/products/lg-dualcool-inverter", undefined, cookie)).data;
   const add = await call("POST", "/cart/items", { variantId: product.variants[0].id, quantity: "1", unit: "pcs", withInstallation: false }, cookie);
   expect(add.status, JSON.stringify(add.data)).toBe(200);
-  const options = (await call("GET", "/checkout/options", undefined, cookie)).data;
+  const query = new URLSearchParams({
+    deliveryMethod: "PICKUP",
+    paymentMethod: opts.paymentMethod ?? "CARD_ONLINE",
+    redeemPoints: String(opts.redeemPoints ?? 0),
+    useWallet: String(opts.useWallet ?? false),
+  });
+  const options = (await call("GET", `/checkout/options?${query}`, undefined, cookie)).data;
   const address = options.addresses[0];
   const r = await call(
     "POST",
@@ -71,14 +78,15 @@ describe("Loyallıq və referral", () => {
     const plainOrder = (await call("GET", `/account/orders/${plain.checkout.data.salesOrderId}`, undefined, cookie)).data;
 
     // Eyni məhsul, amma xal + keşbeklə
-    const loyalty = (await call("GET", "/checkout/options", undefined, cookie)).data;
-    expect(loyalty).toBeTruthy();
     const withPoints = await buy(cookie, { redeemPoints: before.points >= 400 ? 400 : 0, useWallet: true });
     expect(withPoints.checkout.status, JSON.stringify(withPoints.checkout.data)).toBe(200);
     const discounted = (await call("GET", `/account/orders/${withPoints.checkout.data.salesOrderId}`, undefined, cookie)).data;
     expect(Number(discounted.total.amount)).toBeLessThan(Number(plainOrder.total.amount));
     expect(discounted.appliedDiscounts.some((d: any) => d.code === "LOYALTY_POINTS")).toBe(true);
     expect(discounted.appliedDiscounts.some((d: any) => d.code === "LOYALTY_WALLET")).toBe(true);
+    expect(withPoints.options.loyalty.appliedRedeemPoints).toBe(400);
+    expect(Number(withPoints.options.loyalty.walletApplied.amount)).toBeGreaterThan(0);
+    expect(Number(withPoints.options.payableTotal.amount)).toBe(Number(discounted.total.amount));
 
     const afterRedeem = (await call("GET", "/account/loyalty", undefined, cookie)).data.account;
     expect(afterRedeem.points).toBe(before.points - 400);
@@ -124,6 +132,13 @@ describe("Loyallıq və referral", () => {
     expect(inviteeFinal.transactions.some((t: any) => t.type === "EARN_REFERRAL" && t.points === 300)).toBe(true);
   });
 
+  it("referral: mövcud olmayan dəvət kodu hesab yaradılmadan rədd edilir", async () => {
+    const reg = await call("POST", "/auth/register", { method: "EMAIL", firstName: "Yanlış", lastName: "Kod", email: "wrong-ref@demo.az", password: "Demo1234!", acceptTerms: true, locale: "az", referralCode: "YALNIS99" });
+    expect(reg.status).toBe(422);
+    expect(reg.data.fieldErrors.referralCode).toEqual(["validation.referralCode"]);
+    expect(db.users.some((u) => u.email === "wrong-ref@demo.az")).toBe(false);
+  });
+
   it("admin: statistika, üzvlər, əl ilə düzəliş və proqram parametrləri", async () => {
     const manager = await login("manager@demo.az");
     const overview = await call("GET", "/admin/loyalty", undefined, manager);
@@ -143,8 +158,11 @@ describe("Loyallıq və referral", () => {
     expect(adjusted.data.account.points).toBe(target.points + 250);
     expect(adjusted.data.transactions[0].type).toBe("ADJUST");
 
-    const invalid = await call("PUT", "/admin/loyalty", { maxRedeemSharePercent: 500 }, manager);
+    const silverBefore = overview.data.program.tiers.find((t: any) => t.tier === "SILVER").thresholdPoints;
+    const invalid = await call("PUT", "/admin/loyalty", { maxRedeemSharePercent: 500, tiers: [{ tier: "SILVER", thresholdPoints: 9999, multiplier: 1.15, cashbackPercent: 2.5, extraDiscountPercent: 2 }] }, manager);
     expect(invalid.status).toBe(422);
+    const afterInvalid = await call("GET", "/admin/loyalty", undefined, manager);
+    expect(afterInvalid.data.program.tiers.find((t: any) => t.tier === "SILVER").thresholdPoints).toBe(silverBefore);
     const saved = await call("PUT", "/admin/loyalty", { pointsPerAznService: 3, maxRedeemSharePercent: 40, tiers: [{ tier: "SILVER", thresholdPoints: 2500, multiplier: 1.15, cashbackPercent: 2.5, extraDiscountPercent: 2 }] }, manager);
     expect(saved.status, JSON.stringify(saved.data)).toBe(200);
     expect(saved.data.program.pointsPerAznService).toBe(3);

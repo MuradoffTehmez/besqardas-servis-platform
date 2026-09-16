@@ -3,6 +3,7 @@ import { can, fullName, isManager, type Ctx } from "../engine/context";
 import { audit, notify } from "../engine/effects";
 import { createServiceOrder } from "../engine/orders";
 import { estimateTotals, isDone, latestEstimate, orderAmounts, rankTechnicians } from "../engine/workflow";
+import { accountDto } from "../engine/loyalty";
 import { find, list, notFound, requireAuth, requirePerm, route, validationError } from "../lib/http";
 import { apiError } from "../lib/errors";
 import { L } from "../lib/i18n";
@@ -295,6 +296,7 @@ export const adminOpsHandlers = [
       salesOrders: db.salesOrders.filter((s) => s.customerId === u.id).map((s) => ({ id: s.id, number: s.number, status: s.status, total: money(s.totalCents), createdAt: s.createdAt })),
       payments: db.payments.filter((p) => p.payerId === u.id).slice(0, 10).map((p) => ({ id: p.id, number: p.number, status: p.status, amount: money(p.amountCents), method: p.method, createdAt: p.createdAt })),
       warranties: db.warranties.filter((w) => w.customerId === u.id).map(warrantyDto),
+      loyalty: accountDto(u.id),
       consent: { personalData: true, marketing: u.marketingConsent },
     };
   }),

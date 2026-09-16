@@ -359,6 +359,7 @@ export function txnDto(t: LoyaltyTxnRec) {
 export function referralDto(r: ReferralRec) {
   return {
     id: r.id,
+    code: r.code,
     status: r.status,
     inviteeName: r.inviteeName,
     inviterName: fullName(userById(r.inviterId)),

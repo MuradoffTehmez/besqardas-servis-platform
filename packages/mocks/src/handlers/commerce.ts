@@ -36,15 +36,21 @@ function ensureGuestKey(ctx: Ctx): [string, string][] {
 }
 
 /** Checkout-da xal və keşbekin mövcud limitləri (hesablama backend-dədir, §64). */
-function loyaltyBlock(ctx: Ctx, totalCents: number) {
+function loyaltyBlock(ctx: Ctx, totalCents: number, requestedPoints = 0, useWallet = false) {
   const p = program();
-  if (!p.active || !loyaltyEligible(ctx.user) || !!ctx.company) return { available: false, points: 0, pointValue: money(p.pointValueCents ?? 0), minRedeemPoints: 0, maxRedeemPoints: 0, maxRedeemAmount: money(0), walletBalance: money(0), maxWalletAmount: money(0), earnPoints: 0, cashbackAmount: money(0) };
+  if (!p.active || !loyaltyEligible(ctx.user) || !!ctx.company) return { available: false, points: 0, pointValue: money(p.pointValueCents ?? 0), minRedeemPoints: 0, maxRedeemPoints: 0, maxRedeemAmount: money(0), walletBalance: money(0), maxWalletAmount: money(0), appliedRedeemPoints: 0, redeemAmount: money(0), walletApplied: money(0), earnPoints: 0, cashbackAmount: money(0), cashCents: totalCents };
   expirePoints();
   const account = ensureAccount(ctx.user!.id)!;
   const limits = redeemLimits(ctx.user!.id, totalCents);
   const rule = tierRule(account.tier);
-  const afterPoints = Math.max(0, totalCents - limits.maxRedeemCents);
-  const wallet = Math.min(account.walletCents, afterPoints);
+  const appliedRedeemPoints = requestedPoints > 0 && limits.maxRedeemPoints >= limits.minRedeemPoints
+    ? Math.min(limits.maxRedeemPoints, Math.max(limits.minRedeemPoints, Math.floor(requestedPoints)))
+    : 0;
+  const redeemCents = appliedRedeemPoints * p.pointValueCents;
+  const afterPoints = Math.max(0, totalCents - redeemCents);
+  const maxWalletCents = Math.min(account.walletCents, afterPoints);
+  const walletCents = useWallet ? maxWalletCents : 0;
+  const cashCents = Math.max(0, afterPoints - walletCents);
   return {
     available: true,
     points: account.points,
@@ -53,9 +59,13 @@ function loyaltyBlock(ctx: Ctx, totalCents: number) {
     maxRedeemPoints: limits.maxRedeemPoints,
     maxRedeemAmount: money(limits.maxRedeemCents),
     walletBalance: money(account.walletCents),
-    maxWalletAmount: money(wallet),
-    earnPoints: Math.floor((totalCents / 100) * p.pointsPerAznProduct * rule.multiplier),
-    cashbackAmount: money(Math.round((totalCents * rule.cashbackPercent) / 100)),
+    maxWalletAmount: money(maxWalletCents),
+    appliedRedeemPoints,
+    redeemAmount: money(redeemCents),
+    walletApplied: money(walletCents),
+    earnPoints: Math.floor((cashCents / 100) * p.pointsPerAznProduct * rule.multiplier),
+    cashbackAmount: money(Math.round((cashCents * rule.cashbackPercent) / 100)),
+    cashCents,
   };
 }
 
@@ -125,7 +135,16 @@ export const commerceHandlers = [
     const needsInstallation = cart.items.some((i) => i.withInstallation);
     const b2b = !!ctx.company;
     const method = url.searchParams.get("deliveryMethod") ?? "COURIER";
+    const paymentMethod = url.searchParams.get("paymentMethod") ?? "CARD_ONLINE";
+    const requestedPoints = Number(url.searchParams.get("redeemPoints") ?? 0);
+    const useWallet = url.searchParams.get("useWallet") === "true";
+    const installmentMonths = Number(url.searchParams.get("installmentMonths") ?? 12);
     const totalCents = c._raw.total + deliveryPrice(c._raw.subtotal, method);
+    const loyaltyResult = loyaltyBlock(ctx, totalCents, Number.isFinite(requestedPoints) ? requestedPoints : 0, useWallet);
+    const installmentOffers = b2b ? [] : installmentPlans(loyaltyResult.cashCents);
+    const selectedOffer = paymentMethod === "INSTALLMENT" ? installmentOffers.find((offer) => offer.months === installmentMonths) : null;
+    const payableCents = selectedOffer ? Math.round(Number(selectedOffer.total.amount) * 100) : loyaltyResult.cashCents;
+    const { cashCents: _cashCents, ...loyalty } = loyaltyResult;
     const ownerId = ctx.role === "CORPORATE_CUSTOMER" || b2b ? user.companyId! : user.id;
     return {
       deliveryMethods: [
@@ -148,13 +167,14 @@ export const commerceHandlers = [
         { method: "BANK_TRANSFER", label: t("pay.transfer", ctx.locale), available: b2b, note: b2b ? null : t("pay.b2bOnly", ctx.locale) },
         { method: "BALANCE", label: t("pay.balance", ctx.locale), available: b2b && ctx.company!.paymentTerms === "DEFERRED", note: b2b ? null : t("pay.b2bOnly", ctx.locale) },
       ],
-      installmentOffers: b2b ? [] : installmentPlans(totalCents),
+      installmentOffers,
       installationSlots: needsInstallation
         ? [1, 2, 3, 4, 5].map((d) => ({ date: bakuAt(d, 0).slice(0, 10), slots: [10, 13, 16].map((h) => ({ start: bakuAt(d, h), end: bakuAt(d, h + 3), available: (d + h) % 4 !== 0 })) }))
         : [],
       requiresInvoiceDetails: b2b,
       needsInstallation,
-      loyalty: loyaltyBlock(ctx, totalCents),
+      loyalty,
+      payableTotal: money(payableCents),
       company: ctx.company ? { name: ctx.company.legalName, voen: ctx.company.voen, creditAvailable: money(ctx.company.creditLimitCents - ctx.company.debtCents) } : null,
       summary: (({ _raw, ...rest }) => rest)({ ...c, totals: { ...c.totals, deliveryTotal: money(deliveryPrice(c._raw.subtotal, method)), total: money(totalCents) } }),
     };

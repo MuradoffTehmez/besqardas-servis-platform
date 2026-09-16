@@ -186,6 +186,10 @@ export const authHandlers = [
 
   route.post("/auth/register", async ({ body, request, ctx }) => {
     const data = parse(S.RegisterCustomerRequest, await body());
+    const referralCode = data.referralCode?.trim().toUpperCase();
+    if (referralCode && !db.loyaltyAccounts.some((a) => a.referralCode === referralCode)) {
+      throw validationError({ referralCode: ["validation.referralCode"] });
+    }
     if (data.method === "EMAIL") {
       if (db.users.some((u) => u.email?.toLowerCase() === data.email!.toLowerCase())) throw validationError({ email: ["validation.alreadyExists"] });
       const user = createCustomer({ firstName: data.firstName, lastName: data.lastName, phone: data.phone ?? null, email: data.email!, password: data.password!, locale: data.locale, marketingConsent: data.marketingConsent, referralCode: data.referralCode ?? null });
