@@ -6,6 +6,7 @@ import { can, fullName, isInternal, type Ctx } from "../engine/context";
 import { createServiceOrder } from "../engine/orders";
 import { applyAction, decideEstimate, latestEstimate, orderAmounts, estimateTotals, isDone } from "../engine/workflow";
 import { notify, recordPayment, audit } from "../engine/effects";
+import { earnReviewBonus } from "../engine/loyalty";
 import { find, list, notFound, parse, requireAuth, route, validationError } from "../lib/http";
 import { apiError } from "../lib/errors";
 import { L } from "../lib/i18n";
@@ -572,6 +573,11 @@ export const accountHandlers = [
     }
     const rec = { id: newId("review"), target: data.target, targetId: data.targetId, orderId: data.orderId ?? null, authorId: u.id, authorName: `${u.firstName} ${u.lastName.slice(0, 1)}.`, rating: data.rating, criteria: data.criteria, pros: data.pros ?? null, cons: data.cons ?? null, comment: data.comment, photos: 0, status: "PENDING" as const, reply: null, reported: false, createdAt: nowIso() };
     db.reviews.unshift(rec);
+    // Rəy üçün loyallıq bonusu — hər sifariş üzrə yalnız bir dəfə (§A2)
+    const reviewedOrder = data.orderId ? db.serviceOrders.find((o) => o.id === data.orderId) ?? null : null;
+    if (reviewedOrder && !db.loyaltyTxns.some((t) => t.type === "EARN_REVIEW" && t.userId === u.id && t.orderNumber === reviewedOrder.number)) {
+      earnReviewBonus(u.id, reviewedOrder.number);
+    }
     if (data.rating <= 3) notify(db.users.find((x) => x.roles.includes("MANAGER"))?.id, "LOW_RATING", "notif.orderConfirmed", L(`Aşağı reytinqli rəy: ${data.rating} ulduz`), "/reviews");
     return rec;
   }),

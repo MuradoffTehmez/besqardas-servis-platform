@@ -177,7 +177,8 @@
       "gSupport": "Müştəri dəstəyi",
       "tickets": "Müraciətlər",
       "ticketCategories": "Müraciət kateqoriyaları",
-      "cannedResponses": "Hazır cavablar"
+      "cannedResponses": "Hazır cavablar",
+      "loyalty": "Loyallıq proqramı"
     },
     "tickets": {
       "subtitle": "Bütün kanallardan gələn müraciətlər, SLA nəzarəti və cavablar",
@@ -317,6 +318,79 @@
       "catSubtitle": "Mövzular, növbələr və prioritet üzrə SLA hədəfləri",
       "slaHint": "Hər prioritet üçün dəqiqə ilə ilk cavab və həll müddəti",
       "cannedSubtitle": "Operatorların tez-tez istifadə etdiyi cavab şablonları (AZ/RU/EN)"
+    },
+    "loyalty": {
+      "subtitle": "Xal, keşbek, səviyyələr və dəvət proqramının idarə edilməsi",
+      "tabs": {
+        "overview": "İcmal",
+        "members": "Üzvlər",
+        "transactions": "Xal hərəkətləri",
+        "referrals": "Dəvətlər",
+        "settings": "Parametrlər"
+      },
+      "stats": {
+        "members": "Proqram üzvləri",
+        "active": "{count} aktiv balans",
+        "outstanding": "Qalıq xal",
+        "liability": "Öhdəlik: {value}",
+        "redemption": "Xərclənmə nisbəti",
+        "issued": "{issued} verilib · {redeemed} xərclənib",
+        "wallet": "Keşbek qalığı",
+        "cashbackPaid": "Ümumi keşbek: {value}",
+        "expired": "Müddəti bitmiş xal",
+        "byTier": "Səviyyələr üzrə",
+        "referralFunnel": "Dəvət qıfı",
+        "conversion": "Konversiya {value}%"
+      },
+      "col": {
+        "member": "Üzv",
+        "tier": "Səviyyə",
+        "points": "Xal",
+        "lifetime": "Ümumi",
+        "wallet": "Keşbek",
+        "referrals": "Dəvət",
+        "lastActivity": "Son hərəkət",
+        "type": "Növ",
+        "customer": "Müştəri",
+        "amount": "Məbləğ",
+        "balance": "Balans",
+        "order": "Sifariş",
+        "date": "Tarix",
+        "inviter": "Dəvət edən",
+        "invitee": "Dəvət olunan",
+        "status": "Status",
+        "reward": "Mükafat",
+        "code": "Kod"
+      },
+      "adjust": "Xal düzəlişi",
+      "adjustHint": "Müsbət dəyər əlavə edir, mənfi dəyər silir. Səbəb audit log-a yazılır.",
+      "adjustPoints": "Xal (məsələn 250 və ya -100)",
+      "adjustReason": "Səbəb",
+      "adjustDone": "Balans yeniləndi: {points} xal",
+      "settings": {
+        "earn": "Xal toplama",
+        "spend": "Xərcləmə",
+        "bonuses": "Bonuslar və dəvətlər",
+        "tiers": "Səviyyələr",
+        "active": "Proqram aktivdir",
+        "activeHint": "Söndürülsə, yeni xal verilmir və xərcləmə bağlanır",
+        "pointsPerAznService": "Servisdə 1 ₼ üçün xal",
+        "pointsPerAznProduct": "Məhsulda 1 ₼ üçün xal",
+        "pointValueCents": "1 xalın dəyəri (qəpik)",
+        "minRedeemPoints": "Minimum xərclənən xal",
+        "maxRedeemSharePercent": "Sifarişin maksimum %-i",
+        "expiryMonths": "Xalın müddəti (ay)",
+        "signupBonusPoints": "Qeydiyyat bonusu",
+        "reviewBonusPoints": "Rəy bonusu",
+        "referrerBonusPoints": "Dəvət edənə bonus",
+        "refereeBonusPoints": "Dəvət olunana bonus",
+        "referralQualifyCents": "Minimum ilk sifariş (qəpik)",
+        "threshold": "Hədd (xal)",
+        "multiplier": "Xal əmsalı",
+        "cashback": "Keşbek %",
+        "extraDiscount": "Əlavə endirim %",
+        "saved": "Proqram parametrləri yadda saxlanıldı"
+      }
     },
     "pages": {
       "unitConversions": "Vahid çevirmələri"

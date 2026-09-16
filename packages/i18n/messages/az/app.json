@@ -91,6 +91,9 @@
   "validation": {
     "emailRequired": "Bu seçim üçün e-poçt ünvanı lazımdır",
     "subjectMin": "Mövzu ən azı 5 simvol olmalıdır",
+    "pointsRange": "Xal sayı icazə verilən aralıqda deyil",
+    "insufficientPoints": "Kifayət qədər xal yoxdur",
+    "referralCode": "Dəvət kodu tapılmadı",
     "contactRequired": "Telefon və ya e-poçt göstərin",
     "linesRequired": "Ən azı bir məhsul əlavə edin",
     "fileInvalid": "Fayl oxunmadı",
@@ -476,6 +479,8 @@
     "passwordHint": "Ən azı 8 simvol, hərf və rəqəm",
     "acceptTerms1": "Mən",
     "acceptTerms2": "və",
+    "referralCode": "Dəvət kodu",
+    "referralCodeHint": "Dostunuzun kodu varsa, hər ikiniz bonus xal qazanırsınız",
     "marketingConsent": "Kampaniya və yeniliklər barədə bildiriş almaq istəyirəm",
     "createAccount": "Hesab yarat",
     "confirmAndCreate": "Təsdiqlə və hesab yarat",
@@ -761,6 +766,19 @@
     "havePromo": "Promo kodunuz var?",
     "total": "Yekun məbləğ",
     "installationShort": "Quraşdırma"
+  },
+  "loyaltyCheckout": {
+    "title": "Xal və keşbek",
+    "points": "Balansınız: {points} xal ({value})",
+    "use": "Xalları istifadə et",
+    "pointsHint": "Minimum {min} xal · maksimum {max} xal ({amount})",
+    "wallet": "Keşbek pul kisəsi: {amount}",
+    "useWallet": "Pul kisəsindən {amount} istifadə et",
+    "earn": "Bu sifarişdən {points} xal və {cashback} keşbek qazanacaqsınız",
+    "discount": "Xal endirimi",
+    "walletDiscount": "Keşbek",
+    "apply": "Tətbiq et",
+    "notEnough": "Minimum {min} xal tələb olunur"
   },
   "checkout": {
     "title": "Sifarişin rəsmiləşdirilməsi",

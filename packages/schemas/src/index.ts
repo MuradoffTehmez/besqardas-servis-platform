@@ -11,3 +11,4 @@ export * from "./finance";
 export * from "./customer";
 export * from "./b2b";
 export * from "./support";
+export * from "./loyalty";

@@ -628,3 +628,66 @@ export interface TicketRec {
   createdAt: string;
   updatedAt: string;
 }
+
+/* ---------------- Loyallıq və referral ---------------- */
+
+export type LoyaltyTierCode = "BRONZE" | "SILVER" | "GOLD" | "PLATINUM";
+
+export interface LoyaltyProgramRec {
+  active: boolean;
+  pointsPerAznService: number;
+  pointsPerAznProduct: number;
+  pointValueCents: number;
+  minRedeemPoints: number;
+  maxRedeemSharePercent: number;
+  expiryMonths: number;
+  signupBonusPoints: number;
+  reviewBonusPoints: number;
+  referrerBonusPoints: number;
+  refereeBonusPoints: number;
+  referralQualifyCents: number;
+  tiers: { tier: LoyaltyTierCode; thresholdPoints: number; multiplier: number; cashbackPercent: number; extraDiscountPercent: number; perks: import("@sp/types").LocalizedText[] }[];
+}
+
+export interface LoyaltyAccountRec {
+  userId: string;
+  points: number;
+  walletCents: number;
+  lifetimePoints: number;
+  tier: LoyaltyTierCode;
+  tierSince: string;
+  referralCode: string;
+  referredBy: string | null;
+  createdAt: string;
+}
+
+export interface LoyaltyTxnRec {
+  id: string;
+  userId: string;
+  type: "EARN_ORDER" | "EARN_REVIEW" | "EARN_SIGNUP" | "EARN_REFERRAL" | "REDEEM" | "EXPIRE" | "ADJUST" | "CASHBACK_EARN" | "CASHBACK_SPEND";
+  /** Müsbət — toplanan, mənfi — xərclənən xal. */
+  points: number;
+  amountCents: number | null;
+  balanceAfter: number;
+  label: import("@sp/types").LocalizedText;
+  orderId: string | null;
+  orderNumber: string | null;
+  /** FIFO xərcləmə üçün bu qazancdan qalan xal. */
+  remaining: number;
+  expiresAt: string | null;
+  createdAt: string;
+}
+
+export interface ReferralRec {
+  id: string;
+  code: string;
+  inviterId: string;
+  inviteeId: string | null;
+  inviteeName: string;
+  status: "INVITED" | "REGISTERED" | "QUALIFIED" | "REWARDED" | "EXPIRED";
+  orderId: string | null;
+  orderNumber: string | null;
+  rewardPoints: number;
+  createdAt: string;
+  qualifiedAt: string | null;
+}

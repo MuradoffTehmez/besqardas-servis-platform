@@ -50,6 +50,11 @@ export function CustomerDetailPage({ id }: { id: string }) {
               <Card title={t("adm.people.profile")}>
                 <KeyValue cols={1} items={[[t("adm.f.roles"), c.roleLabels?.join(", ")], [t("adm.f.createdAt"), date(c.createdAt)], [t("adm.f.lastLogin"), c.lastLoginAt ? dateTime(c.lastLoginAt) : null], ["2FA", c.twoFactorEnabled ? t("common.yes") : t("common.no")], [t("adm.people.consent"), `${t("acc.security.personalData").split("(")[0]} ✓ · ${t("adm.people.marketing")}: ${c.consent.marketing ? t("common.yes") : t("common.no")}`]]} />
               </Card>
+              {c.loyalty && (
+                <Card title={t("adm.nav.loyalty")} actions={<EnumBadge group="LoyaltyTier" code={c.loyalty.tier} />}>
+                  <KeyValue cols={1} items={[[t("loyalty.points"), c.loyalty.points], [t("loyalty.wallet"), money(c.loyalty.walletBalance)], [t("loyalty.lifetime"), c.loyalty.lifetimePoints], [t("loyalty.code"), c.loyalty.referralCode]]} />
+                </Card>
+              )}
               <Card title={t("acc.nav.addresses")}>
                 {c.addresses.length ? <ul className="kit-list">{c.addresses.map((a: any) => <li key={a.id}><span className="grow"><strong>{a.label}</strong><small className="block text-muted">{a.city}, {a.street}</small></span>{a.isDefault && <span className="badge badge-success">{t("acc.addresses.default")}</span>}</li>)}</ul> : <EmptyState />}
                 {c.addresses.some((a: any) => a.location) && <MapView height={180} points={c.addresses.filter((a: any) => a.location).map((a: any) => ({ id: a.id, lat: a.location.lat, lng: a.location.lng, label: a.label }))} className="mt-3" />}

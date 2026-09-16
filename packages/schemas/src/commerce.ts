@@ -75,6 +75,9 @@ export const CheckoutRequest = z.object({
   installmentMonths: z.number().nullable().optional(),
   invoice: z.object({ companyName: z.string(), voen: z.string(), bankAccount: z.string().optional() }).nullable().optional(),
   note: z.string().optional(),
+  /** Loyallıq: xərclənən xal və keşbek pul kisəsindən istifadə. */
+  redeemPoints: z.number().int().min(0).optional(),
+  useWallet: z.boolean().optional(),
   idempotencyKey: z.string(),
 });
 

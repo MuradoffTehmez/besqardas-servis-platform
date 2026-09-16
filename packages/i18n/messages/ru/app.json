@@ -91,6 +91,9 @@
   "validation": {
     "emailRequired": "Для этого нужен e-mail",
     "subjectMin": "Тема — не менее 5 символов",
+    "pointsRange": "Количество баллов вне допустимого диапазона",
+    "insufficientPoints": "Недостаточно баллов",
+    "referralCode": "Код приглашения не найден",
     "contactRequired": "Укажите телефон или e-mail",
     "linesRequired": "Добавьте хотя бы один товар",
     "fileInvalid": "Не удалось прочитать файл",
@@ -476,6 +479,8 @@
     "passwordHint": "Минимум 8 символов, буквы и цифры",
     "acceptTerms1": "Я принимаю",
     "acceptTerms2": "и",
+    "referralCode": "Код приглашения",
+    "referralCodeHint": "Если есть код друга — бонусные баллы получите оба",
     "marketingConsent": "Хочу получать акции и новости",
     "createAccount": "Создать аккаунт",
     "confirmAndCreate": "Подтвердить и создать",
@@ -761,6 +766,19 @@
     "havePromo": "Есть промокод?",
     "total": "Итого к оплате",
     "installationShort": "Установка"
+  },
+  "loyaltyCheckout": {
+    "title": "Баллы и кэшбэк",
+    "points": "Ваш баланс: {points} баллов ({value})",
+    "use": "Использовать баллы",
+    "pointsHint": "Минимум {min} · максимум {max} баллов ({amount})",
+    "wallet": "Кэшбэк-кошелёк: {amount}",
+    "useWallet": "Использовать {amount} из кошелька",
+    "earn": "За этот заказ вы получите {points} баллов и {cashback} кэшбэка",
+    "discount": "Скидка баллами",
+    "walletDiscount": "Кэшбэк",
+    "apply": "Применить",
+    "notEnough": "Требуется минимум {min} баллов"
   },
   "checkout": {
     "title": "Оформление заказа",

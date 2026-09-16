@@ -544,7 +544,32 @@
       "kpi_targets": "Цели KPI",
       "settings": "Настройки",
       "branches": "Филиалы",
-      "tickets": "Обращения (Help Desk)"
+      "tickets": "Обращения (Help Desk)",
+      "loyalty": "Лояльность и рефералы"
+    },
+    "LoyaltyTier": {
+      "BRONZE": "Бронза",
+      "SILVER": "Серебро",
+      "GOLD": "Золото",
+      "PLATINUM": "Платина"
+    },
+    "LoyaltyTxnType": {
+      "EARN_ORDER": "Баллы за заказ",
+      "EARN_REVIEW": "Бонус за отзыв",
+      "EARN_SIGNUP": "Бонус за регистрацию",
+      "EARN_REFERRAL": "Бонус за приглашение",
+      "REDEEM": "Списание баллов",
+      "EXPIRE": "Срок истёк",
+      "ADJUST": "Ручная корректировка",
+      "CASHBACK_EARN": "Кэшбэк",
+      "CASHBACK_SPEND": "Использование кэшбэка"
+    },
+    "ReferralStatus": {
+      "INVITED": "Приглашение отправлено",
+      "REGISTERED": "Зарегистрирован",
+      "QUALIFIED": "Условие выполнено",
+      "REWARDED": "Вознаграждён",
+      "EXPIRED": "Истёк"
     },
     "TicketStatus": {
       "NEW": "Новое",

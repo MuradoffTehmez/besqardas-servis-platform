@@ -5,14 +5,17 @@ import { seedServiceOrders } from "./orders";
 import { seedCommerce } from "./commerce";
 import { seedMisc } from "./misc";
 import { seedSupport } from "./support";
+import { seedLoyaltyExtras, seedLoyaltyProgram } from "./loyalty";
 
 function seedAll() {
   seedConfig();
+  seedLoyaltyProgram();
   seedStock();
   seedServiceOrders();
   seedCommerce();
   seedMisc();
   seedSupport();
+  seedLoyaltyExtras();
   db.auditLogs.sort((a, b) => b.at.localeCompare(a.at));
   db.notifications.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   db.payments.sort((a, b) => b.createdAt.localeCompare(a.createdAt));

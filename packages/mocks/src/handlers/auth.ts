@@ -12,6 +12,7 @@ import { daysFromNow, nowIso } from "../lib/time";
 import { DEMO_OTP, type UserRec } from "../data/people";
 import { mergeGuestCart, cartItemCount } from "./cartShared";
 import { audit } from "../engine/effects";
+import { onCustomerRegistered } from "../engine/loyalty";
 
 /** Autentifikasiya (PRD §9): e-poçt + şifrə, telefon + OTP, 2FA, rejim seçimi, qeydiyyat axınları. */
 
@@ -142,8 +143,8 @@ export const authHandlers = [
     if (data.code !== DEMO_OTP) throw apiError(422, "INVALID_OTP", "error.invalidOtp", { code: ["validation.otpInvalid"] });
     const challenge = raw.challengeId ? db.otpChallenges.get(raw.challengeId) : undefined;
     if (challenge?.purpose === "REGISTER" && challenge.payload) {
-      const p = challenge.payload as { firstName: string; lastName: string; locale: "az" | "ru" | "en"; marketingConsent: boolean };
-      const user = createCustomer({ firstName: p.firstName, lastName: p.lastName, phone: challenge.target, email: null, password: "", locale: p.locale, marketingConsent: p.marketingConsent });
+      const p = challenge.payload as { firstName: string; lastName: string; locale: "az" | "ru" | "en"; marketingConsent: boolean; referralCode?: string | null };
+      const user = createCustomer({ firstName: p.firstName, lastName: p.lastName, phone: challenge.target, email: null, password: "", locale: p.locale, marketingConsent: p.marketingConsent, referralCode: p.referralCode ?? null });
       user.phoneVerified = true;
       db.otpChallenges.delete(challenge.id);
       return respond(startSession(user, request), ctx);
@@ -185,16 +186,20 @@ export const authHandlers = [
 
   route.post("/auth/register", async ({ body, request, ctx }) => {
     const data = parse(S.RegisterCustomerRequest, await body());
+    const referralCode = data.referralCode?.trim().toUpperCase();
+    if (referralCode && !db.loyaltyAccounts.some((a) => a.referralCode === referralCode)) {
+      throw validationError({ referralCode: ["validation.referralCode"] });
+    }
     if (data.method === "EMAIL") {
       if (db.users.some((u) => u.email?.toLowerCase() === data.email!.toLowerCase())) throw validationError({ email: ["validation.alreadyExists"] });
-      const user = createCustomer({ firstName: data.firstName, lastName: data.lastName, phone: data.phone ?? null, email: data.email!, password: data.password!, locale: data.locale, marketingConsent: data.marketingConsent });
+      const user = createCustomer({ firstName: data.firstName, lastName: data.lastName, phone: data.phone ?? null, email: data.email!, password: data.password!, locale: data.locale, marketingConsent: data.marketingConsent, referralCode: data.referralCode ?? null });
       const result = startSession(user, request);
       if (result.status === "OK") result.redirectTo = "/verify?type=email";
       return respond(result, ctx);
     }
     if (findByPhone(data.phone!)) throw validationError({ phone: ["validation.alreadyExists"] });
     const id = newId("otp");
-    db.otpChallenges.set(id, { id, userId: null, target: normalizeAzPhone(data.phone!), purpose: "REGISTER", createdAt: nowIso(), payload: { firstName: data.firstName, lastName: data.lastName, locale: data.locale, marketingConsent: data.marketingConsent } });
+    db.otpChallenges.set(id, { id, userId: null, target: normalizeAzPhone(data.phone!), purpose: "REGISTER", createdAt: nowIso(), payload: { firstName: data.firstName, lastName: data.lastName, locale: data.locale, marketingConsent: data.marketingConsent, referralCode: data.referralCode ?? null } });
     return { status: "OTP_SENT", challengeId: id, maskedTarget: maskPhone(data.phone!), devCode: DEMO_OTP };
   }),
 
@@ -296,7 +301,7 @@ export const authHandlers = [
   route.get("/health", () => ({ ok: true, at: nowIso() }), { system: true, raw: true }),
 ];
 
-export function createCustomer(input: { firstName: string; lastName: string; phone: string | null; email: string | null; password: string; locale: "az" | "ru" | "en"; marketingConsent: boolean }): UserRec {
+export function createCustomer(input: { firstName: string; lastName: string; phone: string | null; email: string | null; password: string; locale: "az" | "ru" | "en"; marketingConsent: boolean; referralCode?: string | null }): UserRec {
   const user: UserRec = {
     id: newId("user"),
     firstName: input.firstName,
@@ -326,5 +331,7 @@ export function createCustomer(input: { firstName: string; lastName: string; pho
     city: "Bakı",
   };
   db.users.push(user);
+  // Qeydiyyat bonusu və dəvət kodunun bağlanması (§A2)
+  onCustomerRegistered(user, input.referralCode ?? null);
   return user;
 }

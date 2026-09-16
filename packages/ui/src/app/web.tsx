@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { Bell, CreditCard, FileText, Heart, HardDrive, LayoutDashboard, LifeBuoy, Lock, MapPin, Package, RotateCcw, ShieldCheck, Star, User, Users, Wrench, Crown } from "lucide-react";
+import { Award, Bell, CreditCard, FileText, Heart, HardDrive, LayoutDashboard, LifeBuoy, Lock, MapPin, Package, RotateCcw, ShieldCheck, Star, User, Users, Wrench, Crown } from "lucide-react";
 import { useI18n } from "./core/i18n";
 import { useSession } from "./core/session";
 import { AppProviders, RoutedApp, SystemPage, defaultShells, type InitialAppState, type ShellRender } from "./core/app";
@@ -20,6 +20,7 @@ import { DemoMapPage } from "./pages/demo";
 // Müştəri kabineti səhifələri ayrıca chunk-dır — public səhifələrin JS yükünə düşmür
 const Account = lazyPages(() => import("./pages/account"));
 const Support = lazyPages(() => import("./pages/support"));
+const Loyalty = lazyPages(() => import("./pages/loyalty"));
 
 /**
  * Müştəri saytı (apps/web): public sayt, auth, kabinet, usta paneli, B2B kabinetləri və kuryer interfeysi (PRD §60).
@@ -42,6 +43,7 @@ function AccountShell({ children }: { children: React.ReactNode }) {
     {
       label: t("acc.nav.finance"),
       items: [
+        { to: "/account/loyalty", label: t("loyalty.nav"), icon: Award },
         { to: "/account/subscription", label: t("acc.nav.subscription"), icon: Crown },
         { to: "/account/payments", label: t("acc.nav.payments"), icon: CreditCard },
         { to: "/account/documents", label: t("acc.nav.documents"), icon: FileText },
@@ -119,6 +121,7 @@ export const webRoutes: RouteDef[] = [
   { pattern: "/account/orders/:id", render: (p) => <Account.SalesOrderDetailPage id={p.id!} />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.orders" },
   { pattern: "/account/returns", render: () => <Account.ReturnsPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.returns" },
   { pattern: "/account/subscription", render: () => <Account.SubscriptionPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.subscription" },
+  { pattern: "/account/loyalty", render: () => <Loyalty.LoyaltyPage />, shell: "account", roles: CUSTOMER, titleKey: "loyalty.nav" },
   { pattern: "/account/payments", render: () => <Account.PaymentsPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.payments" },
   { pattern: "/account/warranties", render: () => <Account.WarrantiesPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.warranties" },
   { pattern: "/account/documents", render: () => <Account.DocumentsPage />, shell: "account", roles: CUSTOMER, titleKey: "acc.nav.documents" },
@@ -155,5 +158,4 @@ export function WebApp(ssr: InitialAppState) {
     </AppProviders>
   );
 }
-
 

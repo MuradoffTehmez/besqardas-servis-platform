@@ -47,6 +47,8 @@ export const RegisterCustomerRequest = z
     locale: Locale.default("az"),
     acceptTerms: z.literal(true, { message: "validation.acceptTerms" }),
     marketingConsent: z.boolean().default(false),
+    /** Dəvət kodu — referral proqramı. */
+    referralCode: z.string().trim().max(16).optional(),
   })
   .refine((v) => (v.method === "PHONE" ? !!v.phone : !!v.email && !!v.password), {
     message: "validation.required",

@@ -177,7 +177,8 @@
       "gSupport": "Customer support",
       "tickets": "Tickets",
       "ticketCategories": "Ticket categories",
-      "cannedResponses": "Canned responses"
+      "cannedResponses": "Canned responses",
+      "loyalty": "Loyalty programme"
     },
     "tickets": {
       "subtitle": "Tickets from every channel, SLA control and replies",
@@ -317,6 +318,79 @@
       "catSubtitle": "Topics, queues and SLA targets per priority",
       "slaHint": "First response and resolution minutes for each priority",
       "cannedSubtitle": "Reply templates agents use often (AZ/RU/EN)"
+    },
+    "loyalty": {
+      "subtitle": "Manage points, cashback, tiers and referrals",
+      "tabs": {
+        "overview": "Overview",
+        "members": "Members",
+        "transactions": "Points ledger",
+        "referrals": "Referrals",
+        "settings": "Settings"
+      },
+      "stats": {
+        "members": "Programme members",
+        "active": "{count} with a balance",
+        "outstanding": "Outstanding points",
+        "liability": "Liability: {value}",
+        "redemption": "Redemption rate",
+        "issued": "{issued} issued · {redeemed} redeemed",
+        "wallet": "Cashback balance",
+        "cashbackPaid": "Total cashback: {value}",
+        "expired": "Expired points",
+        "byTier": "By tier",
+        "referralFunnel": "Referral funnel",
+        "conversion": "Conversion {value}%"
+      },
+      "col": {
+        "member": "Member",
+        "tier": "Tier",
+        "points": "Points",
+        "lifetime": "Lifetime",
+        "wallet": "Cashback",
+        "referrals": "Invites",
+        "lastActivity": "Last activity",
+        "type": "Type",
+        "customer": "Customer",
+        "amount": "Amount",
+        "balance": "Balance",
+        "order": "Order",
+        "date": "Date",
+        "inviter": "Inviter",
+        "invitee": "Invitee",
+        "status": "Status",
+        "reward": "Reward",
+        "code": "Code"
+      },
+      "adjust": "Adjust points",
+      "adjustHint": "A positive value adds points, a negative one removes them. The reason is stored in the audit log.",
+      "adjustPoints": "Points (e.g. 250 or -100)",
+      "adjustReason": "Reason",
+      "adjustDone": "Balance updated: {points} points",
+      "settings": {
+        "earn": "Earning",
+        "spend": "Spending",
+        "bonuses": "Bonuses & referrals",
+        "tiers": "Tiers",
+        "active": "Programme is active",
+        "activeHint": "When off, no points are earned or spent",
+        "pointsPerAznService": "Points per 1 ₼ (service)",
+        "pointsPerAznProduct": "Points per 1 ₼ (products)",
+        "pointValueCents": "Value of 1 point (qəpik)",
+        "minRedeemPoints": "Minimum points to redeem",
+        "maxRedeemSharePercent": "Maximum % of the order",
+        "expiryMonths": "Points expiry (months)",
+        "signupBonusPoints": "Sign-up bonus",
+        "reviewBonusPoints": "Review bonus",
+        "referrerBonusPoints": "Inviter bonus",
+        "refereeBonusPoints": "Invitee bonus",
+        "referralQualifyCents": "Minimum first order (qəpik)",
+        "threshold": "Threshold (points)",
+        "multiplier": "Points multiplier",
+        "cashback": "Cashback %",
+        "extraDiscount": "Extra discount %",
+        "saved": "Programme settings saved"
+      }
     },
     "pages": {
       "unitConversions": "Unit conversions"
