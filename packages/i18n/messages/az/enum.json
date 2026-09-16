@@ -1,5 +1,40 @@
 {
   "enum": {
+    "CrmLeadStage": {
+      "NEW": "Yeni",
+      "CONTACTED": "Əlaqə saxlanıb",
+      "QUALIFIED": "Uyğunlaşdırılıb",
+      "PROPOSAL": "Təklif",
+      "NEGOTIATION": "Danışıqlar",
+      "WON": "Qazanılıb",
+      "LOST": "İtirilib"
+    },
+    "CrmLeadSource": {
+      "WEBSITE": "Vebsayt",
+      "PHONE": "Telefon",
+      "REFERRAL": "Tövsiyə",
+      "SOCIAL": "Sosial media",
+      "PARTNER": "Partner",
+      "WALK_IN": "Ofisə müraciət",
+      "OTHER": "Digər"
+    },
+    "CrmActivityType": {
+      "NOTE": "Qeyd",
+      "CALL": "Zəng",
+      "EMAIL": "E-poçt",
+      "MEETING": "Görüş",
+      "TASK": "Tapşırıq",
+      "STAGE_CHANGE": "Mərhələ dəyişikliyi",
+      "CONVERSION": "Çevrilmə"
+    },
+    "CrmCallOutcome": {
+      "ANSWERED": "Cavab verdi",
+      "NO_ANSWER": "Cavab yoxdur",
+      "BUSY": "Məşğuldur",
+      "CALLBACK": "Təkrar zəng",
+      "INTERESTED": "Maraqlanır",
+      "NOT_INTERESTED": "Maraqlanmır"
+    },
     "GoodsReceiptStatus": {
       "DRAFT": "Qaralama",
       "POSTED": "Təsdiqlənib",

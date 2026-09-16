@@ -3,7 +3,7 @@ import React from "react";
 import {
   Award, BadgePercent, BarChart3, Bell, Boxes, Building2, CalendarDays, ClipboardCheck, ClipboardList, Coins, CreditCard, FileSpreadsheet, FileText, FolderTree, Gauge, GitBranch, Globe, HandCoins, KeyRound,
   LayoutDashboard, ListChecks, Map, MessageSquare, Package, PackageSearch, Palette, Plug, Receipt, RotateCcw, ScrollText, Settings, ShieldAlert, ShieldCheck, ShoppingCart, Star, Tag, Tags, Truck, Undo2, User,
-  UserCog, Users, Wallet, Warehouse, Wrench, Workflow, Ruler, Link2, Layers, Percent, Image, HelpCircle, Timer, Plus, FileBadge, PackagePlus, Handshake, ArrowLeftRight, LifeBuoy, MessageSquareText,
+  UserCog, Users, Wallet, Warehouse, Wrench, Workflow, Ruler, Link2, Layers, Percent, Image, HelpCircle, Timer, Plus, FileBadge, PackagePlus, Handshake, ArrowLeftRight, LifeBuoy, MessageSquareText, Target,
 } from "lucide-react";
 import { useI18n } from "./core/i18n";
 import { useSession, INTERNAL_ROLES } from "./core/session";
@@ -20,6 +20,7 @@ import { GoodsReceiptDetailPage, GoodsReceiptEditorPage, GoodsReceiptsPage } fro
 import { CompatibilityPage, CostingMethodsPage, InventoryPage, ProductCreatePage, ProductEditorPage, ProductsAdminPage, PurchasesPage, QuotesAdminPage, SalesOrderAdminDetailPage, StockCountDetailPage, StockCountsPage, TransfersPage } from "./admin/commerce";
 import { TicketDetailPage, TicketsPage } from "./admin/support";
 import { LoyaltyAdminPage } from "./admin/loyalty";
+import { CrmLeadDetailPage, CrmPipelinePage } from "./admin/crm";
 import { AdminProfilePage, BrandingPage, CashDesksPage, FinancePage, IntegrationsPage, ReportsPage, SettingsPage, SettlementsPage, SubscriptionPlansAdminPage } from "./admin/finance";
 
 /**
@@ -64,6 +65,9 @@ function AdminShell({ children }: { children: React.ReactNode }) {
       { to: "/partner-types", label: n("partnerTypes"), icon: Tags, permission: "b2b_accounts:view" },
       { to: "/users", label: n("users"), icon: User, permission: "users:view" },
       { to: "/roles", label: n("roles"), icon: KeyRound, permission: ["roles:view", "users:view"] },
+    ] },
+    { label: n("gCrm"), items: [
+      { to: "/crm", label: n("crmPipeline"), icon: Target, permission: "crm:view" },
     ] },
     { label: n("gCatalog"), items: [
       { to: "/products", label: n("products"), icon: Package, permission: "catalog:view" },
@@ -185,6 +189,8 @@ export const adminRoutes: RouteDef[] = [
 
   res("/customers", "customers", "adm.nav.customers"),
   R("/customers/:id", (p) => <CustomerDetailPage id={p.id!} />, "adm.nav.customers"),
+  R("/crm", () => <CrmPipelinePage />, "adm.nav.crmPipeline"),
+  R("/crm/leads/:id", (p) => <CrmLeadDetailPage id={p.id!} />, "adm.nav.crmPipeline"),
   R("/technicians", () => <TechniciansAdminPage />, "adm.nav.technicians"),
   R("/technicians/verification", () => <VerificationPage />, "adm.nav.verification"),
   R("/technicians/licenses", () => <LicensesPage />, "adm.nav.licenses"),

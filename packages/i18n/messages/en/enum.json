@@ -1,5 +1,40 @@
 {
   "enum": {
+    "CrmLeadStage": {
+      "NEW": "New",
+      "CONTACTED": "Contacted",
+      "QUALIFIED": "Qualified",
+      "PROPOSAL": "Proposal",
+      "NEGOTIATION": "Negotiation",
+      "WON": "Won",
+      "LOST": "Lost"
+    },
+    "CrmLeadSource": {
+      "WEBSITE": "Website",
+      "PHONE": "Phone",
+      "REFERRAL": "Referral",
+      "SOCIAL": "Social media",
+      "PARTNER": "Partner",
+      "WALK_IN": "Walk-in",
+      "OTHER": "Other"
+    },
+    "CrmActivityType": {
+      "NOTE": "Note",
+      "CALL": "Call",
+      "EMAIL": "Email",
+      "MEETING": "Meeting",
+      "TASK": "Task",
+      "STAGE_CHANGE": "Stage change",
+      "CONVERSION": "Conversion"
+    },
+    "CrmCallOutcome": {
+      "ANSWERED": "Answered",
+      "NO_ANSWER": "No answer",
+      "BUSY": "Busy",
+      "CALLBACK": "Call back",
+      "INTERESTED": "Interested",
+      "NOT_INTERESTED": "Not interested"
+    },
     "GoodsReceiptStatus": {
       "DRAFT": "Draft",
       "POSTED": "Posted",
