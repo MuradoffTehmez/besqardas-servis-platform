@@ -1,5 +1,40 @@
 {
   "enum": {
+    "CrmLeadStage": {
+      "NEW": "Новый",
+      "CONTACTED": "Связались",
+      "QUALIFIED": "Квалифицирован",
+      "PROPOSAL": "Предложение",
+      "NEGOTIATION": "Переговоры",
+      "WON": "Выигран",
+      "LOST": "Проигран"
+    },
+    "CrmLeadSource": {
+      "WEBSITE": "Сайт",
+      "PHONE": "Телефон",
+      "REFERRAL": "Рекомендация",
+      "SOCIAL": "Соцсети",
+      "PARTNER": "Партнёр",
+      "WALK_IN": "Визит в офис",
+      "OTHER": "Другое"
+    },
+    "CrmActivityType": {
+      "NOTE": "Заметка",
+      "CALL": "Звонок",
+      "EMAIL": "Эл. почта",
+      "MEETING": "Встреча",
+      "TASK": "Задача",
+      "STAGE_CHANGE": "Смена этапа",
+      "CONVERSION": "Конвертация"
+    },
+    "CrmCallOutcome": {
+      "ANSWERED": "Ответил",
+      "NO_ANSWER": "Нет ответа",
+      "BUSY": "Занято",
+      "CALLBACK": "Перезвонить",
+      "INTERESTED": "Заинтересован",
+      "NOT_INTERESTED": "Не заинтересован"
+    },
     "GoodsReceiptStatus": {
       "DRAFT": "Черновик",
       "POSTED": "Проведён",

@@ -11,6 +11,7 @@ import { adminConfigHandlers } from "./adminConfig";
 import { warehouseHandlers } from "./warehouse";
 import { supportHandlers } from "./support";
 import { loyaltyHandlers } from "./loyalty";
+import { crmHandlers } from "./crm";
 
 /** Bütün MSW handler-ləri — mock server və testlər eyni siyahıdan istifadə edir (PRD §65.3). */
 export const handlers = [
@@ -26,5 +27,6 @@ export const handlers = [
   ...warehouseHandlers,
   ...supportHandlers,
   ...loyaltyHandlers,
+  ...crmHandlers,
   ...adminConfigHandlers,
 ];

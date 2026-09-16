@@ -142,6 +142,8 @@ function baseState() {
     loyaltyAccounts: [] as import("./types").LoyaltyAccountRec[],
     loyaltyTxns: [] as import("./types").LoyaltyTxnRec[],
     referrals: [] as import("./types").ReferralRec[],
+    crmLeads: [] as import("./types").CrmLeadRec[],
+    crmActivities: [] as import("./types").CrmActivityRec[],
     counters: {} as Record<string, number>,
     mockConfig: { delayMs: 250, errorRate: 0, forceError: null, emptyLists: false } as MockConfig,
   };

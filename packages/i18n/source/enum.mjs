@@ -1,6 +1,22 @@
 // Enum etiketləri: enum.<Qrup>.<KOD> = [az, ru, en]
 export default {
   enum: {
+    CrmLeadStage: {
+      NEW: ["Yeni", "Новый", "New"], CONTACTED: ["Əlaqə saxlanıb", "Связались", "Contacted"], QUALIFIED: ["Uyğunlaşdırılıb", "Квалифицирован", "Qualified"],
+      PROPOSAL: ["Təklif", "Предложение", "Proposal"], NEGOTIATION: ["Danışıqlar", "Переговоры", "Negotiation"], WON: ["Qazanılıb", "Выигран", "Won"], LOST: ["İtirilib", "Проигран", "Lost"],
+    },
+    CrmLeadSource: {
+      WEBSITE: ["Vebsayt", "Сайт", "Website"], PHONE: ["Telefon", "Телефон", "Phone"], REFERRAL: ["Tövsiyə", "Рекомендация", "Referral"],
+      SOCIAL: ["Sosial media", "Соцсети", "Social media"], PARTNER: ["Partner", "Партнёр", "Partner"], WALK_IN: ["Ofisə müraciət", "Визит в офис", "Walk-in"], OTHER: ["Digər", "Другое", "Other"],
+    },
+    CrmActivityType: {
+      NOTE: ["Qeyd", "Заметка", "Note"], CALL: ["Zəng", "Звонок", "Call"], EMAIL: ["E-poçt", "Эл. почта", "Email"], MEETING: ["Görüş", "Встреча", "Meeting"],
+      TASK: ["Tapşırıq", "Задача", "Task"], STAGE_CHANGE: ["Mərhələ dəyişikliyi", "Смена этапа", "Stage change"], CONVERSION: ["Çevrilmə", "Конвертация", "Conversion"],
+    },
+    CrmCallOutcome: {
+      ANSWERED: ["Cavab verdi", "Ответил", "Answered"], NO_ANSWER: ["Cavab yoxdur", "Нет ответа", "No answer"], BUSY: ["Məşğuldur", "Занято", "Busy"],
+      CALLBACK: ["Təkrar zəng", "Перезвонить", "Call back"], INTERESTED: ["Maraqlanır", "Заинтересован", "Interested"], NOT_INTERESTED: ["Maraqlanmır", "Не заинтересован", "Not interested"],
+    },
     GoodsReceiptStatus: {
       DRAFT: ["Qaralama", "Черновик", "Draft"],
       POSTED: ["Təsdiqlənib", "Проведён", "Posted"],

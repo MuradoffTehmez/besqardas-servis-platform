@@ -691,3 +691,24 @@ export interface ReferralRec {
   createdAt: string;
   qualifiedAt: string | null;
 }
+
+/* ---------------- CRM satış qıfı ---------------- */
+
+export type CrmLeadStageCode = "NEW" | "CONTACTED" | "QUALIFIED" | "PROPOSAL" | "NEGOTIATION" | "WON" | "LOST";
+export type CrmLeadSourceCode = "WEBSITE" | "PHONE" | "REFERRAL" | "SOCIAL" | "PARTNER" | "WALK_IN" | "OTHER";
+export type CrmActivityTypeCode = "NOTE" | "CALL" | "EMAIL" | "MEETING" | "TASK" | "STAGE_CHANGE" | "CONVERSION";
+export type CrmCallOutcomeCode = "ANSWERED" | "NO_ANSWER" | "BUSY" | "CALLBACK" | "INTERESTED" | "NOT_INTERESTED";
+
+export interface CrmLeadRec {
+  id: string; number: string; stage: CrmLeadStageCode; source: CrmLeadSourceCode;
+  name: string; companyName: string | null; phone: string; email: string | null;
+  estimatedValueCents: number; probability: number; ownerId: string; nextActionAt: string | null;
+  note: string | null; lostReason: string | null; customerId: string | null; quoteNumber: string | null;
+  createdAt: string; updatedAt: string;
+}
+
+export interface CrmActivityRec {
+  id: string; leadId: string; type: CrmActivityTypeCode; subject: string; note: string | null;
+  outcome: CrmCallOutcomeCode | null; durationSeconds: number | null; scheduledAt: string | null;
+  completedAt: string | null; actorId: string; createdAt: string;
+}

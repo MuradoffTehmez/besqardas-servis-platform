@@ -214,6 +214,14 @@ export type LoyaltyOverview = I<typeof S.LoyaltyOverview>;
 export type LoyaltyCheckout = I<typeof S.LoyaltyCheckout>;
 export type LoyaltyMember = I<typeof S.LoyaltyMember>;
 export type LoyaltyStats = I<typeof S.LoyaltyStats>;
+export type CrmLeadStage = I<typeof S.CrmLeadStage>;
+export type CrmLeadSource = I<typeof S.CrmLeadSource>;
+export type CrmActivityType = I<typeof S.CrmActivityType>;
+export type CrmCallOutcome = I<typeof S.CrmCallOutcome>;
+export type CrmLead = I<typeof S.CrmLead>;
+export type CrmActivity = I<typeof S.CrmActivity>;
+export type CreateCrmLeadRequest = I<typeof S.CreateCrmLeadRequest>;
+export type UpdateCrmLeadRequest = I<typeof S.UpdateCrmLeadRequest>;
 export type ReferralEntry = I<typeof S.ReferralEntry>;
 
 /** Usta paneli cavabları */
