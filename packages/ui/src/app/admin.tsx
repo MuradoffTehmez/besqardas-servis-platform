@@ -19,6 +19,7 @@ import { CustomerDetailPage, LicensesPage, PartnershipsPage, RolesPage, Technici
 import { GoodsReceiptDetailPage, GoodsReceiptEditorPage, GoodsReceiptsPage } from "./admin/receipts";
 import { CompatibilityPage, CostingMethodsPage, InventoryPage, ProductCreatePage, ProductEditorPage, ProductsAdminPage, PurchasesPage, QuotesAdminPage, SalesOrderAdminDetailPage, StockCountDetailPage, StockCountsPage, TransfersPage } from "./admin/commerce";
 import { TicketDetailPage, TicketsPage } from "./admin/support";
+import { LoyaltyAdminPage } from "./admin/loyalty";
 import { AdminProfilePage, BrandingPage, CashDesksPage, FinancePage, IntegrationsPage, ReportsPage, SettingsPage, SettlementsPage, SubscriptionPlansAdminPage } from "./admin/finance";
 
 /**
@@ -94,6 +95,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
       { to: "/suppliers", label: n("suppliers"), icon: Building2, permission: "purchases:view" },
     ] },
     { label: n("gSubscriptions"), items: [
+      { to: "/loyalty", label: n("loyalty"), icon: Award, permission: "loyalty:view" },
       { to: "/subscription-plans", label: n("subscriptionPlans"), icon: Star, permission: "subscription_plans:view" },
       { to: "/subscriptions", label: n("subscriptions"), icon: CreditCard, permission: "subscription_plans:view" },
     ] },
@@ -230,6 +232,7 @@ export const adminRoutes: RouteDef[] = [
 
   R("/subscription-plans", () => <SubscriptionPlansAdminPage />, "adm.nav.subscriptionPlans"),
   res("/subscriptions", "subscriptions", "adm.nav.subscriptions"),
+  R("/loyalty", () => <LoyaltyAdminPage />, "adm.nav.loyalty"),
 
   R("/finance", () => <FinancePage />, "adm.nav.finance"),
   res("/payments", "payments", "adm.nav.payments"),

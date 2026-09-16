@@ -292,7 +292,9 @@ export function SelectModePage({ app = "web" }: { app?: "web" | "admin" }) {
 export function RegisterPage() {
   const { t, locale } = useI18n();
   const after = useAfterLogin("web");
-  const form = useFormState({ method: "PHONE" as "PHONE" | "EMAIL", firstName: "", lastName: "", phone: "", email: "", password: "", acceptTerms: false, marketingConsent: false, code: "" });
+  const { query } = useRouter();
+  // Dəvət linki ilə gələn kod avtomatik doldurulur: /register?ref=KOD
+  const form = useFormState({ method: "PHONE" as "PHONE" | "EMAIL", firstName: "", lastName: "", phone: "", email: "", password: "", acceptTerms: false, marketingConsent: false, code: "", referralCode: (query.get("ref") ?? "").toUpperCase() });
   const [challenge, setChallenge] = useState<{ id: string; masked: string; devCode: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
@@ -306,7 +308,7 @@ export function RegisterPage() {
         await after(await post("/auth/otp/verify", { phone: v.phone, code: v.code, challengeId: challenge.id }));
         return;
       }
-      const r = await post("/auth/register", { method: v.method, firstName: v.firstName, lastName: v.lastName, phone: v.method === "PHONE" ? v.phone : v.phone || undefined, email: v.method === "EMAIL" ? v.email : undefined, password: v.method === "EMAIL" ? v.password : undefined, locale, acceptTerms: v.acceptTerms || undefined, marketingConsent: v.marketingConsent });
+      const r = await post("/auth/register", { method: v.method, firstName: v.firstName, lastName: v.lastName, phone: v.method === "PHONE" ? v.phone : v.phone || undefined, email: v.method === "EMAIL" ? v.email : undefined, password: v.method === "EMAIL" ? v.password : undefined, locale, acceptTerms: v.acceptTerms || undefined, marketingConsent: v.marketingConsent, referralCode: v.referralCode.trim() || undefined });
       if (r.status === "OTP_SENT") setChallenge({ id: r.challengeId, masked: r.maskedTarget, devCode: r.devCode });
       else await after(r);
     } catch (err) {
@@ -346,6 +348,7 @@ export function RegisterPage() {
             )}
             <Check checked={v.acceptTerms} onValue={(x) => form.set("acceptTerms", x)} label={<>{t("auth.acceptTerms1")} <Link to="/terms" className="text-brand">{t("legal.terms")}</Link> {t("auth.acceptTerms2")} <Link to="/privacy" className="text-brand">{t("legal.privacy")}</Link></>} />
             {form.errors.acceptTerms && <p className="kit-field-error">{t("validation.acceptTerms")}</p>}
+            <TextField label={t("auth.referralCode")} value={v.referralCode} onValue={(x) => form.set("referralCode", x.toUpperCase())} error={form.errors.referralCode} hint={t("auth.referralCodeHint")} />
             <Check checked={v.marketingConsent} onValue={(x) => form.set("marketingConsent", x)} label={t("auth.marketingConsent")} />
           </>
         )}

@@ -544,7 +544,32 @@
       "kpi_targets": "KPI targets",
       "settings": "Settings",
       "branches": "Branches",
-      "tickets": "Tickets (Help Desk)"
+      "tickets": "Tickets (Help Desk)",
+      "loyalty": "Loyalty & referrals"
+    },
+    "LoyaltyTier": {
+      "BRONZE": "Bronze",
+      "SILVER": "Silver",
+      "GOLD": "Gold",
+      "PLATINUM": "Platinum"
+    },
+    "LoyaltyTxnType": {
+      "EARN_ORDER": "Points for an order",
+      "EARN_REVIEW": "Review bonus",
+      "EARN_SIGNUP": "Sign-up bonus",
+      "EARN_REFERRAL": "Referral bonus",
+      "REDEEM": "Points redeemed",
+      "EXPIRE": "Expired",
+      "ADJUST": "Manual adjustment",
+      "CASHBACK_EARN": "Cashback",
+      "CASHBACK_SPEND": "Cashback used"
+    },
+    "ReferralStatus": {
+      "INVITED": "Invited",
+      "REGISTERED": "Registered",
+      "QUALIFIED": "Qualified",
+      "REWARDED": "Rewarded",
+      "EXPIRED": "Expired"
     },
     "TicketStatus": {
       "NEW": "New",

@@ -55,6 +55,8 @@ const EVENTS: Record<string, NotificationMeta> = {
   TICKET_ASSIGNED: { icon: LifeBuoy, tone: "indigo", category: "work" },
   TICKET_ESCALATED: { icon: AlertTriangle, tone: "orange", category: "alerts" },
   TICKET_SLA_BREACH: { icon: AlertTriangle, tone: "red", category: "alerts" },
+  LOYALTY_TIER_UP: { icon: Crown, tone: "violet", category: "care" },
+  LOYALTY_REFERRAL: { icon: Star, tone: "amber", category: "care" },
 };
 
 export function notificationMeta(event?: string | null): NotificationMeta {

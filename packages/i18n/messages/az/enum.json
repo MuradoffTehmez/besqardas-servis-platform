@@ -544,7 +544,32 @@
       "kpi_targets": "KPI hədəfləri",
       "settings": "Ayarlar",
       "branches": "Filiallar",
-      "tickets": "Müraciətlər (Help Desk)"
+      "tickets": "Müraciətlər (Help Desk)",
+      "loyalty": "Loyallıq və referral"
+    },
+    "LoyaltyTier": {
+      "BRONZE": "Bürünc",
+      "SILVER": "Gümüş",
+      "GOLD": "Qızıl",
+      "PLATINUM": "Platin"
+    },
+    "LoyaltyTxnType": {
+      "EARN_ORDER": "Sifarişə görə xal",
+      "EARN_REVIEW": "Rəy bonusu",
+      "EARN_SIGNUP": "Qeydiyyat bonusu",
+      "EARN_REFERRAL": "Dəvət bonusu",
+      "REDEEM": "Xal endirimi",
+      "EXPIRE": "Müddəti bitdi",
+      "ADJUST": "Əl ilə düzəliş",
+      "CASHBACK_EARN": "Keşbek",
+      "CASHBACK_SPEND": "Keşbekdən istifadə"
+    },
+    "ReferralStatus": {
+      "INVITED": "Dəvət göndərilib",
+      "REGISTERED": "Qeydiyyatdan keçib",
+      "QUALIFIED": "Şərti ödəyib",
+      "REWARDED": "Mükafatlandırılıb",
+      "EXPIRED": "Müddəti bitib"
     },
     "TicketStatus": {
       "NEW": "Yeni",

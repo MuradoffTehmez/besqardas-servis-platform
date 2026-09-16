@@ -91,6 +91,9 @@
   "validation": {
     "emailRequired": "An email address is required for this",
     "subjectMin": "Subject must be at least 5 characters",
+    "pointsRange": "The number of points is out of range",
+    "insufficientPoints": "Not enough points",
+    "referralCode": "Referral code not found",
     "contactRequired": "Enter a phone number or email",
     "linesRequired": "Add at least one item",
     "fileInvalid": "The file couldn't be read",
@@ -476,6 +479,8 @@
     "passwordHint": "At least 8 characters with letters and digits",
     "acceptTerms1": "I accept the",
     "acceptTerms2": "and",
+    "referralCode": "Referral code",
+    "referralCodeHint": "With a friend's code you both earn bonus points",
     "marketingConsent": "I want to receive offers and news",
     "createAccount": "Create account",
     "confirmAndCreate": "Confirm and create",
@@ -761,6 +766,19 @@
     "havePromo": "Have a promo code?",
     "total": "Total",
     "installationShort": "Installation"
+  },
+  "loyaltyCheckout": {
+    "title": "Points & cashback",
+    "points": "Your balance: {points} points ({value})",
+    "use": "Use points",
+    "pointsHint": "Minimum {min} · maximum {max} points ({amount})",
+    "wallet": "Cashback wallet: {amount}",
+    "useWallet": "Use {amount} from the wallet",
+    "earn": "You will earn {points} points and {cashback} cashback",
+    "discount": "Points discount",
+    "walletDiscount": "Cashback",
+    "apply": "Apply",
+    "notEnough": "At least {min} points required"
   },
   "checkout": {
     "title": "Checkout",

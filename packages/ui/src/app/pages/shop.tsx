@@ -7,7 +7,7 @@ import { ApiError, idempotencyKey, post, qs, useApi, useQueryClient, del, patch 
 import { useI18n } from "../core/i18n";
 import { Link, useRouter } from "../core/router";
 import { useSession } from "../core/session";
-import { Card, EmptyState, ErrorState, FormError, Loading, Radios, SearchBox, SelectField, Stars, TextArea, TextField, errorText, useFormState } from "../kit/base";
+import { Card, Check, EmptyState, ErrorState, FormError, Loading, Radios, SearchBox, SelectField, Stars, TextArea, TextField, errorText, useFormState } from "../kit/base";
 import { ConfirmDialog, Dialog } from "../kit/actions";
 import { StockPill } from "../kit/domain";
 import { ProductVisual, QuantityInput } from "../kit/media";
@@ -1068,9 +1068,16 @@ export function CheckoutPage() {
   const { navigate } = useRouter();
   const { session, refresh } = useSession();
   const [key] = useState(() => idempotencyKey());
-  const form = useFormState({ deliveryMethod: "COURIER", addressMode: "saved" as "saved" | "oneTime", addressId: "", city: "Bakı", street: "", building: "", apartment: "", pickupBranchId: "", installationSlot: "", paymentMethod: "CARD_ONLINE", installmentMonths: 12, companyName: session?.user?.companyName ?? "", voen: "", bankAccount: "", note: "" });
+  const form = useFormState({ deliveryMethod: "COURIER", addressMode: "saved" as "saved" | "oneTime", addressId: "", city: "Bakı", street: "", building: "", apartment: "", pickupBranchId: "", installationSlot: "", paymentMethod: "CARD_ONLINE", installmentMonths: 12, companyName: session?.user?.companyName ?? "", voen: "", bankAccount: "", note: "", redeemPoints: 0, useWallet: false });
   const v = form.values;
-  const opts = useApi<any>(`/checkout/options?deliveryMethod=${v.deliveryMethod}`, { placeholderData: (p: any) => p });
+  const checkoutQuery = new URLSearchParams({
+    deliveryMethod: v.deliveryMethod,
+    paymentMethod: v.paymentMethod,
+    installmentMonths: String(v.installmentMonths),
+    redeemPoints: String(v.redeemPoints),
+    useWallet: String(v.useWallet),
+  });
+  const opts = useApi<any>(`/checkout/options?${checkoutQuery}`, { placeholderData: (p: any) => p });
   const [error, setError] = useState<unknown>(null);
   const [busy, setBusy] = useState(false);
   useEffect(() => {
@@ -1079,6 +1086,10 @@ export function CheckoutPage() {
     if (opts.data.company && !v.companyName) { form.set("companyName", opts.data.company.name); form.set("voen", opts.data.company.voen); }
     const pm = opts.data.paymentMethods.find((m: any) => m.method === v.paymentMethod);
     if (pm && !pm.available) form.set("paymentMethod", opts.data.paymentMethods.find((m: any) => m.available)?.method ?? "CARD_ONLINE");
+    const loyalty = opts.data.loyalty;
+    const validMax = loyalty?.available && loyalty.maxRedeemPoints >= loyalty.minRedeemPoints ? loyalty.maxRedeemPoints : 0;
+    if (v.redeemPoints > validMax) form.set("redeemPoints", validMax);
+    if (!loyalty?.available && v.useWallet) form.set("useWallet", false);
   }, [opts.data]); // eslint-disable-line react-hooks/exhaustive-deps
   // Məhsul səhifəsində kredit seçilibsə, taksit və müddət əvvəlcədən seçilir
   const optsReady = !!opts.data;
@@ -1102,6 +1113,9 @@ export function CheckoutPage() {
   const o = opts.data;
   const s = o.summary;
   const creditOffer = v.paymentMethod === "INSTALLMENT" ? o.installmentOffers.find((i: any) => i.months === v.installmentMonths && i.total) : null;
+  // Xal, keşbek, taksit fərqi və yekun məbləğ yalnız backend nəticəsindən göstərilir (§64)
+  const redeemCents = Math.round(Number(o.loyalty?.redeemAmount?.amount ?? 0) * 100);
+  const walletCents = Math.round(Number(o.loyalty?.walletApplied?.amount ?? 0) * 100);
   const submit = async () => {
     setBusy(true);
     setError(null);
@@ -1116,6 +1130,8 @@ export function CheckoutPage() {
         installmentMonths: v.paymentMethod === "INSTALLMENT" ? v.installmentMonths : null,
         invoice: o.requiresInvoiceDetails ? { companyName: v.companyName, voen: v.voen, bankAccount: v.bankAccount || undefined } : null,
         note: v.note || undefined,
+        redeemPoints: v.redeemPoints || undefined,
+        useWallet: v.useWallet || undefined,
         idempotencyKey: key,
       });
       await refresh();
@@ -1192,6 +1208,18 @@ export function CheckoutPage() {
               </div>
             </Card>
           )}
+          {o.loyalty?.available && (
+            <Card title={t("loyaltyCheckout.title")} subtitle={t("loyaltyCheckout.points", { points: o.loyalty.points, value: money({ amount: (o.loyalty.points * Number(o.loyalty.pointValue.amount)).toFixed(2), currency: "AZN" }) })}>
+              <LoyaltyCheckoutBlock
+                loyalty={o.loyalty}
+                redeemPoints={v.redeemPoints}
+                useWallet={v.useWallet}
+                error={form.errors.redeemPoints}
+                onRedeem={(x) => form.set("redeemPoints", x)}
+                onWallet={(x) => form.set("useWallet", x)}
+              />
+            </Card>
+          )}
           <Card title={t("common.note")}><TextArea aria-label={t("common.note")} value={v.note} onValue={(x) => form.set("note", x)} rows={2} /></Card>
         </div>
         <aside className="kit-card cart-summary-card">
@@ -1204,7 +1232,9 @@ export function CheckoutPage() {
               {Number(s.totals.installationTotal.amount) > 0 && <div><dt>{t("cart.installation")}</dt><dd>{money(s.totals.installationTotal)}</dd></div>}
               <div><dt>{t("checkout.deliveryFee")}</dt><dd>{Number(s.totals.deliveryTotal.amount) ? money(s.totals.deliveryTotal) : t("shop.free")}</dd></div>
               {creditOffer && <div><dt>{t("shop.creditDiff")} ({t("shop.monthsShort", { months: creditOffer.months })})</dt><dd>+{money(creditOffer.difference)}</dd></div>}
-              <div className="grand"><dt>{t("common.total")}</dt><dd>{money(creditOffer ? creditOffer.total : s.totals.total)}</dd></div>
+              {redeemCents > 0 && <div className="text-success"><dt>{t("loyaltyCheckout.discount")}</dt><dd>−{money({ amount: (redeemCents / 100).toFixed(2), currency: "AZN" })}</dd></div>}
+              {walletCents > 0 && <div className="text-success"><dt>{t("loyaltyCheckout.walletDiscount")}</dt><dd>−{money({ amount: (walletCents / 100).toFixed(2), currency: "AZN" })}</dd></div>}
+              <div className="grand"><dt>{t("common.total")}</dt><dd>{money(o.payableTotal)}</dd></div>
             </dl>
             <p className="text-sm text-muted">{t("checkout.agree")} <Link to="/terms" className="text-brand">{t("legal.terms")}</Link></p>
             <button type="button" className="btn primary btn-lg w-full mt-3" disabled={busy} onClick={submit}>{v.paymentMethod === "CARD_ONLINE" || v.paymentMethod === "INSTALLMENT" ? t("checkout.payNow") : t("checkout.placeOrder")}</button>
@@ -1212,6 +1242,46 @@ export function CheckoutPage() {
           </div>
         </aside>
       </div>
+    </div>
+  );
+}
+
+/** Checkout-da xal sürgüsü və keşbek seçimi (§A2). */
+function LoyaltyCheckoutBlock({ loyalty, redeemPoints, useWallet, error, onRedeem, onWallet }: { loyalty: any; redeemPoints: number; useWallet: boolean; error?: string[]; onRedeem: (v: number) => void; onWallet: (v: boolean) => void }) {
+  const { t, money, num } = useI18n();
+  const canRedeem = loyalty.maxRedeemPoints >= loyalty.minRedeemPoints;
+  const walletCents = Math.round(Number(loyalty.maxWalletAmount.amount) * 100);
+  return (
+    <div className="grid gap-3">
+      {canRedeem ? (
+        <div>
+          <label className="form-label" htmlFor="loyalty-range">{t("loyaltyCheckout.use")}</label>
+          <div className="flex items-center gap-3 flex-wrap">
+            <input
+              id="loyalty-range"
+              type="range"
+              className="grow"
+              min={0}
+              max={loyalty.maxRedeemPoints}
+              step={50}
+              value={redeemPoints}
+              onChange={(e) => {
+                const raw = Number(e.target.value);
+                onRedeem(raw && raw < loyalty.minRedeemPoints ? loyalty.minRedeemPoints : raw);
+              }}
+            />
+            <strong className="whitespace-nowrap">{num(redeemPoints)} · {money({ amount: ((redeemPoints * Number(loyalty.pointValue.amount)) / 1).toFixed(2), currency: "AZN" })}</strong>
+          </div>
+          <p className="kit-field-hint">{t("loyaltyCheckout.pointsHint", { min: loyalty.minRedeemPoints, max: loyalty.maxRedeemPoints, amount: money(loyalty.maxRedeemAmount) })}</p>
+          {error && <p className="kit-field-error">{t("validation.pointsRange")}</p>}
+        </div>
+      ) : (
+        <p className="text-sm text-muted">{t("loyaltyCheckout.notEnough", { min: loyalty.minRedeemPoints })}</p>
+      )}
+      {walletCents > 0 && (
+        <Check label={t("loyaltyCheckout.useWallet", { amount: money(loyalty.maxWalletAmount) })} hint={t("loyaltyCheckout.wallet", { amount: money(loyalty.walletBalance) })} checked={useWallet} onValue={onWallet} />
+      )}
+      <p className="kit-note info text-sm">{t("loyaltyCheckout.earn", { points: loyalty.earnPoints, cashback: money(loyalty.cashbackAmount) })}</p>
     </div>
   );
 }

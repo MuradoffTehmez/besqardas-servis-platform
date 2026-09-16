@@ -177,7 +177,8 @@
       "gSupport": "Поддержка клиентов",
       "tickets": "Обращения",
       "ticketCategories": "Категории обращений",
-      "cannedResponses": "Шаблоны ответов"
+      "cannedResponses": "Шаблоны ответов",
+      "loyalty": "Программа лояльности"
     },
     "tickets": {
       "subtitle": "Обращения из всех каналов, контроль SLA и ответы",
@@ -317,6 +318,79 @@
       "catSubtitle": "Темы, очереди и цели SLA по приоритетам",
       "slaHint": "Минуты первого ответа и решения для каждого приоритета",
       "cannedSubtitle": "Частые шаблоны ответов операторов (AZ/RU/EN)"
+    },
+    "loyalty": {
+      "subtitle": "Управление баллами, кэшбэком, уровнями и приглашениями",
+      "tabs": {
+        "overview": "Обзор",
+        "members": "Участники",
+        "transactions": "Операции с баллами",
+        "referrals": "Приглашения",
+        "settings": "Настройки"
+      },
+      "stats": {
+        "members": "Участники программы",
+        "active": "С балансом: {count}",
+        "outstanding": "Остаток баллов",
+        "liability": "Обязательства: {value}",
+        "redemption": "Доля списаний",
+        "issued": "Начислено {issued} · списано {redeemed}",
+        "wallet": "Остаток кэшбэка",
+        "cashbackPaid": "Всего кэшбэка: {value}",
+        "expired": "Сгоревшие баллы",
+        "byTier": "По уровням",
+        "referralFunnel": "Воронка приглашений",
+        "conversion": "Конверсия {value}%"
+      },
+      "col": {
+        "member": "Участник",
+        "tier": "Уровень",
+        "points": "Баллы",
+        "lifetime": "Всего",
+        "wallet": "Кэшбэк",
+        "referrals": "Приглашения",
+        "lastActivity": "Последняя операция",
+        "type": "Тип",
+        "customer": "Клиент",
+        "amount": "Сумма",
+        "balance": "Баланс",
+        "order": "Заказ",
+        "date": "Дата",
+        "inviter": "Пригласил",
+        "invitee": "Приглашённый",
+        "status": "Статус",
+        "reward": "Награда",
+        "code": "Код"
+      },
+      "adjust": "Корректировка баллов",
+      "adjustHint": "Положительное значение начисляет, отрицательное списывает. Причина попадёт в журнал аудита.",
+      "adjustPoints": "Баллы (например 250 или -100)",
+      "adjustReason": "Причина",
+      "adjustDone": "Баланс обновлён: {points} баллов",
+      "settings": {
+        "earn": "Начисление баллов",
+        "spend": "Списание",
+        "bonuses": "Бонусы и приглашения",
+        "tiers": "Уровни",
+        "active": "Программа активна",
+        "activeHint": "Если выключить, баллы не начисляются и не списываются",
+        "pointsPerAznService": "Баллов за 1 ₼ в сервисе",
+        "pointsPerAznProduct": "Баллов за 1 ₼ за товары",
+        "pointValueCents": "Стоимость 1 балла (гяпик)",
+        "minRedeemPoints": "Минимум баллов к списанию",
+        "maxRedeemSharePercent": "Максимум % заказа",
+        "expiryMonths": "Срок действия баллов (мес.)",
+        "signupBonusPoints": "Бонус за регистрацию",
+        "reviewBonusPoints": "Бонус за отзыв",
+        "referrerBonusPoints": "Бонус пригласившему",
+        "refereeBonusPoints": "Бонус приглашённому",
+        "referralQualifyCents": "Минимальный первый заказ (гяпик)",
+        "threshold": "Порог (баллы)",
+        "multiplier": "Множитель баллов",
+        "cashback": "Кэшбэк %",
+        "extraDiscount": "Доп. скидка %",
+        "saved": "Настройки программы сохранены"
+      }
     },
     "pages": {
       "unitConversions": "Пересчёт единиц"
