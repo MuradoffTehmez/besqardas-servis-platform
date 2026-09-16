@@ -26,7 +26,7 @@ Bu sənəd 35 modulluq qiymətləndirmədəki boşluqların hansı ardıcıllıq
 | ---: | --- | ---: | --- |
 | A1 | **Help Desk** ✅ | 20% → 90% | Bilet növbəsi, kateqoriyalar, prioritet və SLA (ilk cavab / həll), təyinat, daxili qeydlər, hazır cavablar, müştəri kabinetindən müraciət, sifariş/zəmanətə bağlama, biletdən servis sifarişi, məmnunluq (CSAT) |
 | A2 | **Loyalty / Referral** ✅ | 40% → 95% | Xal hesabı və FIFO xərcləmə, müddətin bitməsi, keşbek pul kisəsi, səviyyələr və üstünlüklər, referral qeydiyyatı/mükafatı, checkout-da server hesablamalı xal və keşbek istifadəsi, admin analitikası və əl ilə düzəliş |
-| A3 | CRM satış qıfı | 85% | Lead-lər, pipeline mərhələləri (kanban), fəaliyyətlər, lead → müştəri/təklif çevrilməsi, zəng jurnalı (telefoniya adapteri) |
+| A3 | **CRM satış qıfı** ✅ | 85% → 95% | 7 mərhələli lead kanbanı, ehtimal və çəkili dəyər, fəaliyyət tarixçəsi, lead → müştəri/təklif çevrilməsi, mock telefoniya adapterli zəng jurnalı, RBAC və audit |
 | A4 | HRM | 30% | Ştat cədvəli, növbələr, davamiyyət, məzuniyyət/xəstəlik müraciətləri və təsdiqi, əmək haqqı hesablanması (AZ vergi/DSMF/işsizlik/icbari tibbi sığorta) |
 | A5 | Mühasibat (GL) | 40% / 65% | Hesablar planı, ikili yazılış jurnalı, sənədlərdən avtomatik provodka, dövr bağlanması, sınaq balansı, mənfəət-zərər, balans, e-qaimə export adapteri |
 | A6 | DMS | 45% | Sənəd reyestri, versiyalar, təsdiq marşrutları, imza adapteri (Asan İmza), saxlanma müddəti |
