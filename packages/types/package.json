@@ -7,6 +7,6 @@
   "types": "./src/index.ts",
   "exports": { ".": "./src/index.ts" },
   "scripts": { "typecheck": "tsc --noEmit" },
-  "dependencies": { "@sp/schemas": "workspace:*", "zod": "^4.3.3" },
+  "dependencies": { "@sp/schemas": "workspace:*", "zod": "^4.6.5" },
   "devDependencies": { "@sp/config": "workspace:*", "typescript": "^5.9.3" }
 }
