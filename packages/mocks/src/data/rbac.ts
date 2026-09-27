@@ -38,6 +38,8 @@ export const RESOURCES = [
   "tickets",
   "loyalty",
   "crm",
+  "hr",
+  "payroll",
 ] as const;
 
 export type Resource = (typeof RESOURCES)[number];
@@ -66,13 +68,13 @@ const matrix: Record<string, Matrix> = {
   },
   ACCOUNTANT: {
     service_orders: V, catalog: V, price_rules: V, inventory: V, purchases: V, sales_orders: V, payments: M, finance_reports: M,
-    subscription_plans: V, b2b_accounts: V, partner_commissions: M, technician_settlements: M, audit_logs: V, customers: V, branches: V, tickets: E, loyalty: E,
+    subscription_plans: V, b2b_accounts: V, partner_commissions: M, technician_settlements: M, audit_logs: V, customers: V, branches: V, tickets: E, hr: V, payroll: M, loyalty: E,
   },
   MANAGER: {
     service_orders: M, assignments: M, estimates: M, workflow_templates: V, fee_rules: [...V, "approve"], reason_codes: V, catalog: V, price_rules: V,
     inventory: M, purchases: M, sales_orders: M, payments: V, finance_reports: V, subscription_plans: V, b2b_accounts: M,
     partner_commissions: V, technician_settlements: V, logistics_tasks: M, users: V, audit_logs: V, customers: M, technicians: M,
-    reviews: M, kpi_targets: V, content: V, branches: V, tickets: M, loyalty: M, crm: M,
+    reviews: M, kpi_targets: V, content: V, branches: V, tickets: M, hr: M, payroll: V, loyalty: M, crm: M,
   },
   ADMIN: Object.fromEntries(RESOURCES.map((r) => [r, r === "roles" ? V : r === "audit_logs" ? V : M])) as Matrix,
   TECHNICIAN: {

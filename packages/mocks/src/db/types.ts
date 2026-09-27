@@ -712,3 +712,146 @@ export interface CrmActivityRec {
   outcome: CrmCallOutcomeCode | null; durationSeconds: number | null; scheduledAt: string | null;
   completedAt: string | null; actorId: string; createdAt: string;
 }
+
+/* ---------------- HRM ---------------- */
+
+export interface HrEmployeeRec {
+  id: string;
+  userId: string | null;
+  personnelNumber: string;
+  fullName: string;
+  positionId: string | null;
+  department: string;
+  branchId: string | null;
+  managerId: string | null;
+  contractType: "PERMANENT" | "FIXED_TERM" | "PART_TIME" | "INTERNSHIP";
+  contractNumber: string;
+  status: "PROBATION" | "ACTIVE" | "ON_LEAVE" | "SUSPENDED" | "TERMINATED";
+  hiredAt: string;
+  probationUntil: string | null;
+  terminatedAt: string | null;
+  terminationReason: string | null;
+  salaryCents: number;
+  monthlyHours: number;
+  annualLeaveDays: number;
+  phone: string | null;
+  email: string | null;
+  iban: string | null;
+  /** Həftənin iş günləri (0 = bazar). */
+  workDays: number[];
+  shiftId: string | null;
+}
+
+export interface HrPositionRec {
+  id: string;
+  code: string;
+  title: import("@sp/types").LocalizedText;
+  department: string;
+  branchId: string | null;
+  plannedCount: number;
+  salaryFromCents: number;
+  salaryToCents: number;
+  active: boolean;
+}
+
+export interface HrShiftRec {
+  id: string;
+  code: string;
+  name: import("@sp/types").LocalizedText;
+  kind: "DAY" | "EVENING" | "NIGHT" | "FLEX";
+  startTime: string;
+  endTime: string;
+  breakMinutes: number;
+  active: boolean;
+}
+
+export interface HrAttendanceRec {
+  id: string;
+  employeeId: string;
+  date: string;
+  status: "PRESENT" | "LATE" | "ABSENT" | "LEAVE" | "SICK" | "BUSINESS_TRIP" | "WEEKEND" | "HOLIDAY";
+  shiftId: string | null;
+  checkIn: string | null;
+  checkOut: string | null;
+  workedMinutes: number;
+  plannedMinutes: number;
+  lateMinutes: number;
+  overtimeMinutes: number;
+  note: string | null;
+}
+
+export interface HrLeaveRec {
+  id: string;
+  number: string;
+  employeeId: string;
+  type: "ANNUAL" | "SICK" | "UNPAID" | "MATERNITY" | "STUDY" | "SPECIAL";
+  status: "PENDING" | "APPROVED" | "REJECTED" | "CANCELLED";
+  from: string;
+  to: string;
+  days: number;
+  reason: string | null;
+  attachmentName: string | null;
+  approverId: string | null;
+  decidedAt: string | null;
+  decisionNote: string | null;
+  createdAt: string;
+}
+
+export interface HrPayrollSettingsRec {
+  incomeTaxThresholdCents: number;
+  incomeTaxRateBelow: number;
+  incomeTaxRateAbove: number;
+  socialThresholdCents: number;
+  socialEmployeeRateBelow: number;
+  socialEmployeeRateAbove: number;
+  socialEmployerRateBelow: number;
+  socialEmployerRateAbove: number;
+  unemploymentEmployeeRate: number;
+  unemploymentEmployerRate: number;
+  healthThresholdCents: number;
+  healthEmployeeRateBelow: number;
+  healthEmployeeRateAbove: number;
+  healthEmployerRateBelow: number;
+  healthEmployerRateAbove: number;
+  overtimeMultiplier: number;
+  nightShiftBonusPercent: number;
+  standardMonthlyHours: number;
+}
+
+export interface HrPayrollLineRec {
+  employeeId: string;
+  plannedDays: number;
+  workedDays: number;
+  /** İşlənmiş günlər + ödənişli məzuniyyət/xəstəlik günləri — maaş bu nisbətlə hesablanır. */
+  paidDays: number;
+  overtimeHours: number;
+  nightHours: number;
+  baseCents: number;
+  earnedCents: number;
+  overtimeCents: number;
+  nightBonusCents: number;
+  bonusCents: number;
+  grossCents: number;
+  incomeTaxCents: number;
+  socialEmployeeCents: number;
+  unemploymentEmployeeCents: number;
+  healthEmployeeCents: number;
+  netCents: number;
+  socialEmployerCents: number;
+  unemploymentEmployerCents: number;
+  healthEmployerCents: number;
+}
+
+export interface HrPayrollRunRec {
+  id: string;
+  number: string;
+  period: string;
+  status: "DRAFT" | "CALCULATED" | "APPROVED" | "PAID";
+  lines: HrPayrollLineRec[];
+  createdBy: string;
+  createdAt: string;
+  calculatedAt: string | null;
+  approvedBy: string | null;
+  approvedAt: string | null;
+  paidAt: string | null;
+}

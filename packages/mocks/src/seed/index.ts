@@ -6,6 +6,7 @@ import { seedCommerce } from "./commerce";
 import { seedMisc } from "./misc";
 import { seedSupport } from "./support";
 import { seedLoyaltyExtras, seedLoyaltyProgram } from "./loyalty";
+import { seedHr } from "./hr";
 import { seedCrm } from "./crm";
 
 function seedAll() {
@@ -18,6 +19,7 @@ function seedAll() {
   seedSupport();
   seedCrm();
   seedLoyaltyExtras();
+  seedHr();
   db.auditLogs.sort((a, b) => b.at.localeCompare(a.at));
   db.notifications.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   db.payments.sort((a, b) => b.createdAt.localeCompare(a.createdAt));

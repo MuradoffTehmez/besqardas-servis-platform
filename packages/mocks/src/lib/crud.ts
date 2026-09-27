@@ -18,6 +18,8 @@ export interface CrudOptions<T extends { id: string }> {
   defaultSort?: string;
   label?: (rec: T) => string;
   create?: (body: Record<string, unknown>, ctx: Ctx) => T;
+  /** PATCH gövdəsini qeydin sahələrinə uyğunlaşdırır (məs. manat → sent). */
+  mapPatch?: (body: Record<string, unknown>, rec: T) => Record<string, unknown>;
   validate?: (body: Record<string, unknown>, rec: T | null) => Record<string, string[]> | null;
   beforeDelete?: (rec: T) => void;
   readOnly?: boolean;
@@ -55,7 +57,7 @@ export function crud<T extends { id: string }>(path: string, o: CrudOptions<T>):
     }),
     route.get(`${path}/:id`, ({ ctx, params }) => {
       requirePerm(ctx, `${o.perm}:view`);
-      const rec = o.get().find((r) => r.id === params.id);
+      const rec = o.get().find((r) => r.id === params.id && (!o.filter || o.filter(r, ctx)));
       if (!rec) notFound();
       return dto(rec, ctx);
     }),
@@ -74,18 +76,18 @@ export function crud<T extends { id: string }>(path: string, o: CrudOptions<T>):
     }),
     route.patch(`${path}/:id`, async ({ ctx, params, body }) => {
       requirePerm(ctx, `${o.perm}:edit`);
-      const rec = o.get().find((r) => r.id === params.id);
+      const rec = o.get().find((r) => r.id === params.id && (!o.filter || o.filter(r, ctx)));
       if (!rec) notFound();
       const data = await body();
       const errors = o.validate?.(data, rec);
       if (errors) throw validationError(errors);
-      const changes = applyPatch(rec, data);
+      const changes = applyPatch(rec, o.mapPatch ? o.mapPatch(data, rec) : data);
       if (changes.length) audit(ctx, "edit", o.perm, rec.id, label(rec), changes);
       return dto(rec, ctx);
     }),
     route.delete(`${path}/:id`, ({ ctx, params }) => {
       requirePerm(ctx, `${o.perm}:delete`);
-      const rec = o.get().find((r) => r.id === params.id);
+      const rec = o.get().find((r) => r.id === params.id && (!o.filter || o.filter(r, ctx)));
       if (!rec) notFound();
       o.beforeDelete?.(rec);
       o.set(o.get().filter((r) => r !== rec));

@@ -12,4 +12,5 @@ export * from "./customer";
 export * from "./b2b";
 export * from "./support";
 export * from "./loyalty";
+export * from "./hr";
 export * from "./crm";
