@@ -290,6 +290,31 @@ export interface DispatchBoard {
   branches: { id: string; name: string; location: GeoPoint }[];
 }
 
+export type EmployeeStatus = I<typeof S.EmployeeStatus>;
+export type ContractType = I<typeof S.ContractType>;
+export type LeaveType = I<typeof S.LeaveType>;
+export type LeaveStatus = I<typeof S.LeaveStatus>;
+export type AttendanceStatus = I<typeof S.AttendanceStatus>;
+export type PayrollStatus = I<typeof S.PayrollStatus>;
+export type ShiftKind = I<typeof S.ShiftKind>;
+export type Employee = I<typeof S.Employee>;
+export type EmployeeInput = I<typeof S.EmployeeInput>;
+export type StaffPosition = I<typeof S.StaffPosition>;
+export type ShiftTemplate = I<typeof S.ShiftTemplate>;
+export type ScheduleCell = I<typeof S.ScheduleCell>;
+export type ScheduleRow = I<typeof S.ScheduleRow>;
+export type AttendanceRecord = I<typeof S.AttendanceRecord>;
+export type TimesheetRow = I<typeof S.TimesheetRow>;
+export type LeaveBalance = I<typeof S.LeaveBalance>;
+export type LeaveRequest = I<typeof S.LeaveRequest>;
+export type LeaveRequestInput = I<typeof S.LeaveRequestInput>;
+export type PayrollSettings = I<typeof S.PayrollSettings>;
+export type PayslipLine = I<typeof S.PayslipLine>;
+export type PayrollRun = I<typeof S.PayrollRun>;
+export type PayrollRunDetail = I<typeof S.PayrollRunDetail>;
+export type HrDashboard = I<typeof S.HrDashboard>;
+export type MyHrProfile = I<typeof S.MyHrProfile>;
+
 export interface MockConfig {
   delayMs: number;
   errorRate: number;
