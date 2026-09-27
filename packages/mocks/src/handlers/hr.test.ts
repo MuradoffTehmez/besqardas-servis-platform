@@ -22,6 +22,12 @@ async function login(email: string) {
 }
 
 const day = (offset: number) => new Date(Date.now() + offset * 86400_000).toISOString().slice(0, 10);
+const monthsAgo = (n: number) => {
+  const d = new Date();
+  d.setUTCDate(1);
+  d.setUTCMonth(d.getUTCMonth() - n);
+  return d.toISOString().slice(0, 7);
+};
 const money = (m: any) => Number(m.amount);
 
 describe("HRM", () => {
@@ -104,15 +110,28 @@ describe("HRM", () => {
     const manager = await login("manager@demo.az");
 
     // Menecerin yaratmaq icazəsi yoxdur
-    expect((await call("POST", "/admin/hr/payroll", { period: new Date().toISOString().slice(0, 7) }, manager)).status).toBe(403);
+    expect((await call("POST", "/admin/hr/payroll", { period: monthsAgo(0) }, manager)).status).toBe(403);
 
-    const period = new Date().toISOString().slice(0, 7);
+    // Cari ay bitməyib: hesablama proqnozdur, təsdiq açılmır
+    const preview = await call("POST", "/admin/hr/payroll", { period: monthsAgo(0) }, accountant);
+    expect(preview.status, JSON.stringify(preview.data)).toBe(200);
+    expect(preview.data.status).toBe("CALCULATED");
+    expect(preview.data.periodClosed).toBe(false);
+    expect(preview.data.lines.length).toBeGreaterThan(8);
+    expect(preview.data.availableActions.map((a: any) => a.code)).not.toContain("approve");
+    expect((await call("POST", `/admin/hr/payroll/${preview.data.id}/actions`, { code: "approve" }, accountant)).status).toBe(409);
+
+    expect((await call("POST", "/admin/hr/payroll", { period: monthsAgo(0) }, accountant)).status).toBe(422);
+    expect((await call("POST", "/admin/hr/payroll", { period: "2099-01" }, accountant)).status).toBe(422);
+    expect((await call("POST", "/admin/hr/payroll", { period: "2026-00" }, accountant)).status).toBe(422);
+    expect((await call("POST", "/admin/hr/payroll", { period: "2026-13" }, accountant)).status).toBe(422);
+
+    // Bağlanmış dövr üçün tam axın
+    const period = monthsAgo(3);
     const run = await call("POST", "/admin/hr/payroll", { period }, accountant);
     expect(run.status, JSON.stringify(run.data)).toBe(200);
-    expect(run.data.status).toBe("CALCULATED");
+    expect(run.data.periodClosed).toBe(true);
     expect(run.data.lines.length).toBeGreaterThan(8);
-    expect((await call("POST", "/admin/hr/payroll", { period }, accountant)).status).toBe(422);
-    expect((await call("POST", "/admin/hr/payroll", { period: "2099-01" }, accountant)).status).toBe(422);
 
     const line = run.data.lines.find((l: any) => l.fullName === "Səbinə Axundova");
     const gross = money(line.gross);
@@ -124,6 +143,11 @@ describe("HRM", () => {
     expect(money(line.net)).toBeCloseTo(gross - money(line.incomeTax) - money(line.socialEmployee) - money(line.unemploymentEmployee) - money(line.healthEmployee), 1);
     expect(money(line.employerCost)).toBeGreaterThan(gross);
 
+    // İşdən çıxmış əməkdaşın son iş ayına qədərki günləri də hesablanır
+    const leaver = run.data.lines.find((l: any) => l.fullName === "Günay Rzayeva");
+    expect(leaver.paidDays).toBeGreaterThan(0);
+    expect(money(leaver.net)).toBeGreaterThan(0);
+
     // Yüksək maaşda gəlir vergisi 8000 ₼-dən yuxarı hissəyə 14%
     const settings = (await call("GET", "/admin/hr/settings", undefined, accountant)).data;
     expect(money(settings.incomeTaxThreshold)).toBe(8000);
@@ -132,7 +156,7 @@ describe("HRM", () => {
     const approved = await call("POST", `/admin/hr/payroll/${run.data.id}/actions`, { code: "approve" }, accountant);
     expect(approved.data.status).toBe("APPROVED");
     // Təsdiqlənmiş dövrdə davamiyyət düzəlişi bağlıdır
-    const attendance = (await call("GET", "/admin/hr/attendance?pageSize=5", undefined, manager)).data.items[0];
+    const attendance = (await call("GET", `/admin/hr/attendance?period=${period}&pageSize=5`, undefined, manager)).data.items[0];
     const locked = await call("PATCH", `/admin/hr/attendance/${attendance.id}`, { status: "ABSENT" }, manager);
     expect(locked.status).toBe(409);
 
@@ -157,7 +181,7 @@ describe("HRM", () => {
     expect((await call("POST", `/admin/hr/leaves/${request.data.id}/actions`, { code: "approve" }, operator)).status).toBe(409);
 
     // Başqasının adına müraciət yaratmaq üçün icazə lazımdır
-    const others = (await call("GET", "/admin/hr/employees?pageSize=50", undefined, await login("manager@demo.az"))).data.items;
+    const others = (await call("GET", "/admin/hr/employees?pageSize=50", undefined, await login("admin@demo.az"))).data.items;
     const other = others.find((e: any) => e.fullName === "Samir Qasımov");
     expect((await call("POST", "/admin/hr/leaves", { employeeId: other.id, type: "ANNUAL", from: day(40), to: day(42) }, operator)).status).toBe(403);
     expect((await call("GET", "/admin/hr/employees", undefined, operator)).status).toBe(403);
@@ -178,6 +202,12 @@ describe("HRM", () => {
     expect(created.data.vacantCount).toBe(2);
     expect((await call("POST", "/admin/hr/positions", { code: "hr_spec", titleI18n: { az: "Təkrar", ru: "", en: "" }, department: "İdarəetmə" }, admin)).status).toBe(422);
 
+    const edited = await call("PATCH", `/admin/hr/positions/${created.data.id}`, { salaryFrom: "1300", salaryTo: "1900", plannedCount: 3 }, admin);
+    expect(edited.status, JSON.stringify(edited.data)).toBe(200);
+    expect(money(edited.data.salaryFrom)).toBe(1300);
+    expect(money(edited.data.salaryTo)).toBe(1900);
+    expect(edited.data.plannedCount).toBe(3);
+
     const hire = await call("POST", "/admin/hr/employees", { fullName: "Aygün Nəsirli", positionId: created.data.id, department: "İdarəetmə", hiredAt: day(-5), salary: "1500", probationMonths: 3 }, admin);
     expect(hire.status, JSON.stringify(hire.data)).toBe(200);
     expect(hire.data.status).toBe("PROBATION");
@@ -191,5 +221,62 @@ describe("HRM", () => {
     expect(terminated.data.terminationReason).toBe("Sınaq müddətini keçmədi");
     const shifts = (await call("GET", "/admin/hr/shifts?pageSize=20", undefined, admin)).data.items;
     expect(shifts.find((s: any) => s.code === "N1").hours).toBeGreaterThan(7);
+  });
+
+  it("ödənişli məzuniyyət maaşa daxildir, ödənişsiz məzuniyyət çıxılır", async () => {
+    const manager = await login("manager@demo.az");
+    const employees = (await call("GET", "/admin/hr/employees?pageSize=50", undefined, manager)).data.items;
+    const kamran = employees.find((e: any) => e.fullName === "Kamran Əliyev");
+    const ramil = employees.find((e: any) => e.fullName === "Ramil Sadıqov");
+
+    /** Məzuniyyət iki aya düşə bilər — hər iki ayın tabel sətrini götürürük. */
+    const rowsFor = async (employeeId: string, from: string, to: string) => {
+      const out: any[] = [];
+      for (const month of [...new Set([from.slice(0, 7), to.slice(0, 7)])]) {
+        out.push((await call("GET", `/admin/hr/timesheet?period=${month}&pageSize=50`, undefined, manager)).data.items.find((r: any) => r.employeeId === employeeId));
+      }
+      return out;
+    };
+
+    // Xəstəlik vərəqəsi ödənişlidir: ödənişli günlər işlənmiş günlərdən çoxdur
+    const leaves = (await call("GET", "/admin/hr/leaves?pageSize=50", undefined, manager)).data.items;
+    const sick = leaves.find((l: any) => l.employeeId === kamran.id && l.type === "SICK");
+    expect(sick.paid).toBe(true);
+    expect((await rowsFor(kamran.id, sick.from, sick.to)).some((r) => r.paidDays > r.workedDays)).toBe(true);
+
+    // Ödənişsiz məzuniyyət isə ödənişli günlərə düşmür
+    const unpaid = await call("POST", "/admin/hr/leaves", { employeeId: ramil.id, type: "UNPAID", from: day(-12), to: day(-6) }, manager);
+    expect(unpaid.status, JSON.stringify(unpaid.data)).toBe(200);
+    expect((await call("POST", `/admin/hr/leaves/${unpaid.data.id}/actions`, { code: "approve" }, manager)).data.status).toBe("APPROVED");
+    const unpaidRows = await rowsFor(ramil.id, unpaid.data.from, unpaid.data.to);
+    expect(unpaidRows.reduce((sum, r) => sum + r.leaveDays, 0)).toBeGreaterThan(0);
+    for (const row of unpaidRows) expect(row.paidDays).toBe(row.workedDays);
+  });
+
+  it("filial səlahiyyəti: menecer yalnız öz filialının əməkdaşlarını görür", async () => {
+    const manager = await login("manager@demo.az");
+    const admin = await login("admin@demo.az");
+    const mine = (await call("GET", "/admin/hr/employees?pageSize=50", undefined, manager)).data.items;
+    const all = (await call("GET", "/admin/hr/employees?pageSize=50", undefined, admin)).data.items;
+    expect(all.length).toBeGreaterThan(mine.length);
+    expect(mine.every((e: any) => e.branchName === mine[0].branchName)).toBe(true);
+    expect(mine.some((e: any) => e.fullName === "Samir Qasımov")).toBe(false);
+
+    // Başqa filialın kartı, redaktəsi və cədvəl sətirləri bağlıdır
+    const samir = all.find((e: any) => e.fullName === "Samir Qasımov");
+    expect((await call("GET", `/admin/hr/employees/${samir.id}`, undefined, manager)).status).toBe(404);
+    expect((await call("PATCH", `/admin/hr/employees/${samir.id}`, { salary: "9999" }, manager)).status).toBe(404);
+    expect((await call("GET", "/admin/hr/schedule", undefined, manager)).data.rows.some((r: any) => r.employeeId === samir.id)).toBe(false);
+    expect((await call("GET", "/admin/hr/leaves?pageSize=50", undefined, manager)).data.items.some((l: any) => l.employeeId === samir.id)).toBe(false);
+    expect((await call("GET", "/admin/hr/leave-balances?pageSize=50", undefined, manager)).data.items.some((b: any) => b.employeeId === samir.id)).toBe(false);
+
+    // Əmək haqqı sətirləri və yekunları da filiala görə daralır
+    const runs = (await call("GET", "/admin/hr/payroll", undefined, manager)).data.items;
+    const scoped = (await call("GET", `/admin/hr/payroll/${runs[0].id}`, undefined, manager)).data;
+    const full = (await call("GET", `/admin/hr/payroll/${runs[0].id}`, undefined, admin)).data;
+    expect(scoped.lines.some((l: any) => l.employeeId === samir.id)).toBe(false);
+    expect(full.lines.some((l: any) => l.employeeId === samir.id)).toBe(true);
+    expect(scoped.employeeCount).toBeLessThan(full.employeeCount);
+    expect(Number(scoped.totalGross.amount)).toBeLessThan(Number(full.totalGross.amount));
   });
 });

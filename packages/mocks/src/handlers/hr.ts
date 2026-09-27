@@ -1,6 +1,6 @@
 import * as S from "@sp/schemas";
 import { db, nextNumber } from "../db/state";
-import type { HrEmployeeRec, HrLeaveRec } from "../db/types";
+import type { HrEmployeeRec, HrLeaveRec, HrPayrollRunRec } from "../db/types";
 import { can, fullName, isInternal, userById, type Ctx } from "../engine/context";
 import { audit, notify } from "../engine/effects";
 import {
@@ -20,13 +20,48 @@ import { nowIso } from "../lib/time";
 
 const DAY_MS = 86400_000;
 
+/** `list()` naməlum sorğu parametrini sahə filtri sayır — dövrü marşrut özü işlədiyi üçün onu çıxarırıq. */
+function withoutPeriod(url: URL) {
+  const clean = new URL(url);
+  clean.searchParams.delete("period");
+  return clean;
+}
+
 function canApproveLeave(ctx: Ctx) {
   return can(ctx, "hr:approve") || can(ctx, "hr:edit");
 }
 
-function requireEmployee(id: string) {
+/**
+ * BRANCH səlahiyyətli rol (filial meneceri) yalnız öz filialının əməkdaşlarını görür və redaktə edir —
+ * əməkdaş kartında maaş və IBAN kimi həssas sahələr var (PRD §18.4).
+ */
+function inScope(ctx: Ctx, rec: { branchId: string | null }) {
+  return ctx.scopes.hr !== "BRANCH" || !rec.branchId || rec.branchId === ctx.user?.branchId;
+}
+
+function scopedEmployees(ctx: Ctx) {
+  return db.hrEmployees.filter((e) => inScope(ctx, e));
+}
+
+function visibleIds(ctx: Ctx) {
+  return new Set(scopedEmployees(ctx).map((e) => e.id));
+}
+
+function scopedLeaves(ctx: Ctx) {
+  const ids = visibleIds(ctx);
+  return db.hrLeaves.filter((l) => ids.has(l.employeeId));
+}
+
+/** Səlahiyyətə düşən əmək haqqı sətirləri — yekunlar da yalnız onlara görə hesablanır. */
+function visibleLines(ctx: Ctx, run: HrPayrollRunRec) {
+  if (ctx.scopes.payroll !== "BRANCH" && ctx.scopes.hr !== "BRANCH") return run.lines;
+  const ids = visibleIds(ctx);
+  return run.lines.filter((l) => ids.has(l.employeeId));
+}
+
+function requireEmployee(id: string, ctx: Ctx) {
   const e = db.hrEmployees.find((x) => x.id === id);
-  if (!e) notFound();
+  if (!e || !inScope(ctx, e)) notFound();
   return e;
 }
 
@@ -51,22 +86,25 @@ function dashboard(ctx: Ctx) {
   const period = currentPeriod();
   fillAttendance(period);
   const today = dayKey(new Date(nowIso()));
-  const active = db.hrEmployees.filter((e) => e.status !== "TERMINATED");
-  const planned = db.hrPositions.filter((p) => p.active).reduce((s, p) => s + p.plannedCount, 0);
+  const all = scopedEmployees(ctx);
+  const active = all.filter((e) => e.status !== "TERMINATED");
+  const positions = db.hrPositions.filter((p) => inScope(ctx, p));
+  const planned = positions.filter((p) => p.active).reduce((s, p) => s + p.plannedCount, 0);
   const todayRows = active.map((e) => attendanceOn(e.id, today)).filter(Boolean);
   const year = new Date(nowIso()).getUTCFullYear();
-  const hired = db.hrEmployees.filter((e) => e.hiredAt.startsWith(String(year))).length;
-  const left = db.hrEmployees.filter((e) => e.terminatedAt?.startsWith(String(year))).length;
+  const hired = all.filter((e) => e.hiredAt.startsWith(String(year))).length;
+  const left = all.filter((e) => e.terminatedAt?.startsWith(String(year))).length;
   const departments = [...new Set(active.map((e) => e.department))];
+  const leaves = scopedLeaves(ctx);
   const run = db.hrPayrollRuns.find((r) => r.period === period) ?? null;
-  const totals = run ? runTotals(run) : { grossCents: 0, netCents: 0, taxesCents: 0, employerCostCents: 0 };
+  const totals = run ? runTotals(visibleLines(ctx, run)) : { grossCents: 0, netCents: 0, taxesCents: 0, employerCostCents: 0 };
   return {
     headcount: active.length,
     plannedHeadcount: planned,
     vacancies: Math.max(0, planned - active.length),
     probation: active.filter((e) => e.status === "PROBATION").length,
     onLeaveToday: active.filter((e) => leaveOn(e.id, today)).length,
-    pendingLeaves: db.hrLeaves.filter((l) => l.status === "PENDING").length,
+    pendingLeaves: leaves.filter((l) => l.status === "PENDING").length,
     attendanceToday: {
       present: todayRows.filter((a) => a!.status === "PRESENT").length,
       late: todayRows.filter((a) => a!.status === "LATE").length,
@@ -77,7 +115,7 @@ function dashboard(ctx: Ctx) {
     byDepartment: departments.map((department) => ({
       department,
       headcount: active.filter((e) => e.department === department).length,
-      planned: db.hrPositions.filter((p) => p.department === department && p.active).reduce((s, p) => s + p.plannedCount, 0),
+      planned: positions.filter((p) => p.department === department && p.active).reduce((s, p) => s + p.plannedCount, 0),
       salaryTotal: money(active.filter((e) => e.department === department).reduce((s, e) => s + e.salaryCents, 0)),
     })),
     hiredThisYear: hired,
@@ -85,11 +123,11 @@ function dashboard(ctx: Ctx) {
     turnoverPercent: active.length ? Math.round((left / (active.length + left)) * 1000) / 10 : 0,
     averageTenureMonths: active.length ? Math.round(active.reduce((s, e) => s + Math.max(0, (new Date(nowIso()).getTime() - new Date(e.hiredAt).getTime()) / (30 * DAY_MS)), 0) / active.length) : 0,
     payroll: { period, status: run?.status ?? null, gross: money(totals.grossCents), net: money(totals.netCents), taxes: money(totals.taxesCents), employerCost: money(totals.employerCostCents) },
-    upcomingLeaves: db.hrLeaves
+    upcomingLeaves: leaves
       .filter((l) => l.status === "APPROVED" && l.from >= today)
       .sort((a, b) => a.from.localeCompare(b.from))
       .slice(0, 6)
-      .map((l) => ({ fullName: db.hrEmployees.find((e) => e.id === l.employeeId)?.fullName ?? "—", type: l.type, from: l.from, to: l.to })),
+      .map((l) => ({ fullName: all.find((e) => e.id === l.employeeId)?.fullName ?? "—", type: l.type, from: l.from, to: l.to })),
     canApprove: canApproveLeave(ctx),
   };
 }
@@ -104,13 +142,13 @@ export const hrHandlers = [
   /* ---------------- Əməkdaşlar ---------------- */
   route.get("/admin/hr/employees", ({ ctx, url }) => {
     requirePerm(ctx, "hr:view");
-    const rows = db.hrEmployees.map(employeeDto);
+    const rows = scopedEmployees(ctx).map(employeeDto);
     return list(url, rows, { defaultSort: "fullName", search: (e) => `${e.fullName} ${e.personnelNumber} ${e.department}`, dateField: "hiredAt", defaultPageSize: 25 });
   }),
 
   route.get("/admin/hr/employees/:id", ({ ctx, params }) => {
     requirePerm(ctx, "hr:view");
-    const e = requireEmployee(params.id);
+    const e = requireEmployee(params.id, ctx);
     const period = currentPeriod();
     fillAttendance(period);
     const payslips = db.hrPayrollRuns
@@ -169,7 +207,7 @@ export const hrHandlers = [
 
   route.patch("/admin/hr/employees/:id", async ({ ctx, params, body }) => {
     requirePerm(ctx, "hr:edit");
-    const e = requireEmployee(params.id);
+    const e = requireEmployee(params.id, ctx);
     const data = await body<Record<string, unknown>>();
     const errors = validateEmployee(data, e);
     if (errors) throw validationError(errors);
@@ -201,7 +239,7 @@ export const hrHandlers = [
 
   route.post("/admin/hr/employees/:id/terminate", async ({ ctx, params, body }) => {
     requirePerm(ctx, "hr:edit");
-    const e = requireEmployee(params.id);
+    const e = requireEmployee(params.id, ctx);
     if (e.status === "TERMINATED") throw apiError(409, "ACTION_NOT_ALLOWED", "error.actionNotAllowed");
     const { reason, date } = await body<{ reason?: string; date?: string }>();
     if (!reason?.trim()) throw validationError({ reason: ["validation.required"] });
@@ -221,11 +259,23 @@ export const hrHandlers = [
     set: (x) => (db.hrPositions = x),
     defaultSort: "department",
     label: (p) => p.code,
+    filter: (p, ctx) => inScope(ctx, p),
     toDto: (p) => positionDto(p),
+    // Sorğuda maaş manatla gəlir, qeyddə sentlə saxlanılır — redaktədə də çevrilməlidir
+    mapPatch: (b) => ({
+      ...b,
+      ...(b.salaryFrom === undefined ? {} : { salaryFromCents: Math.round(Number(b.salaryFrom) * 100), salaryFrom: undefined }),
+      ...(b.salaryTo === undefined ? {} : { salaryToCents: Math.round(Number(b.salaryTo) * 100), salaryTo: undefined }),
+      ...(b.code === undefined ? {} : { code: String(b.code).toUpperCase() }),
+    }),
     validate: (b, rec) => {
       const errors = rec ? null : required(b, "code", "titleI18n", "department");
       if (errors) return errors;
       if (b.plannedCount !== undefined && Number(b.plannedCount) < 0) return { plannedCount: ["validation.positive"] };
+      for (const key of ["salaryFrom", "salaryTo"] as const) {
+        if (b[key] !== undefined && (!Number.isFinite(Number(b[key])) || Number(b[key]) < 0)) return { [key]: ["validation.positive"] };
+      }
+      if (rec && b.code !== undefined && db.hrPositions.some((p) => p.code === String(b.code).toUpperCase() && p.id !== rec.id)) return { code: ["validation.alreadyExists"] };
       if (!rec && db.hrPositions.some((p) => p.code === String(b.code).toUpperCase())) return { code: ["validation.alreadyExists"] };
       return null;
     },
@@ -271,7 +321,7 @@ export const hrHandlers = [
     const period = url.searchParams.get("period") || currentPeriod();
     const department = url.searchParams.get("department");
     const days = monthDays(period);
-    const rows = db.hrEmployees
+    const rows = scopedEmployees(ctx)
       .filter((e) => e.status !== "TERMINATED" && (!department || e.department === department))
       .map((e) => {
         const shift = shiftOf(e);
@@ -297,23 +347,24 @@ export const hrHandlers = [
           plannedHours: Math.round(cells.reduce((s, c) => s + c.hours, 0) * 10) / 10,
         };
       });
-    return { period, days, rows, departments: [...new Set(db.hrEmployees.filter((e) => e.status !== "TERMINATED").map((e) => e.department))] };
+    return { period, days, rows, departments: [...new Set(scopedEmployees(ctx).filter((e) => e.status !== "TERMINATED").map((e) => e.department))] };
   }),
 
   route.get("/admin/hr/timesheet", ({ ctx, url }) => {
     requirePerm(ctx, "hr:view");
     const period = url.searchParams.get("period") || currentPeriod();
     fillAttendance(period);
-    const rows = db.hrEmployees.filter((e) => e.status !== "TERMINATED").map((e) => timesheetRow(e, period));
-    return { period, ...list(url, rows, { defaultSort: "fullName", search: (r) => `${r.fullName} ${r.department}`, defaultPageSize: 50 }) };
+    const rows = scopedEmployees(ctx).filter((e) => e.status !== "TERMINATED").map((e) => timesheetRow(e, period));
+    return { period, ...list(withoutPeriod(url), rows, { defaultSort: "fullName", search: (r) => `${r.fullName} ${r.department}`, defaultPageSize: 50 }) };
   }),
 
   route.get("/admin/hr/attendance", ({ ctx, url }) => {
     requirePerm(ctx, "hr:view");
     const period = url.searchParams.get("period") || currentPeriod();
     fillAttendance(period);
+    const ids = visibleIds(ctx);
     const rows = db.hrAttendance
-      .filter((a) => a.date.startsWith(period))
+      .filter((a) => a.date.startsWith(period) && ids.has(a.employeeId))
       .map((a) => {
         const e = db.hrEmployees.find((x) => x.id === a.employeeId);
         return {
@@ -332,7 +383,7 @@ export const hrHandlers = [
           note: a.note,
         };
       });
-    return list(url, rows, { defaultSort: "-date", search: (r) => `${r.fullName} ${r.department}`, dateField: "date", defaultPageSize: 50 });
+    return list(withoutPeriod(url), rows, { defaultSort: "-date", search: (r) => `${r.fullName} ${r.department}`, dateField: "date", defaultPageSize: 50 });
   }),
 
   /** Davamiyyət düzəlişi — tabel təsdiqlənməmişdən əvvəl (§A4). */
@@ -340,7 +391,7 @@ export const hrHandlers = [
     requirePerm(ctx, "hr:edit");
     const rec = find(db.hrAttendance, params.id);
     const data = await body<{ status?: string; checkIn?: string; checkOut?: string; note?: string }>();
-    const employee = db.hrEmployees.find((e) => e.id === rec.employeeId);
+    const employee = requireEmployee(rec.employeeId, ctx);
     if (db.hrPayrollRuns.some((r) => r.period === rec.date.slice(0, 7) && ["APPROVED", "PAID"].includes(r.status))) {
       throw apiError(409, "PAYROLL_LOCKED", "error.actionNotAllowed");
     }
@@ -353,26 +404,26 @@ export const hrHandlers = [
         rec.lateMinutes = 0;
         rec.overtimeMinutes = 0;
       } else if (rec.workedMinutes === 0) {
-        rec.workedMinutes = rec.plannedMinutes || shiftHours(shiftOf(employee!)) * 60;
+        rec.workedMinutes = rec.plannedMinutes || shiftHours(shiftOf(employee)) * 60;
       }
     }
     if (data.checkIn !== undefined) rec.checkIn = data.checkIn || null;
     if (data.checkOut !== undefined) rec.checkOut = data.checkOut || null;
     if (data.note !== undefined) rec.note = data.note || null;
-    audit(ctx, "edit", "hr", rec.id, `${employee?.fullName ?? "—"} · ${rec.date}`);
+    audit(ctx, "edit", "hr", rec.id, `${employee.fullName} · ${rec.date}`);
     return { ok: true };
   }),
 
   /* ---------------- Məzuniyyət ---------------- */
   route.get("/admin/hr/leaves", ({ ctx, url }) => {
     requirePerm(ctx, "hr:view");
-    const rows = db.hrLeaves.map((l) => leaveDto(l, ctx, canApproveLeave(ctx)));
+    const rows = scopedLeaves(ctx).map((l) => leaveDto(l, ctx, canApproveLeave(ctx)));
     return list(url, rows, { defaultSort: "-createdAt", search: (l) => `${l.fullName} ${l.number}`, dateField: "from", defaultPageSize: 25 });
   }),
 
   route.get("/admin/hr/leave-balances", ({ ctx, url }) => {
     requirePerm(ctx, "hr:view");
-    const rows = db.hrEmployees.filter((e) => e.status !== "TERMINATED").map((e) => leaveBalance(e));
+    const rows = scopedEmployees(ctx).filter((e) => e.status !== "TERMINATED").map((e) => leaveBalance(e));
     return list(url, rows, { defaultSort: "-remainingDays", search: (r) => r.fullName, defaultPageSize: 50 });
   }),
 
@@ -380,7 +431,7 @@ export const hrHandlers = [
     const u = requireAuth(ctx);
     const data = parse(S.LeaveRequestInput, await body());
     const mine = employeeOf(u.id);
-    const employee = data.employeeId ? requireEmployee(data.employeeId) : mine;
+    const employee = data.employeeId ? requireEmployee(data.employeeId, ctx) : mine;
     if (!employee) throw apiError(403, "NO_EMPLOYEE_CARD", "error.forbidden");
     if (employee.id !== mine?.id) requirePerm(ctx, "hr:edit");
     if (data.from > data.to) throw validationError({ to: ["validation.invalid"] });
@@ -419,6 +470,7 @@ export const hrHandlers = [
   route.post("/admin/hr/leaves/:id/actions", async ({ ctx, params, body }) => {
     const u = requireAuth(ctx);
     const leave = find(db.hrLeaves, params.id);
+    if (employeeOf(u.id)?.id !== leave.employeeId) requireEmployee(leave.employeeId, ctx);
     const data = await body<{ code: string; note?: string }>();
     const approver = canApproveLeave(ctx);
     const actions = leaveDto(leave, ctx, approver).availableActions;
@@ -457,26 +509,28 @@ export const hrHandlers = [
   /* ---------------- Əmək haqqı ---------------- */
   route.get("/admin/hr/payroll", ({ ctx, url }) => {
     requirePerm(ctx, "payroll:view");
-    const rows = db.hrPayrollRuns.map((r) => runDto(r, can(ctx, "payroll:edit"), can(ctx, "payroll:approve")));
+    const rows = db.hrPayrollRuns.map((r) => runDto(r, can(ctx, "payroll:edit"), can(ctx, "payroll:approve"), visibleLines(ctx, r)));
     return list(url, rows, { defaultSort: "-period", search: (r) => `${r.number} ${r.period}`, defaultPageSize: 25 });
   }),
 
   route.get("/admin/hr/payroll/:id", ({ ctx, params }) => {
     requirePerm(ctx, "payroll:view");
     const run = find(db.hrPayrollRuns, params.id);
-    return { ...runDto(run, can(ctx, "payroll:edit"), can(ctx, "payroll:approve")), lines: run.lines.map(payslipDto), settings: settingsDto() };
+    const lines = visibleLines(ctx, run);
+    return { ...runDto(run, can(ctx, "payroll:edit"), can(ctx, "payroll:approve"), lines), lines: lines.map(payslipDto), settings: settingsDto() };
   }),
 
   route.post("/admin/hr/payroll", async ({ ctx, body }) => {
     requirePerm(ctx, "payroll:create", "payroll:edit");
     const { period } = await body<{ period?: string }>();
     const target = period || currentPeriod();
-    if (!/^\d{4}-\d{2}$/.test(target)) throw validationError({ period: ["validation.invalid"] });
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(target)) throw validationError({ period: ["validation.invalid"] });
     if (target > currentPeriod()) throw validationError({ period: ["validation.futurePeriod"] });
     if (db.hrPayrollRuns.some((r) => r.period === target)) throw validationError({ period: ["validation.alreadyExists"] });
     const run = createRun(target, ctx);
     audit(ctx, "create", "payroll", run.id, `${run.number} · ${run.period}`);
-    return { ...runDto(run, can(ctx, "payroll:edit"), can(ctx, "payroll:approve")), lines: run.lines.map(payslipDto), settings: settingsDto() };
+    const lines = visibleLines(ctx, run);
+    return { ...runDto(run, can(ctx, "payroll:edit"), can(ctx, "payroll:approve"), lines), lines: lines.map(payslipDto), settings: settingsDto() };
   }),
 
   route.post("/admin/hr/payroll/:id/actions", async ({ ctx, params, body }) => {
@@ -505,7 +559,8 @@ export const hrHandlers = [
       return { deleted: true };
     }
     audit(ctx, code, "payroll", run.id, `${run.number} · ${run.period}`, [], note);
-    return { ...runDto(run, can(ctx, "payroll:edit"), can(ctx, "payroll:approve")), lines: run.lines.map(payslipDto), settings: settingsDto() };
+    const lines = visibleLines(ctx, run);
+    return { ...runDto(run, can(ctx, "payroll:edit"), can(ctx, "payroll:approve"), lines), lines: lines.map(payslipDto), settings: settingsDto() };
   }),
 
   route.get("/admin/hr/settings", ({ ctx }) => {

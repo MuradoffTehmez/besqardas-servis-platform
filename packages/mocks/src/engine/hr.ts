@@ -123,12 +123,28 @@ export function ensureAttendance(employee: HrEmployeeRec, date: string): HrAtten
   return rec;
 }
 
+const WORKED_STATUSES = ["PRESENT", "LATE", "BUSINESS_TRIP"];
+/** Ödənişli günlər: iş günləri + ödənişli məzuniyyət, xəstəlik vərəqəsi və bayram (yalnız ödənişsiz məzuniyyət çıxılır). */
+const PAID_STATUSES = [...WORKED_STATUSES, "LEAVE", "SICK", "HOLIDAY"];
+
+/**
+ * Əməkdaşın həmin ayda davamiyyətə düşən intervalı: işə qəbuldan — bu gün, ayın sonu və işdən çıxma
+ * tarixindən ən erkəninə qədər. İşdən çıxmış əməkdaşın son iş ayı da hesablanır ki, arxiv dövrün
+ * əmək haqqı yenidən hesablananda sıfır gün qalmasın.
+ */
+export function coveredRange(employee: HrEmployeeRec, period: string) {
+  const days = monthDays(period);
+  const ends = [days[days.length - 1]!, dayKey(new Date(nowIso()))];
+  if (employee.terminatedAt) ends.push(employee.terminatedAt.slice(0, 10));
+  return { from: employee.hiredAt.slice(0, 10), to: ends.sort()[0]! };
+}
+
 /** Ayın keçmiş günləri üçün davamiyyəti tamamlayır. */
 export function fillAttendance(period: string) {
-  const today = dayKey(new Date(nowIso()));
-  for (const employee of db.hrEmployees.filter((e) => e.status !== "TERMINATED")) {
+  for (const employee of db.hrEmployees) {
+    const { from, to } = coveredRange(employee, period);
     for (const date of monthDays(period)) {
-      if (date > today || date < employee.hiredAt.slice(0, 10)) continue;
+      if (date > to || date < from) continue;
       ensureAttendance(employee, date);
     }
   }
@@ -136,14 +152,18 @@ export function fillAttendance(period: string) {
 
 export function timesheetRow(employee: HrEmployeeRec, period: string) {
   const rows = db.hrAttendance.filter((a) => a.employeeId === employee.id && a.date.startsWith(period));
-  const planned = monthDays(period).filter((d) => isWorkDay(employee, d) && d >= employee.hiredAt.slice(0, 10)).length;
+  const { from, to } = coveredRange(employee, period);
+  // Plan yalnız davamiyyət yaradılan interval üzrə sayılır — yarımçıq ay və ya işdən çıxma maaşı qırmasın
+  const planned = monthDays(period).filter((d) => isWorkDay(employee, d) && d >= from && d <= to).length;
   const sum = (fn: (a: HrAttendanceRec) => number) => rows.reduce((s, a) => s + fn(a), 0);
+  const unpaidLeave = (a: HrAttendanceRec) => a.status === "LEAVE" && leaveOn(employee.id, a.date)?.type === "UNPAID";
   return {
     employeeId: employee.id,
     fullName: employee.fullName,
     department: employee.department,
     plannedDays: planned,
-    workedDays: rows.filter((a) => ["PRESENT", "LATE", "BUSINESS_TRIP"].includes(a.status)).length,
+    workedDays: rows.filter((a) => WORKED_STATUSES.includes(a.status)).length,
+    paidDays: rows.filter((a) => PAID_STATUSES.includes(a.status) && !unpaidLeave(a)).length,
     plannedHours: Math.round((sum((a) => a.plannedMinutes) / 60) * 10) / 10,
     workedHours: Math.round((sum((a) => a.workedMinutes) / 60) * 10) / 10,
     overtimeHours: Math.round((sum((a) => a.overtimeMinutes) / 60) * 10) / 10,
@@ -229,7 +249,7 @@ export function calculateLine(employee: HrEmployeeRec, period: string): HrPayrol
   const s = db.hrPayrollSettings;
   const sheet = timesheetRow(employee, period);
   const base = employee.salaryCents;
-  const ratio = sheet.plannedDays ? Math.min(1, sheet.workedDays / sheet.plannedDays) : 0;
+  const ratio = sheet.plannedDays ? Math.min(1, sheet.paidDays / sheet.plannedDays) : 0;
   const earned = Math.round(base * ratio);
   const hourly = employee.monthlyHours ? base / employee.monthlyHours : base / s.standardMonthlyHours;
   const overtime = Math.round(hourly * sheet.overtimeHours * s.overtimeMultiplier);
@@ -248,6 +268,7 @@ export function calculateLine(employee: HrEmployeeRec, period: string): HrPayrol
     employeeId: employee.id,
     plannedDays: sheet.plannedDays,
     workedDays: sheet.workedDays,
+    paidDays: sheet.paidDays,
     overtimeHours: sheet.overtimeHours,
     nightHours,
     baseCents: base,
@@ -276,12 +297,17 @@ export function calculateRun(run: HrPayrollRunRec) {
   return run;
 }
 
-export function runTotals(run: HrPayrollRunRec) {
-  const sum = (fn: (l: HrPayrollLineRec) => number) => run.lines.reduce((s, l) => s + fn(l), 0);
+export function runTotals(lines: HrPayrollLineRec[]) {
+  const sum = (fn: (l: HrPayrollLineRec) => number) => lines.reduce((s, l) => s + fn(l), 0);
   const gross = sum((l) => l.grossCents);
   const taxes = sum((l) => l.incomeTaxCents + l.socialEmployeeCents + l.unemploymentEmployeeCents + l.healthEmployeeCents);
   const employer = sum((l) => l.socialEmployerCents + l.unemploymentEmployerCents + l.healthEmployerCents);
   return { grossCents: gross, netCents: sum((l) => l.netCents), taxesCents: taxes, employerCostCents: gross + employer };
+}
+
+/** Dövr bağlanıb: ay tamamlanmayıbsa maaş yalnız proqnoz kimi hesablanır. */
+export function periodClosed(run: HrPayrollRunRec) {
+  return run.period < currentPeriod();
 }
 
 export function createRun(period: string, ctx: Ctx) {
@@ -306,7 +332,8 @@ export function payrollActions(run: HrPayrollRunRec, canEdit: boolean, canApprov
   const out: { code: string; variant?: string }[] = [];
   if (run.status === "DRAFT" || run.status === "CALCULATED") {
     if (canEdit) out.push({ code: "recalculate", variant: "secondary" });
-    if (canApprove && run.lines.length) out.push({ code: "approve", variant: "primary" });
+    // Bitməmiş ayın hesablanması yalnız proqnozdur — təsdiq və ödəniş ay bağlandıqdan sonra açılır
+    if (canApprove && run.lines.length && periodClosed(run)) out.push({ code: "approve", variant: "primary" });
   }
   if (run.status === "APPROVED" && canApprove) out.push({ code: "pay", variant: "primary" });
   if (run.status !== "PAID" && canEdit) out.push({ code: "delete", variant: "destructive" });
@@ -408,6 +435,7 @@ export function payslipDto(line: HrPayrollLineRec) {
     positionTitle: position?.title ?? L("—"),
     plannedDays: line.plannedDays,
     workedDays: line.workedDays,
+    paidDays: line.paidDays,
     overtimeHours: line.overtimeHours,
     baseSalary: money(line.baseCents),
     earnedSalary: money(line.earnedCents),
@@ -428,14 +456,16 @@ export function payslipDto(line: HrPayrollLineRec) {
   };
 }
 
-export function runDto(run: HrPayrollRunRec, canEdit: boolean, canApprove: boolean) {
-  const totals = runTotals(run);
+/** `lines` — çağıranın səlahiyyətinə düşən sətirlər; yekunlar da yalnız onlara görə hesablanır. */
+export function runDto(run: HrPayrollRunRec, canEdit: boolean, canApprove: boolean, lines: HrPayrollLineRec[] = run.lines) {
+  const totals = runTotals(lines);
   return {
     id: run.id,
     number: run.number,
     period: run.period,
     status: run.status,
-    employeeCount: run.lines.length,
+    periodClosed: periodClosed(run),
+    employeeCount: lines.length,
     totalGross: money(totals.grossCents),
     totalNet: money(totals.netCents),
     totalTaxes: money(totals.taxesCents),

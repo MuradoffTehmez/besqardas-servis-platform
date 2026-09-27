@@ -822,6 +822,8 @@ export interface HrPayrollLineRec {
   employeeId: string;
   plannedDays: number;
   workedDays: number;
+  /** İşlənmiş günlər + ödənişli məzuniyyət/xəstəlik günləri — maaş bu nisbətlə hesablanır. */
+  paidDays: number;
   overtimeHours: number;
   nightHours: number;
   baseCents: number;

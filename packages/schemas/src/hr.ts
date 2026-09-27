@@ -133,6 +133,8 @@ export const TimesheetRow = z.object({
   department: z.string(),
   plannedDays: z.number(),
   workedDays: z.number(),
+  /** İşlənmiş + ödənişli məzuniyyət günləri (maaş bu nisbətlə hesablanır). */
+  paidDays: z.number(),
   plannedHours: z.number(),
   workedHours: z.number(),
   overtimeHours: z.number(),
@@ -219,6 +221,7 @@ export const PayslipLine = z.object({
   positionTitle: LocalizedText,
   plannedDays: z.number(),
   workedDays: z.number(),
+  paidDays: z.number(),
   overtimeHours: z.number(),
   baseSalary: Money,
   earnedSalary: Money,
@@ -243,6 +246,8 @@ export const PayrollRun = z.object({
   number: z.string(),
   period: z.string(),
   status: PayrollStatus,
+  /** Ay bağlanmayıbsa hesablama proqnozdur — təsdiq/ödəniş əməliyyatları açılmır. */
+  periodClosed: z.boolean(),
   employeeCount: z.number(),
   totalGross: Money,
   totalNet: Money,
