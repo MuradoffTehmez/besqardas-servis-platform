@@ -21,7 +21,7 @@
     "@sp/schemas": "workspace:*",
     "@sp/types": "workspace:*",
     "@sp/utils": "workspace:*",
-    "msw": "^2.15.0"
+    "msw": "^3.0.2"
   },
   "devDependencies": {
     "@sp/config": "workspace:*",
